@@ -1,0 +1,18 @@
+#! /bin/sh
+
+set -e
+
+case "$1" in
+    '') name='intel_backlight';;
+     *) name="$1";;
+esac
+
+path="/sys/class/backlight/$name"
+
+awk '
+    FILENAME ~ "/max_brightness$" {max = $1; next}
+    FILENAME ~     "/brightness$" {cur = $1; next}
+    END                           {printf("☀ %d%%\n", (cur / max) * 100)}
+' \
+"$path/max_brightness" \
+"$path/brightness"
