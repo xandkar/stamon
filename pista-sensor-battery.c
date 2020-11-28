@@ -98,6 +98,7 @@ int
 main(int argc, char **argv)
 {
 	/* TODO support multiple batteries */
+	/* TODO track and show (de|in)crease */
 	argv0 = argv[0];
 
 	char  buf[25];
