@@ -1,0 +1,43 @@
+#! /bin/bash
+
+set -e
+
+remake() {
+    rm -f "$1"
+    mkfifo "$1"
+}
+
+base_dir="$HOME/.pista-in"
+mkdir -p "$base_dir"
+
+fifo_time="$base_dir/time"
+remake "$fifo_time"
+fifo_vol="$base_dir/volume"
+remake "$fifo_vol"
+fifo_light="$base_dir/backlight"
+remake "$fifo_light"
+fifo_blue="$base_dir/bluetooth"
+remake "$fifo_blue"
+fifo_wifi="$base_dir/wifi"
+remake "$fifo_wifi"
+fifo_batt="$base_dir/battery"
+remake "$fifo_batt"
+
+./pista-sensor-time             > "$fifo_time"   &
+./pista-sensor-volume           > "$fifo_vol"    &
+./pista-sensor-backlight        > "$fifo_light"  &
+./pista-sensor-bluetooth        > "$fifo_blue"   &
+./pista-sensor-wifi wlp0s20f3 5 > "$fifo_wifi"   &
+./pista-sensor-battery          > "$fifo_batt"   &
+
+pista \
+    -l 0 \
+    -i 0.5 \
+    -s '  ' \
+    -x \
+    "$fifo_batt"    8  5   \
+    "$fifo_wifi"    6  10  \
+    "$fifo_blue"    7  10  \
+    "$fifo_light"   8  5   \
+    "$fifo_vol"     6  5   \
+    "$fifo_time"   20  2
