@@ -47,11 +47,11 @@ current_state() {
             state           = status["state"]
 
             if (state == "play") {
-                symbol = "▶"
+                symbol = ">"
             } else if (state == "pause") {
-                symbol = "⏸"
+                symbol = "="
             } else if (state == "stop") {
-                symbol = "⏹"
+                symbol = "-"
             } else {
                 printf("Unexpected state value: " state) > "/dev/stderr"
                 exit 1
