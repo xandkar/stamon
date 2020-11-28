@@ -91,7 +91,7 @@ get_capacity(char *buf, char *path)
 	default: assert(0);
 	}
 	fclose(fp);
-	return snprintf(buf, 6, "%3d%%", cap);
+	return snprintf(buf, 20, "⚡%3d%%", cap);
 }
 
 int
@@ -100,7 +100,7 @@ main(int argc, char **argv)
 	/* TODO support multiple batteries */
 	argv0 = argv[0];
 
-	char  buf[10];
+	char  buf[25];
 	char path[PATH_MAX];
 	char *path_fmt = "/sys/class/power_supply/%s/capacity";
 	struct timespec ti;
