@@ -12,6 +12,8 @@ mkdir -p "$base_dir"
 
 fifo_time="$base_dir/time"
 remake "$fifo_time"
+fifo_mpd="$base_dir/mpd"
+remake "$fifo_mpd"
 fifo_vol="$base_dir/volume"
 remake "$fifo_vol"
 fifo_light="$base_dir/backlight"
@@ -24,6 +26,7 @@ fifo_batt="$base_dir/battery"
 remake "$fifo_batt"
 
 ./pista-sensor-time             > "$fifo_time"   &
+./pista-sensor-mpd              > "$fifo_mpd"    &
 ./pista-sensor-volume           > "$fifo_vol"    &
 ./pista-sensor-backlight        > "$fifo_light"  &
 ./pista-sensor-bluetooth        > "$fifo_blue"   &
@@ -40,4 +43,5 @@ pista \
     "$fifo_blue"    7  10  \
     "$fifo_light"   8  5   \
     "$fifo_vol"     6  5   \
+    "$fifo_mpd"    17  5   \
     "$fifo_time"   20  2
