@@ -5,7 +5,7 @@ BINS := \
     pista-sensor-battery \
     pista-sensor-time
 
-.PHONY: build clean rebuild
+.PHONY: build clean rebuild install
 
 build: $(BINS)
 
@@ -26,3 +26,6 @@ clean:
 rebuild:
 	@$(MAKE) -s clean
 	@$(MAKE) -s build
+
+install:
+	find . -type f -name 'pista-sensor-*' -executable -exec cp '{}' ~/bin/ \;
