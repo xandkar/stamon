@@ -28,4 +28,4 @@ rebuild:
 	@$(MAKE) -s build
 
 install:
-	find . -type f -name 'pista-sensor-*' -executable -exec cp '{}' ~/bin/ \;
+	find . -type f -name 'pista-sensor-*' -executable -exec cp -f '{}' ~/bin/ \;
