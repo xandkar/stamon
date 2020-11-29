@@ -16,6 +16,9 @@
 #define usage(...) {print_usage(); fprintf(stderr, "Error:\n    " __VA_ARGS__); exit(EXIT_FAILURE);}
 
 #define MAX_LEN 20
+#define PREFIX "⚡"
+#define POSTFIX "%"
+#define BUF_SIZE sizeof(PREFIX) + sizeof("100") + sizeof(POSTFIX) + sizeof(NULL)
 
 char *argv0;
 
@@ -91,7 +94,7 @@ get_capacity(char *buf, char *path)
 	default: assert(0);
 	}
 	fclose(fp);
-	return snprintf(buf, 20, "⚡%3d%%", cap);
+	return snprintf(buf, BUF_SIZE, "%s%3d%s", PREFIX, cap, POSTFIX);
 }
 
 int
@@ -101,13 +104,14 @@ main(int argc, char **argv)
 	/* TODO track and show (de|in)crease */
 	argv0 = argv[0];
 
-	char  buf[25];
+	char buf[BUF_SIZE];
 	char path[PATH_MAX];
 	char *path_fmt = "/sys/class/power_supply/%s/capacity";
 	struct timespec ti;
 
 	opt_parse(argc, argv);
 	ti = pista_timespec_of_float(opt_interval);
+	pista_debug("buf size: %lu\n", BUF_SIZE);
 	pista_debug("opt_battery: \"%s\"\n", opt_battery);
 	pista_debug("opt_interval: %f\n", opt_interval);
 	pista_debug("ti: {tv_sec = %ld, tv_nsec = %ld}\n",ti.tv_sec,ti.tv_nsec);
