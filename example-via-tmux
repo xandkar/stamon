@@ -1,0 +1,55 @@
+#! /bin/bash
+
+set -e
+
+SESSION='pista'
+BASE_DIR="$HOME/.pista-in"
+
+tmux_new_win() {
+    # Have to pass the window id because incrementing a global is futile, since
+    # tmux_new_win will be called from a new process each time and a global's
+    # value will be reset.
+    local -r win="$1"
+    local -r cmd="$2"
+
+    echo "[debug] win:\"$win\" cmd:\"$cmd\"" >&2
+    tmux new-window -t "$SESSION"
+    tmux send-keys  -t "$SESSION":"$win".0 "$cmd" ENTER
+}
+
+start_sensor() {
+    local -r win="$1"
+    local -r exe="$2"
+    shift 2
+    local -r arg="$*"
+    local -r fifo="$BASE_DIR/$exe"
+
+    rm -f "$fifo"
+    mkfifo "$fifo"
+    tmux_new_win "$win" "$exe $arg > $fifo"
+    echo "$fifo"
+}
+
+main() {
+    tmux new-session -d -s "$SESSION"
+
+    # Have to increment window ids manually, because an increment operation
+    # would be executed local to each subprocess if I did something like:
+    #     $(start_sensor $((win++)) pista-sensor-foo)
+    tmux_new_win \
+        0 \
+        "pista \
+        -l 0 \
+        -i 0.5 \
+        -s ' ' \
+        -x \
+        $(start_sensor  1  pista-sensor-battery)            8   5  \
+        $(start_sensor  2  pista-sensor-wifi wlp0s20f3 5)   6  10  \
+        $(start_sensor  3  pista-sensor-bluetooth)          7  10  \
+        $(start_sensor  4  pista-sensor-backlight)          8   5  \
+        $(start_sensor  5  pista-sensor-volume)             6   5  \
+        $(start_sensor  6  pista-sensor-mpd)               15   5  \
+        $(start_sensor  7  pista-sensor-time)              20   2"
+}
+
+main
