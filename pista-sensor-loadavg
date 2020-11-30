@@ -1,7 +1,5 @@
 #! /bin/sh
 
-set -e
-
 while :
 do
     awk '{printf("L:%.1f\n", $1)}' /proc/loadavg

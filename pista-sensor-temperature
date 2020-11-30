@@ -1,7 +1,5 @@
 #! /bin/bash
 
-set -e
-
 find_thermal_zone() {
     local -r _type="$1"
     awk \

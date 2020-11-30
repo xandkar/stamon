@@ -1,7 +1,5 @@
 #! /bin/sh
 
-set -e
-
 while :
 do
     free | awk '$1 == "Mem:" {printf("M:%d%%\n", ($3 / $2) * 100); exit 0}'

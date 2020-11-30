@@ -1,7 +1,5 @@
 #! /bin/sh
 
-set -e
-
 count_powered_controllers() {
     echo 'show' | bluetoothctl | grep -c 'Powered: yes'
 }
