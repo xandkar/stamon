@@ -12,8 +12,10 @@ count_connected_devices() {
     | grep -c 'Connected: yes'
 }
 
+trap '' PIPE
+
 while :
 do
-    printf "ᛒ %d:%d\n" "$(count_powered_controllers)" "$(count_connected_devices)"
+    printf "(ᛒ %d:%d)\n" "$(count_powered_controllers)" "$(count_connected_devices)"
     sleep 5;
 done

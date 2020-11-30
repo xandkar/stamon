@@ -5,6 +5,8 @@ case "$1" in
      *) wifi_interface="$1"
 esac
 
+trap '' PIPE
+
 while :
 do
     iwconfig "$wifi_interface" \
@@ -37,7 +39,7 @@ do
         }
 
         END {
-            printf("W:%d%%\n", link[requested_interface]);
+            printf("(w %3d%%)\n", link[requested_interface]);
         }
     '
     sleep "$2"

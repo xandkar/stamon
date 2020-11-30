@@ -13,13 +13,13 @@
 
 #define usage(...) {print_usage(); fprintf(stderr, "Error:\n    " __VA_ARGS__); exit(EXIT_FAILURE);}
 
-#define MAX_LEN 20
+#define BUF_SIZE 22
 #define END_OF_MESSAGE '\n'
 
 char *argv0 = NULL;
 
 double opt_interval = 1.0;
-char *opt_fmt = "%a %b %d %H:%M:%S";
+char *opt_fmt = "(%a %b %d %H:%M:%S)";
 
 void
 print_usage()
@@ -76,19 +76,19 @@ main(int argc, char **argv)
 
 	time_t t;
 	struct timespec ti;
-	char buf[MAX_LEN];
+	char buf[BUF_SIZE];
 
 	opt_parse(argc, argv);
 	ti = pista_timespec_of_float(opt_interval);
 	pista_debug("opt_fmt: \"%s\"\n", opt_fmt);
 	pista_debug("opt_interval: %f\n", opt_interval);
 	pista_debug("ti: {tv_sec = %ld, tv_nsec = %ld}\n",ti.tv_sec,ti.tv_nsec);
-	memset(buf, '\0', MAX_LEN);
+	memset(buf, '\0', BUF_SIZE);
 	signal(SIGPIPE, SIG_IGN);
 
 	for (;;) {
 		t = time(NULL);
-		strftime(buf, MAX_LEN, opt_fmt, localtime(&t));
+		strftime(buf, BUF_SIZE, opt_fmt, localtime(&t));
 		puts(buf);
 		fflush(stdout);
 		pista_sleep(&ti);

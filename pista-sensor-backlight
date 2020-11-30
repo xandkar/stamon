@@ -8,17 +8,19 @@ esac
 path="/sys/class/backlight/$name"
 
 current_state() {
-	awk '
-	    FILENAME ~ "/max_brightness$" {max = $1; next}
-	    FILENAME ~     "/brightness$" {cur = $1; next}
-	    END                           {printf("☀ %d%%\n", (cur / max) * 100)}
-	' \
-	"$path/max_brightness" \
-	"$path/brightness"
+        awk '
+            FILENAME ~ "/max_brightness$" {max = $1; next}
+            FILENAME ~     "/brightness$" {cur = $1; next}
+            END                           {printf("(☀ %3d%%)\n", (cur / max) * 100)}
+        ' \
+        "$path/max_brightness" \
+        "$path/brightness"
 }
+
+trap '' PIPE
 
 while :
 do
-	printf "%s\n" "$(current_state)"
-	sleep 1
+        printf "%s\n" "$(current_state)"
+        sleep 1
 done

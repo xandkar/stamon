@@ -53,12 +53,14 @@ current_state() {
 			else
 			    printf("Unexpected value for mute field: %s\n" mute[sink]) > "/dev/stderr"
 
-			printf("V:%s\n", show)
+                        printf("(v %4s)\n", show)
 		    }
 		}
 	    }
 	    '
 }
+
+trap '' PIPE
 
 while :
 do
