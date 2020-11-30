@@ -53,7 +53,7 @@ current_state() {
             } else if (state == "stop") {
                 symbol = "-"
             } else {
-                printf("Unexpected state value: " state) > "/dev/stderr"
+                printf("Unexpected state value: %s\n", state) > "/dev/stderr"
                 exit 1
             }
 
