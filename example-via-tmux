@@ -30,7 +30,7 @@ start_sensor() {
     echo "$fifo"
 }
 
-main() {
+_start() {
     tmux new-session -d -s "$SESSION"
 
     # Have to increment window ids manually, because an increment operation
@@ -41,15 +41,41 @@ main() {
         "pista \
         -l 0 \
         -i 0.5 \
-        -s ' ' \
+        -s '  ' \
         -x \
-        $(start_sensor  1  pista-sensor-battery)            8   5  \
-        $(start_sensor  2  pista-sensor-wifi wlp0s20f3 5)   6  10  \
-        $(start_sensor  3  pista-sensor-bluetooth)          7  10  \
-        $(start_sensor  4  pista-sensor-backlight)          8   5  \
-        $(start_sensor  5  pista-sensor-volume)             6   5  \
-        $(start_sensor  6  pista-sensor-mpd)               15   5  \
-        $(start_sensor  7  pista-sensor-time)              20   2"
+        $(start_sensor  1  pista-sensor-battery)           10   5  \
+        $(start_sensor  2  pista-sensor-wifi wlp0s20f3 5)   8  10  \
+        $(start_sensor  3  pista-sensor-bluetooth)          9  10  \
+        $(start_sensor  4  pista-sensor-backlight)         10   5  \
+        $(start_sensor  5  pista-sensor-volume)             8   5  \
+        $(start_sensor  6  pista-sensor-mpd)               17   5  \
+        $(start_sensor  7  pista-sensor-time)              21   2"
 }
 
-main
+_stop() {
+    tmux kill-session -t "$SESSION"
+}
+
+_restart() {
+    _stop || true
+    _start
+}
+
+_attach() {
+    tmux attach -t "$SESSION"
+}
+
+main() {
+    local -r cmd="$1"
+    case "$cmd" in
+        'start') _start;;
+        'stop') _stop;;
+        'restart') _restart;;
+        'attach') _attach;;
+        *)
+            echo "[error] Unknown command: \"$cmd\". Known: start|stop|restart|attach"
+            exit 1;;
+    esac
+}
+
+main "$*"
