@@ -1,5 +1,7 @@
 #! /bin/sh
 
+# TODO: Try a rewrite with https://www.npmjs.com/package/bluetoothctl
+
 count_powered_controllers() {
     echo 'show' | bluetoothctl | grep -c 'Powered: yes'
 }
