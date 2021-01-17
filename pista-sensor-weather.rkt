@@ -77,7 +77,7 @@
          (define one-minute 60)
          (define opt-interval (* 30 one-minute))
          (define opt-backoff one-minute)
-         (command-line #:once-any
+         (command-line #:once-each
                        [("-i" "--interval")
                         i "Refresh interval."
                         (set! opt-interval (string->number i))]
