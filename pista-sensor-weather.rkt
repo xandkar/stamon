@@ -55,7 +55,9 @@
   (with-handlers
     ; Expecting broken pipes
     ([exn:fail:filesystem:errno? (λ (e) (eprintf "[error] Exception when printing: ~v\n" e))])
-    (displayln temp-f)
+    (printf "(~a°F)\n" (~a temp-f
+                           #:width 3
+                           #:align 'right))
     (flush-output)))
 
 (define/contract (loop weather-station-id i)
