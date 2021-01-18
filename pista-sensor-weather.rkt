@@ -26,8 +26,12 @@
                      "/observations/latest?require_qc=false")
       #:ssl? #t
       #:headers '("accept: application/vnd.noaa.obs+xml")))
+  (eprintf "[debug] headers ~v~n" headers)
+  (eprintf "[debug] status-line: ~v~n" status-line)
   (define status (string-split (bytes->string/utf-8 status-line)))
+  (eprintf "[debug] status: ~v~n" status)
   (define status-code (string->number (second status)))
+  (eprintf "[debug] status-code: ~v~n" status-code)
   (if (= 200 status-code)
       (cons 'ok (string->xexpr (port->string data-port)))
       (cons 'error status-code)))
