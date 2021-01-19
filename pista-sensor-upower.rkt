@@ -73,28 +73,31 @@
                       ; 1. it is already an aggregate;
                       ; 2. it is not reported by "--monitor-detail" - we expect
                       ;    to see it only once, because of the initial "--dump".
-                      (let ([s1
-                              (cond [(and (battery? p0)
-                                          ; Ignoring DisplayDevice:
-                                          (not (regexp-match? re-display (battery-path p0))))
-                                     (struct-copy state s0
-                                                  [batteries
-                                                    (dict-set (state-batteries s0)
-                                                              (battery-path p0)
-                                                              p0)])]
-                                    [(line-power? p0)
-                                     (struct-copy state s0
-                                                  [plugged-in?
-                                                    (match (line-power-online p0)
-                                                           ["yes" #t]
-                                                           ["no"  #f])])]
-                                    [else s0])])
-                           ; Using DisplayDevice aggregate instead of computing our own:
-                           (if (and (battery? p0) (regexp-match? re-display (battery-path p0)))
-                               (displayln (aggregate (state-plugged-in? s1) (list p0)))
-                               (displayln (aggregate (state-plugged-in? s1) (dict-values (state-batteries s1)))))
-                           (flush-output)
-                           s1)]
+                      (let* ([s1
+                               (cond [(and (battery? p0)
+                                           ; Ignoring DisplayDevice:
+                                           (not (regexp-match? re-display (battery-path p0))))
+                                      (struct-copy state s0
+                                                   [batteries
+                                                     (dict-set (state-batteries s0)
+                                                               (battery-path p0)
+                                                               p0)])]
+                                     [(line-power? p0)
+                                      (struct-copy state s0
+                                                   [plugged-in?
+                                                     (match (line-power-online p0)
+                                                            ["yes" #t]
+                                                            ["no"  #f])])]
+                                     [else s0])]
+                             [batteries
+                               ; Using DisplayDevice aggregate instead of computing our own:
+                               (if (and (battery? p0)
+                                        (regexp-match? re-display (battery-path p0)))
+                                   (list p0)
+                                   (dict-values (state-batteries s1)))])
+                            (displayln (aggregate (state-plugged-in? s1) batteries))
+                            (flush-output)
+                            s1)]
 
                      ; -- BEGIN battery
                      [(and (device? p0)
