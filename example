@@ -24,6 +24,8 @@ fifo_wifi="$base_dir/wifi"
 remake "$fifo_wifi"
 fifo_batt="$base_dir/battery"
 remake "$fifo_batt"
+fifo_upow="$base_dir/upower"
+remake "$fifo_upow"
 fifo_weather="$base_dir/weather"
 remake "$fifo_weather"
 
@@ -36,13 +38,14 @@ wifi_if=$(iwconfig | grep -v '^lo' | awk '/^[^\ ]/ {print $1}')
 ./pista-sensor-bluetooth        > "$fifo_blue"   &
 ./pista-sensor-wifi "$wifi_if" 5 > "$fifo_wifi"   &
 ./pista-sensor-battery          > "$fifo_batt"   &
+./pista-sensor-upower.rkt       > "$fifo_upow"   &
 ./pista-sensor-weather.rkt -i $(( 15 * 60)) KJFK > "$fifo_weather" &
 
 pista \
     -l 0 \
     -i 0.5 \
     -s '  ' \
-    "$fifo_batt"   10  5   \
+    "$fifo_upow"   10  60 \
     "$fifo_wifi"    8 10  \
     "$fifo_blue"    9 10  \
     "$fifo_light"  10  5   \
