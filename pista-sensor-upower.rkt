@@ -93,6 +93,7 @@
                            (if (and (battery? p0) (regexp-match? re-display (battery-path p0)))
                                (displayln (aggregate (state-plugged-in? s1) (list p0)))
                                (displayln (aggregate (state-plugged-in? s1) (dict-values (state-batteries s1)))))
+                           (flush-output)
                            s1)]
 
                      ; -- BEGIN battery
