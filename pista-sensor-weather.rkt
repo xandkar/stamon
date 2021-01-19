@@ -58,7 +58,7 @@
   (eprintf "+~a\n" bar)
   (with-handlers
     ; Expecting broken pipes
-    ([exn:fail:filesystem:errno? (λ (e) (eprintf "[error] Exception when printing: ~v\n" e))])
+    ([exn:fail:filesystem:errno? (λ (e) (eprintf "[error] Print failed: ~v\n" e))])
     (printf "(~a°F)\n" (~r temp-f
                            #:min-width 3
                            #:precision 0))
