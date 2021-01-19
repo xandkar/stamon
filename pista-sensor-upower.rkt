@@ -147,10 +147,10 @@
                      [else s0])])
                 (loop input s1))))
 
-(define (main)
+(define (start)
   (define cmd "stdbuf -o L upower --dump; stdbuf -o L upower --monitor-detail")
   (match-define (list in-port out-port pid in-err-port ctrl) (process cmd))
   (loop in-port (state #f #f '()))
   (ctrl 'wait))
 
-(module+ main (main))
+(module+ main (start))
