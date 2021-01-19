@@ -95,8 +95,12 @@
                                         (regexp-match? re-display (battery-path p0)))
                                    (list p0)
                                    (dict-values (state-batteries s1)))])
-                            (displayln (aggregate (state-plugged-in? s1) batteries))
-                            (flush-output)
+                            (with-handlers
+                              ; Expect broken pipes
+                              ([exn:fail:filesystem:errno?
+                                 (λ (e) (eprintf "[error] Print failed: ~v\n" e))])
+                              (displayln (aggregate (state-plugged-in? s1) batteries))
+                              (flush-output))
                             s1)]
 
                      ; -- BEGIN battery
