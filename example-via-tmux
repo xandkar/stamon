@@ -45,7 +45,7 @@ _start() {
         -i 0.5 \
         -s '  ' \
         -x \
-        $(start_sensor  1  pista-sensor-upower)            10  60  \
+        $(start_sensor  1  pista-sensor-upower.rkt)        10  60  \
         $(start_sensor  2  pista-sensor-wifi $wifi_if 5)    8  10  \
         $(start_sensor  3  pista-sensor-bluetooth)          9  10  \
         $(start_sensor  4  pista-sensor-backlight)         10   5  \
