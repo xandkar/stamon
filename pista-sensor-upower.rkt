@@ -49,7 +49,7 @@
                    (~r (* 100 (/ cur max))
                        #:precision 0
                        #:min-width 3)))])
-       (format "(⚡~a~a%)" direction percentage)))
+       (format "(⚡ ~a~a%)" direction percentage)))
 
 (define (loop input s0)
   (define line (read-line input))
