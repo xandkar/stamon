@@ -45,7 +45,7 @@ pista \
     -l 0 \
     -i 0.5 \
     -s '  ' \
-    "$fifo_upow"   10  60 \
+    "$fifo_upow"   11  60 \
     "$fifo_wifi"    8 10  \
     "$fifo_blue"    9 10  \
     "$fifo_light"  10  5   \
