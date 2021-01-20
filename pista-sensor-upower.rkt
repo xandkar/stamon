@@ -143,7 +143,11 @@
   (define cmd "stdbuf -o L upower --dump; stdbuf -o L upower --monitor-detail")
   (match-define (list in-port out-port pid in-err-port ctrl) (process cmd))
   (loop in-port (state #f #f '()))
-  (ctrl 'wait))
+  (define code (ctrl 'exit-code))
+  (define stderr (port->string in-err-port))
+  (when (> (string-length stderr) 0)
+    (eprintf "[error] upower command stderr: ~v~n" stderr))
+  (exit code))
 
 (module+ main
   (start))
