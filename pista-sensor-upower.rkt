@@ -5,10 +5,12 @@
         (path))
 
 (struct line-power
-        (path online))
+        (path online)
+        #:transparent)
 
 (struct battery
-        (path state energy energy-full percentage))
+        (path state energy energy-full percentage)
+        #:transparent)
 
 ; parsing = #f
 ;         | device?
@@ -60,6 +62,7 @@
 
                      ; EOM
                      [(regexp-match? #rx"^$" line)
+                      (log-debug "msg: ~v" p0)
                       ; Use DisplayDevice if we have it, but do not stash it,
                       ; because:
                       ; 1. it is already an aggregate;
@@ -90,7 +93,7 @@
                             (with-handlers
                               ; Expect broken pipes
                               ([exn:fail:filesystem:errno?
-                                 (λ (e) (eprintf "[error] Print failed: ~v\n" e))])
+                                 (λ (e) (log-error "Print failed: ~v\n" e))])
                               (displayln (aggregate (state-plugged-in? s1) batteries))
                               (flush-output))
                             (struct-copy state s1 [parsing #f]))]
@@ -139,14 +142,28 @@
                      [else s0])])
                 (loop input s1))))
 
+(define (start-logger level)
+  (define logger (make-logger #f #f level #f))
+  (define log-receiver (make-log-receiver logger level))
+  (thread
+    (λ ()
+       (local-require racket/date)
+       (date-display-format 'iso-8601)
+       (let loop ()
+            (match-let ([(vector level msg _ ...) (sync log-receiver)])
+              (eprintf "~a [~a] ~a~n" (date->string (current-date) #t) level msg))
+            (loop))))
+  (current-logger logger))
+
 (define (start)
+  (start-logger 'debug)
   (define cmd "stdbuf -o L upower --dump; stdbuf -o L upower --monitor-detail")
   (match-define (list in-port out-port pid in-err-port ctrl) (process cmd))
   (loop in-port (state #f #f '()))
   (define code (ctrl 'exit-code))
   (define stderr (port->string in-err-port))
   (when (> (string-length stderr) 0)
-    (eprintf "[error] upower command stderr: ~v~n" stderr))
+    (log-error "upower stderr: ~v~n" stderr))
   (exit code))
 
 (module+ main
