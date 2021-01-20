@@ -81,8 +81,8 @@
                                       (struct-copy state s0
                                                    [plugged-in?
                                                      (match (line-power-online p0)
-                                                            ["yes" #t]
-                                                            ["no"  #f])])]
+                                                       ["yes" #t]
+                                                       ["no"  #f])])]
                                      [else s0])]
                              [batteries
                                ; Using DisplayDevice aggregate instead of computing our own:
