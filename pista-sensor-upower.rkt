@@ -93,7 +93,7 @@
                                  (λ (e) (eprintf "[error] Print failed: ~v\n" e))])
                               (displayln (aggregate (state-plugged-in? s1) batteries))
                               (flush-output))
-                            s1)]
+                            (struct-copy state s1 [parsing #f]))]
 
                      ; -- BEGIN battery
                      [(and (device? p0)
