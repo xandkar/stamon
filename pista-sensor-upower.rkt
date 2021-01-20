@@ -17,18 +17,8 @@
 (struct state
         (parsing plugged-in? batteries))
 
-(define re-dev-changed
-  (regexp "^\\[[0-9]+:[0-9]+:[0-9]+\\.[0-9]+\\][ \t]+device changed:[ \t]+"))
-(define re-dev         (regexp "^Device:[ \t]+"))
-(define re-eom         (regexp "^$"))
-(define re-line-power  (regexp "^  line-power$"))
-(define re-online      (regexp "^    online:"))
-(define re-battery     (regexp "^  battery$"))
-(define re-state       (regexp "^    state:"))
-(define re-energy      (regexp "^    energy:"))
-(define re-energy-full (regexp "^    energy-full:"))
-(define re-percentage  (regexp "^    percentage:"))
-(define re-display     (regexp "/DisplayDevice$"))
+(define (display-device? line)
+  (regexp-match? #rx"/DisplayDevice$" line))
 
 (define unique (compose set->list list->set))
 
@@ -59,15 +49,17 @@
                  [s1
                    (cond
                      ; BOM when --dump
-                     [(regexp-match? re-dev line)
+                     [(regexp-match? #rx"^Device:[ \t]+" line)
                       (struct-copy state s0 [parsing (device (second fields))])]
 
                      ; BOM when --monitor-detail
-                     [(regexp-match? re-dev-changed line)
+                     [(regexp-match?
+                        #rx"^\\[[0-9]+:[0-9]+:[0-9]+\\.[0-9]+\\][ \t]+device changed:[ \t]+"
+                        line)
                       (struct-copy state s0 [parsing (device (fourth fields))])]
 
                      ; EOM
-                     [(regexp-match? re-eom line)
+                     [(regexp-match? #rx"^$" line)
                       ; Use DisplayDevice if we have it, but do not stash it,
                       ; because:
                       ; 1. it is already an aggregate;
@@ -76,7 +68,7 @@
                       (let* ([s1
                                (cond [(and (battery? p0)
                                            ; Ignoring DisplayDevice:
-                                           (not (regexp-match? re-display (battery-path p0))))
+                                           (not (display-device? (battery-path p0))))
                                       (struct-copy state s0
                                                    [batteries
                                                      (dict-set (state-batteries s0)
@@ -92,7 +84,7 @@
                              [batteries
                                ; Using DisplayDevice aggregate instead of computing our own:
                                (if (and (battery? p0)
-                                        (regexp-match? re-display (battery-path p0)))
+                                        (display-device? (battery-path p0)))
                                    (list p0)
                                    (dict-values (state-batteries s1)))])
                             (with-handlers
@@ -105,40 +97,40 @@
 
                      ; -- BEGIN battery
                      [(and (device? p0)
-                           (regexp-match? re-battery line))
+                           (regexp-match? #rx"^  battery$" line))
                       (define p1 (battery (device-path p0) #f #f #f #f))
                       (struct-copy state s0 [parsing p1])]
 
                      [(and (battery? p0)
-                           (regexp-match? re-state line))
+                           (regexp-match? #rx"^    state:" line))
                       (define p1 (struct-copy battery p0 [state (second fields)]))
                       (struct-copy state s0 [parsing p1])]
 
                      [(and (battery? p0)
-                           (regexp-match? re-energy line))
+                           (regexp-match? #rx"^    energy:" line))
                       (define e (string->number (second fields)))
                       (define p1 (struct-copy battery p0 [energy e]))
                       (struct-copy state s0 [parsing p1])]
 
                      [(and (battery? p0)
-                           (regexp-match? re-energy-full line))
+                           (regexp-match? #rx"^    energy-full:" line))
                       (define ef (string->number (second fields)))
                       (define p1 (struct-copy battery p0 [energy-full ef]))
                       (struct-copy state s0 [parsing p1])]
 
                      [(and (battery? p0)
-                           (regexp-match? re-percentage line))
+                           (regexp-match? #rx"^    percentage:" line))
                       (define pct (second fields))
                       (define p1 (struct-copy battery p0 [percentage pct]))
                       (struct-copy state s0 [parsing p1])]
                      ; -- END battery
 
                      ; -- BEGIN line-power
-                     [(and (device? p0) (regexp-match? re-line-power line))
+                     [(and (device? p0) (regexp-match? #rx"^  line-power$" line))
                       (define dp (device-path p0))
                       (struct-copy state s0 [parsing (line-power dp #f)])]
 
-                     [(and (line-power? p0) (regexp-match? re-online line))
+                     [(and (line-power? p0) (regexp-match? #rx"^    online:" line))
                       (define o (second fields))
                       (define p1 (struct-copy line-power p0 [online o]))
                       (struct-copy state s0 [parsing p1])]
