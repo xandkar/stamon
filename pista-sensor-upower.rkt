@@ -117,6 +117,7 @@
   (next #f))
 
 (define (run input)
+  (log-info "starting...")
   (let loop ([s (state #f '())])
     (log-debug "state: ~v" s)
     (state-print s)
@@ -146,8 +147,8 @@
          (loop))))
   (current-logger logger))
 
-(define (start)
-  (start-logger 'debug)
+(define (start level)
+  (start-logger level)
   (define cmd "stdbuf -o L upower --dump; stdbuf -o L upower --monitor-detail")
   (match-define (list in-port out-port pid in-err-port ctrl) (process cmd))
   (run in-port)
@@ -158,4 +159,9 @@
   (exit code))
 
 (module+ main
-  (start))
+  (define opt-log-level 'info)
+  (command-line #:once-each
+                [("-d" "--debug")
+                 "Enable debug logging"
+                 (set! opt-log-level 'debug)])
+  (start opt-log-level))
