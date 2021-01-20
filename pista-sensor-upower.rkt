@@ -145,4 +145,5 @@
   (loop in-port (state #f #f '()))
   (ctrl 'wait))
 
-(module+ main (start))
+(module+ main
+  (start))
