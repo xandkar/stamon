@@ -70,7 +70,9 @@
                  (begin
                    (log-debug "msg: ~v" msg)
                    msg)
-                 (next msg))]
+                 (begin
+                   (log-debug "EOM for unknown msg")
+                   (next msg)))]
 
             ; BOM when --dump
             [(and (not msg)
@@ -117,7 +119,7 @@
   (next #f))
 
 (define (run input)
-  (log-info "starting...")
+  (log-info "Starting loop ...")
   (let loop ([s (state #f '())])
     (log-debug "state: ~v" s)
     (state-print s)
@@ -150,7 +152,9 @@
 (define (start level)
   (start-logger level)
   (define cmd "stdbuf -o L upower --dump; stdbuf -o L upower --monitor-detail")
+  (log-info "Spawning command: ~v" cmd)
   (match-define (list in-port out-port pid in-err-port ctrl) (process cmd))
+  (log-info "Child process PID: ~a" pid)
   (run in-port)
   (define code (ctrl 'exit-code))
   (define stderr (port->string in-err-port))
