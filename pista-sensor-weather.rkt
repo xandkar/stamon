@@ -38,8 +38,13 @@
 
 (define/contract (data-print data)
   (-> xexpr? void?)
-  (define (get path) (se-path* (append '(current_observation) path) data))
-  (define temp-f (string->number (get '(temp_f))))
+  (define (get path [default #f])
+    (let ([val (se-path* (append '(current_observation) path) data)])
+      (if val val default)))
+  (define (get-num path)
+    ; TODO better handling of missing values than defaulting to 0
+    (string->number (get path "0")))
+  (define temp-f (get-num '(temp_f)))
   (define bar (make-string 25 #\-))
   (eprintf "+~a\n" bar)
   (eprintf "| ~a\n" (date->string (current-date) #t))
@@ -48,13 +53,13 @@
   (eprintf "| location          : ~a\n" (get '(location)))
   (eprintf "| timestamp         : ~a\n" (get '(observation_time_rfc822)))
   (eprintf "| suggested pickup  : ~a\n" (get '(suggested_pickup)))
-  (eprintf "| suggested interval: ~a\n" (string->number (get '(suggested_pickup_period))))
+  (eprintf "| suggested interval: ~a\n" (get-num '(suggested_pickup_period)))
   (eprintf "| temp-f            : ~a\n" temp-f)
-  (eprintf "| temp-c            : ~a\n" (string->number (get '(temp_c))))
-  (eprintf "| humidity          : ~a\n" (string->number (get '(relative_humidity))))
+  (eprintf "| temp-c            : ~a\n" (get-num '(temp_c)))
+  (eprintf "| humidity          : ~a\n" (get-num '(relative_humidity)))
   (eprintf "| wind-dir          : ~a\n" (get '(wind_dir)))
-  (eprintf "| wind-speed        : ~a\n" (string->number (get '(wind_mph))))
-  (eprintf "| visibility        : ~a\n" (string->number (get '(visibility_mi))))
+  (eprintf "| wind-speed        : ~a\n" (get-num '(wind_mph)))
+  (eprintf "| visibility        : ~a\n" (get-num '(visibility_mi)))
   (eprintf "+~a\n" bar)
   (with-handlers
     ; Expecting broken pipes
@@ -67,33 +72,33 @@
 (define/contract (loop weather-station-id i)
   (-> string? interval? void?)
   (match (data-fetch weather-station-id)
-         [(cons 'error status-code)
-          (eprintf "[error] Data fetch failed with ~a\n" status-code)
-          (sleep (interval-error-curr i))
-          (loop weather-station-id (interval-increase i))]
-         [(cons 'ok data)
-          (data-print data)
-          (sleep (interval-normal i))
-          (loop weather-station-id (interval-reset i))]))
+    [(cons 'error status-code)
+     (eprintf "[error] Data fetch failed with ~a\n" status-code)
+     (sleep (interval-error-curr i))
+     (loop weather-station-id (interval-increase i))]
+    [(cons 'ok data)
+     (data-print data)
+     (sleep (interval-normal i))
+     (loop weather-station-id (interval-reset i))]))
 
 (module+ main
-         (date-display-format 'rfc2822)
-         (define one-minute 60)
-         (define opt-interval (* 30 one-minute))
-         (define opt-backoff one-minute)
-         (command-line #:once-each
-                       [("-i" "--interval")
-                        i "Refresh interval."
-                        (set! opt-interval (string->number i))]
-                       [("-b" "--backoff")
-                        b "Initial retry backoff period (subsequently doubled)."
-                        (set! opt-backoff (string->number b))]
-                       #:args
-                       (weather-station-id)
-                       (loop weather-station-id
-                             (interval opt-interval
-                                       opt-backoff
-                                       opt-backoff))))
+  (date-display-format 'rfc2822)
+  (define one-minute 60)
+  (define opt-interval (* 30 one-minute))
+  (define opt-backoff one-minute)
+  (command-line #:once-each
+                [("-i" "--interval")
+                 i "Refresh interval."
+                 (set! opt-interval (string->number i))]
+                [("-b" "--backoff")
+                 b "Initial retry backoff period (subsequently doubled)."
+                 (set! opt-backoff (string->number b))]
+                #:args
+                (weather-station-id)
+                (loop weather-station-id
+                      (interval opt-interval
+                                opt-backoff
+                                opt-backoff))))
 
 ; API docs at https://www.weather.gov/documentation/services-web-api
 
