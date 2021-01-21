@@ -3,7 +3,7 @@
 #lang racket
 
 (struct device
-        (path))
+        (path native-path))
 
 (struct line-power
         (path online)
@@ -77,19 +77,25 @@
             ; BOM when --dump
             [(and (not msg)
                   (regexp-match? #rx"^Device:[ \t]+" line))
-             (next (device (second fields)))]
+             (next (device (second fields) #f))]
 
             ; BOM when --monitor-detail
             [(and (not msg)
                   (regexp-match?
                     #rx"^\\[[0-9]+:[0-9]+:[0-9]+\\.[0-9]+\\][ \t]+device changed:[ \t]+"
                     line))
-             (next (device (fourth fields)))]
+             (next (device (fourth fields) #f))]
+
+            [(and (device? msg)
+                  (regexp-match? #rx"^  native-path:" line))
+             (next (struct-copy device msg [native-path (second fields)]))]
 
             ; -- BEGIN battery
             [(and (device? msg)
                   (regexp-match? #rx"^  battery$" line))
-             (next (battery (device-path msg) #f #f #f))]
+             (let ([path (device-path msg)]
+                   [native-path (device-native-path msg)])
+               (next (battery (if native-path native-path path) #f #f #f)))]
 
             [(and (battery? msg)
                   (regexp-match? #rx"^    state:" line))
@@ -108,7 +114,9 @@
 
             ; -- BEGIN line-power
             [(and (device? msg) (regexp-match? #rx"^  line-power$" line))
-             (next (line-power (device-path msg) #f))]
+             (let ([path (device-path msg)]
+                   [native-path (device-native-path msg)])
+               (next (line-power (if native-path native-path path) #f)))]
 
             [(and (line-power? msg) (regexp-match? #rx"^    online:" line))
              (next (struct-copy line-power msg [online (second fields)]))]
