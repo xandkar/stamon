@@ -118,13 +118,14 @@
               (next msg)]))))
   (next #f))
 
-(define (run input)
+(define (start-parser input printer)
   (log-info "Starting loop ...")
   (let loop ([s (state #f '())])
-    (log-debug "state: ~v" s)
-    (state-print s)
+    (log-debug "parser state: ~v" s)
+    (thread-send printer s)
     (match (read-msg input)
-      [#f (void)]
+      [#f
+        (thread-send printer 'parser-exit)]
       [(struct* battery ([path p])) #:when (display-device? p)
        (loop s)]
       [(and b (struct* battery ([path p])))
@@ -136,7 +137,34 @@
                                       ["yes" #t]
                                       ["no" #f])]))])))
 
+(define (timer-start seconds msg)
+  (let ([parent (current-thread)])
+    (thread (λ () (sleep seconds) (thread-send parent msg)))))
+
+(define timer-cancel
+  kill-thread)
+
+(define (start-printer max-interval)
+  (let loop ([prev #f])
+    (let ([tm (timer-start max-interval 'timeout)])
+      (match (thread-receive)
+        [(and curr (struct* state ()))
+         (log-debug "printer state: ~v" curr)
+         (state-print curr)
+         (timer-cancel tm)
+         (loop curr)]
+        ['timeout #:when prev
+         (log-info "Timeout. Reprinting previous state: ~v" prev)
+         (state-print prev)
+         (loop prev)]
+        ['timeout
+         (log-warning "Timeout before ever receiving a state!" prev)
+         (loop prev)]
+        ['parser-exit
+         (void)]))))
+
 (define (start-logger level)
+  ; TODO implement graceful stop, flushing before exiting
   (define logger (make-logger #f #f level #f))
   (define log-receiver (make-log-receiver logger level))
   (thread
@@ -149,23 +177,38 @@
          (loop))))
   (current-logger logger))
 
-(define (start level)
-  (start-logger level)
+(define (run log-level max-interval)
+  (start-logger log-level)
   (define cmd "stdbuf -o L upower --dump; stdbuf -o L upower --monitor-detail")
   (log-info "Spawning command: ~v" cmd)
   (match-define (list in-port out-port pid in-err-port ctrl) (process cmd))
   (log-info "Child process PID: ~a" pid)
-  (run in-port)
+  (let* ([printer    (thread (λ () (start-printer max-interval)))]
+         [parser     (thread (λ () (start-parser in-port printer)))]
+         [cmd-logger (thread (λ () (let loop ()
+                                     (let ([line (read-line in-err-port)])
+                                       (unless (eof-object? line)
+                                         (log-error "upower stderr: ~v~n" line)
+                                         (loop))))))])
+    (for-each thread-wait (list parser
+                                printer
+                                cmd-logger)))
+  (ctrl 'wait)
   (define code (ctrl 'exit-code))
-  (define stderr (port->string in-err-port))
-  (when (> (string-length stderr) 0)
-    (log-error "upower stderr: ~v~n" stderr))
+  (log-info "upower exit code: ~a" code)
+  (when (> code 0)
+    ; FIXME We exit faster than the logger can print. Need to flush before exit.
+    (log-error "non-zero exit code from upower: ~a" code))
   (exit code))
 
 (module+ main
   (define opt-log-level 'info)
+  (define opt-interval 30)
   (command-line #:once-each
                 [("-d" "--debug")
                  "Enable debug logging"
-                 (set! opt-log-level 'debug)])
-  (start opt-log-level))
+                 (set! opt-log-level 'debug)]
+                [("-i" "--interval")
+                 i "Maximum interval between state prints"
+                 (set! opt-interval (string->number i))])
+  (run opt-log-level opt-interval))
