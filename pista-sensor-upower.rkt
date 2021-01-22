@@ -38,11 +38,11 @@
   (define batteries (dict-values (state-batteries s)))
   (let ([direction
           (let ([states (map battery-state batteries)])
-            (cond [(not (state-plugged-in? s))                 "<"]
-                  [(member      "discharging"         states)  "<"]
-                  [(member         "charging"         states)  ">"]
-                  [(equal? '("fully-charged") (unique states)) "="]
-                  [else                                        "?"]))]
+            (cond [(not (state-plugged-in? s))                 '<]
+                  [(member      "discharging"         states)  '<]
+                  [(member         "charging"         states)  '>]
+                  [(equal? '("fully-charged") (unique states)) '=]
+                  [else                                        '?]))]
         [percentage
           (if (empty? batteries)
               #f
@@ -53,13 +53,13 @@
 
 (define state->string (compose status->string state->status))
 
-(define/contract (safe-print s)
-  (-> string? void?)
+(define/contract (status-print s)
+  (-> status? void?)
   (with-handlers
     ; Expect broken pipes
     ([exn:fail:filesystem:errno?
        (λ (e) (log-error "print failed: ~v\n" e))])
-    (displayln s)
+    (displayln (status->string s))
     (flush-output)))
 
 (define/contract (read-msg input)
@@ -164,22 +164,51 @@
   kill-thread)
 
 (define (start-printer max-interval)
-  (let loop ([prev #f])
+  (local-require libnotify)
+  ; TODO User-defined alerts
+  (define init-discharging-alerts (sort '(100 70 50 30 20 15 10 5 4 3 2 1 0) <))
+  (log-info "Alerts defined: ~v" init-discharging-alerts)
+  (let loop ([prev #f]
+             [alerts init-discharging-alerts])
     (let ([tm (timer-start max-interval 'timeout)])
       (match (thread-receive)
-        [(and curr (struct* status ()))
+        [(and curr (status direction percentage))
          (timer-cancel tm)
          (log-debug "printer status: ~v" curr)
-         (let ([curr (status->string curr)])
-           (safe-print curr)
-           (loop curr))]
+         (status-print curr)
+         ; TODO Fully-charged alert
+         (let ([alerts
+                 (cond [(and percentage (equal? '< direction))
+                        (match (dropf alerts (λ (a) (<= a percentage)))
+                          [(cons a _)
+                           (send (new notification%
+                                      ; TODO User-defined summary
+                                      [summary (format "Battery power bellow ~a%!" a)]
+
+                                      ; TODO User-defined body
+                                      [body (~r percentage #:precision 2)]
+
+                                      ; TODO User-defined urgency
+                                      [urgency (cond [(<= a 10) 'critical]
+                                                     [(<= a 30) 'normal]
+                                                     [else      'low])]
+                                      )
+                                 show)
+                           (log-info "Alert sent: ~v" a)
+                           (filter-not ((curry =) a) alerts)]
+                          [_
+                            alerts])]
+                       [else
+                         init-discharging-alerts])])
+           (log-debug "Alerts remaining: ~v" alerts)
+           (loop curr alerts))]
         ['timeout #:when prev
          (log-info "Timeout. Reprinting previous status: ~v" prev)
-         (safe-print prev)
-         (loop prev)]
+         (status-print prev)
+         (loop prev alerts)]
         ['timeout
          (log-warning "Timeout before ever receiving a status!" prev)
-         (loop prev)]
+         (loop prev alerts)]
         ['parser-exit
          (void)]))))
 
