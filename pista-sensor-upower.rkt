@@ -17,13 +17,24 @@
         (plugged-in? batteries)
         #:transparent)
 
+(struct status
+        (direction percentage)
+        #:transparent)
+
 (define (display-device? line)
   (regexp-match? #rx"/DisplayDevice$" line))
 
 (define unique (compose set->list list->set))
 
-(define/contract (state->string s)
-  (-> state? string?)
+(define/contract (status->string s)
+  (-> status? string?)
+  (match-define (status direction percentage) s)
+  (format "(⚡ ~a~a%)" direction (if percentage
+                                    (~r percentage #:precision 0 #:min-width 3)
+                                    "___")))
+
+(define/contract (state->status s)
+  (-> state? status?)
   (define batteries (dict-values (state-batteries s)))
   (let ([direction
           (let ([states (map battery-state batteries)])
@@ -34,21 +45,21 @@
                   [else                                        "?"]))]
         [percentage
           (if (empty? batteries)
-              "___"
+              #f
               (let ([cur (apply + (map battery-energy batteries))]
                     [max (apply + (map battery-energy-full batteries))])
-                (~r (* 100 (/ cur max))
-                    #:precision 0
-                    #:min-width 3)))])
-    (format "(⚡ ~a~a%)" direction percentage)))
+                (* 100 (/ cur max))))])
+    (status direction percentage)))
 
-(define/contract (state-print s)
-  (-> state? void?)
+(define state->string (compose status->string state->status))
+
+(define/contract (safe-print s)
+  (-> string? void?)
   (with-handlers
     ; Expect broken pipes
     ([exn:fail:filesystem:errno?
        (λ (e) (log-error "print failed: ~v\n" e))])
-    (displayln (state->string s))
+    (displayln s)
     (flush-output)))
 
 (define/contract (read-msg input)
@@ -130,7 +141,7 @@
   (log-info "Starting loop ...")
   (let loop ([s (state #f '())])
     (log-debug "parser state: ~v" s)
-    (thread-send printer s)
+    (thread-send printer (state->status s))
     (match (read-msg input)
       [#f
         (thread-send printer 'parser-exit)]
@@ -156,17 +167,18 @@
   (let loop ([prev #f])
     (let ([tm (timer-start max-interval 'timeout)])
       (match (thread-receive)
-        [(and curr (struct* state ()))
-         (log-debug "printer state: ~v" curr)
-         (state-print curr)
+        [(and curr (struct* status ()))
          (timer-cancel tm)
-         (loop curr)]
+         (log-debug "printer status: ~v" curr)
+         (let ([curr (status->string curr)])
+           (safe-print curr)
+           (loop curr))]
         ['timeout #:when prev
-         (log-info "Timeout. Reprinting previous state: ~v" prev)
-         (state-print prev)
+         (log-info "Timeout. Reprinting previous status: ~v" prev)
+         (safe-print prev)
          (loop prev)]
         ['timeout
-         (log-warning "Timeout before ever receiving a state!" prev)
+         (log-warning "Timeout before ever receiving a status!" prev)
          (loop prev)]
         ['parser-exit
          (void)]))))
