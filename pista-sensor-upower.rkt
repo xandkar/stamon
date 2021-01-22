@@ -203,7 +203,7 @@
            (log-debug "Alerts remaining: ~v" alerts)
            (loop curr alerts))]
         ['timeout #:when prev
-         (log-info "Timeout. Reprinting previous status: ~v" prev)
+         (log-debug "Timeout. Reprinting previous status: ~v" prev)
          (status-print prev)
          (loop prev alerts)]
         ['timeout
