@@ -31,21 +31,24 @@
   (require (submod ".." types))
 
   (struct state
-          (plugged-in? batteries)
+          (plugged-in? batteries clock) ; clock is just for debugging
           #:transparent)
 
   (define (state-init)
-    (state #f '()))
+    (state #f '() 0))
+
+  (define (clock-incr s)
+    (struct-copy state s [clock (+ 1 (state-clock s))]))
 
   (define/contract (state-update-batteries s b)
     (-> state? battery? state?)
-    (struct-copy state s [batteries (dict-set (state-batteries s)
-                                              (battery-path b)
-                                              b)]))
+    (define batteries (dict-set (state-batteries s) (battery-path b) b))
+    (clock-incr (struct-copy state s [batteries batteries])))
 
   (define/contract (state-update-plugged-in s online)
     (-> state? (or/c "yes" "no") state?)
-    (struct-copy state s [plugged-in? (match online ["yes" #t] ["no" #f])]))
+    (define plugged-in? (match online ["yes" #t] ["no" #f]))
+    (clock-incr (struct-copy state s [plugged-in? plugged-in?])))
 
   (define unique (compose set->list list->set))
 
