@@ -2,29 +2,77 @@
 
 #lang racket
 
-(struct device
-        (path native-path))
+; Can we do better than "types"? I hate that I've become That Guy ...
+(module types racket
+  (provide (all-defined-out))
 
-(struct line-power
-        (path online)
-        #:transparent)
+  (struct device
+          (path native-path))
 
-(struct battery
-        (path state energy energy-full)
-        #:transparent)
+  (struct line-power
+          (path online)
+          #:transparent)
 
-(struct state
-        (plugged-in? batteries)
-        #:transparent)
+  (struct battery
+          (path state energy energy-full)
+          #:transparent)
 
-(struct status
-        (direction percentage)
-        #:transparent)
+  (struct status
+          (direction percentage)
+          #:transparent)
+  ) ; Does this make you angry?
+
+(module state racket
+  (provide state-init
+           state-update-plugged-in
+           state-update-batteries
+           state->status)
+
+  (require (submod ".." types))
+
+  (struct state
+          (plugged-in? batteries)
+          #:transparent)
+
+  (define (state-init)
+    (state #f '()))
+
+  (define/contract (state-update-batteries s b)
+    (-> state? battery? state?)
+    (struct-copy state s [batteries (dict-set (state-batteries s)
+                                              (battery-path b)
+                                              b)]))
+
+  (define/contract (state-update-plugged-in s online)
+    (-> state? (or/c "yes" "no") state?)
+    (struct-copy state s [plugged-in? (match online ["yes" #t] ["no" #f])]))
+
+  (define unique (compose set->list list->set))
+
+  (define/contract (state->status s)
+    (-> state? status?)
+    (define batteries (dict-values (state-batteries s)))
+    (let ([direction
+            (let ([states (map battery-state batteries)])
+              (cond [(not (state-plugged-in? s))                 '<]
+                    [(member      "discharging"         states)  '<]
+                    [(member         "charging"         states)  '>]
+                    [(equal? '("fully-charged") (unique states)) '=]
+                    [else                                        '?]))]
+          [percentage
+            (if (empty? batteries)
+                #f
+                (let ([cur (apply + (map battery-energy batteries))]
+                      [max (apply + (map battery-energy-full batteries))])
+                  (* 100 (/ cur max))))])
+      (status direction percentage)))
+  )
+
+(require 'types
+         'state)
 
 (define (display-device? line)
   (regexp-match? #rx"/DisplayDevice$" line))
-
-(define unique (compose set->list list->set))
 
 (define/contract (status->string s)
   (-> status? string?)
@@ -32,26 +80,6 @@
   (format "(⚡ ~a~a%)" direction (if percentage
                                     (~r percentage #:precision 0 #:min-width 3)
                                     "___")))
-
-(define/contract (state->status s)
-  (-> state? status?)
-  (define batteries (dict-values (state-batteries s)))
-  (let ([direction
-          (let ([states (map battery-state batteries)])
-            (cond [(not (state-plugged-in? s))                 '<]
-                  [(member      "discharging"         states)  '<]
-                  [(member         "charging"         states)  '>]
-                  [(equal? '("fully-charged") (unique states)) '=]
-                  [else                                        '?]))]
-        [percentage
-          (if (empty? batteries)
-              #f
-              (let ([cur (apply + (map battery-energy batteries))]
-                    [max (apply + (map battery-energy-full batteries))])
-                (* 100 (/ cur max))))])
-    (status direction percentage)))
-
-(define state->string (compose status->string state->status))
 
 (define/contract (status-print s)
   (-> status? void?)
@@ -139,7 +167,7 @@
 
 (define (start-parser input printer)
   (log-info "Starting loop ...")
-  (let loop ([s (state #f '())])
+  (let loop ([s (state-init)])
     (log-debug "parser state: ~v" s)
     (thread-send printer (state->status s))
     (match (read-msg input)
@@ -147,14 +175,10 @@
         (thread-send printer 'parser-exit)]
       [(struct* battery ([path p])) #:when (display-device? p)
        (loop s)]
-      [(and b (struct* battery ([path p])))
-       (loop (struct-copy state s
-                          [batteries (dict-set (state-batteries s) p b)]))]
+      [(and b (struct* battery ()))
+       (loop (state-update-batteries s b))]
       [(line-power _ online)
-       (loop (struct-copy state s [plugged-in?
-                                    (match online
-                                      ["yes" #t]
-                                      ["no" #f])]))])))
+       (loop (state-update-plugged-in s online))])))
 
 (define (timer-start seconds msg)
   (let ([parent (current-thread)])
@@ -228,6 +252,7 @@
 
 (define (run log-level max-interval)
   (start-logger log-level)
+  ; TODO Multiplex ports so we can execute as separate executables instead
   (define cmd "stdbuf -o L upower --dump; stdbuf -o L upower --monitor-detail")
   (log-info "Spawning command: ~v" cmd)
   (match-define (list in-port out-port pid in-err-port ctrl) (process cmd))
