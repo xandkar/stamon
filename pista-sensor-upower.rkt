@@ -74,9 +74,6 @@
 (require 'types
          'state)
 
-(define (display-device? line)
-  (regexp-match? #rx"/DisplayDevice$" line))
-
 (define/contract (status->string s)
   (-> status? string?)
   (match-define (status direction percentage) s)
@@ -108,7 +105,7 @@
         (let ([fields (string-split line)])
           (cond
             ; EOM
-            [(regexp-match? #rx"^$" line)
+            [(string=? line "")
              (if msg
                  (begin
                    (log-debug "msg: ~v" msg)
@@ -119,7 +116,7 @@
 
             ; BOM when --dump
             [(and (not msg)
-                  (regexp-match? #rx"^Device:[ \t]+" line))
+                  (string-prefix? line "Device: "))
              (next (device (second fields) #f))]
 
             ; BOM when --monitor-detail
@@ -130,38 +127,38 @@
              (next (device (fourth fields) #f))]
 
             [(and (device? msg)
-                  (regexp-match? #rx"^  native-path:" line))
+                  (string-prefix? line "  native-path:"))
              (next (struct-copy device msg [native-path (second fields)]))]
 
             ; -- BEGIN battery
             [(and (device? msg)
-                  (regexp-match? #rx"^  battery$" line))
+                  (string=? line "  battery"))
              (let ([path (device-path msg)]
                    [native-path (device-native-path msg)])
                (next (battery (if native-path native-path path) #f #f #f)))]
 
             [(and (battery? msg)
-                  (regexp-match? #rx"^    state:" line))
+                  (string-prefix? line "    state:"))
              (next (struct-copy battery msg [state (second fields)]))]
 
             [(and (battery? msg)
-                  (regexp-match? #rx"^    energy:" line))
+                  (string-prefix? line "    energy:"))
              (next (struct-copy battery msg [energy
                                               (string->number (second fields))]))]
 
             [(and (battery? msg)
-                  (regexp-match? #rx"^    energy-full:" line))
+                  (string-prefix? line "    energy-full:"))
              (next (struct-copy battery msg [energy-full
                                               (string->number (second fields))]))]
             ; -- END battery
 
             ; -- BEGIN line-power
-            [(and (device? msg) (regexp-match? #rx"^  line-power$" line))
+            [(and (device? msg) (string=? line "  line-power"))
              (let ([path (device-path msg)]
                    [native-path (device-native-path msg)])
                (next (line-power (if native-path native-path path) #f)))]
 
-            [(and (line-power? msg) (regexp-match? #rx"^    online:" line))
+            [(and (line-power? msg) (string-prefix? line "    online:"))
              (next (struct-copy line-power msg [online (second fields)]))]
             ; -- END line-power
 
@@ -177,7 +174,7 @@
     (match (read-msg input)
       [#f
         (thread-send printer 'parser-exit)]
-      [(struct* battery ([path p])) #:when (display-device? p)
+      [(struct* battery ([path p])) #:when (string-suffix? p "/DisplayDevice")
        (loop s)]
       [(and b (struct* battery ()))
        (loop (state-update-batteries s b))]
