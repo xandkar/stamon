@@ -92,7 +92,7 @@
     (flush-output)))
 
 (define/contract (read-msg input)
-  (-> input-port? (or/c #f battery? line-power?))
+  (-> input-port? (or/c 'eof battery? line-power?))
   ; msg = #f
   ;     | device?
   ;     | battery?
@@ -100,7 +100,7 @@
   (define (next msg)
     (define line (read-line input))
     (if (eof-object? line)
-        #f
+        'eof
         ; TODO can we make fields lazy? To avoid splitting unmatched lines.
         (let ([fields (string-split line)])
           (cond
@@ -172,7 +172,7 @@
     (log-debug "parser state: ~v" s)
     (thread-send printer (state->status s))
     (match (read-msg input)
-      [#f
+      ['eof
         (thread-send printer 'parser-exit)]
       [(struct* battery ([path p])) #:when (string-suffix? p "/DisplayDevice")
        (loop s)]
