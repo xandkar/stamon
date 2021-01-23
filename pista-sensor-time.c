@@ -11,7 +11,11 @@
 #include "pista_log.h"
 #include "pista_time.h"
 
-#define usage(...) {print_usage(); fprintf(stderr, "Error:\n    " __VA_ARGS__); exit(EXIT_FAILURE);}
+#define usage(...) {\
+	print_usage(); \
+	fprintf(stderr, "Error:\n    " __VA_ARGS__); \
+	exit(EXIT_FAILURE); \
+}
 
 #define BUF_SIZE 22
 #define END_OF_MESSAGE '\n'
