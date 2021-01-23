@@ -26,12 +26,12 @@
                      "/observations/latest?require_qc=false")
       #:ssl? #t
       #:headers '("accept: application/vnd.noaa.obs+xml")))
-  (eprintf "[debug] headers ~v~n" headers)
-  (eprintf "[debug] status-line: ~v~n" status-line)
+  (log-debug "headers ~v" headers)
+  (log-debug "status-line: ~v" status-line)
   (define status (string-split (bytes->string/utf-8 status-line)))
-  (eprintf "[debug] status: ~v~n" status)
+  (log-debug "status: ~v" status)
   (define status-code (string->number (second status)))
-  (eprintf "[debug] status-code: ~v~n" status-code)
+  (log-debug "status-code: ~v" status-code)
   (if (= 200 status-code)
       (cons 'ok (string->xexpr (port->string data-port)))
       (cons 'error status-code)))
@@ -63,7 +63,7 @@
   (eprintf "+~a\n" bar)
   (with-handlers
     ; Expecting broken pipes
-    ([exn:fail:filesystem:errno? (λ (e) (eprintf "[error] Print failed: ~v\n" e))])
+    ([exn:fail:filesystem:errno? (λ (e) (log-error "Print failed: ~v" e))])
     (printf "(~a°F)\n" (~r temp-f
                            #:min-width 3
                            #:precision 0))
@@ -73,7 +73,7 @@
   (-> string? interval? void?)
   (match (data-fetch weather-station-id)
     [(cons 'error status-code)
-     (eprintf "[error] Data fetch failed with ~a\n" status-code)
+     (log-error "Data fetch failed with ~a" status-code)
      (sleep (interval-error-curr i))
      (loop weather-station-id (interval-increase i))]
     [(cons 'ok data)
@@ -81,12 +81,29 @@
      (sleep (interval-normal i))
      (loop weather-station-id (interval-reset i))]))
 
+(define (start-logger level)
+  (define logger (make-logger #f #f level #f))
+  (define log-receiver (make-log-receiver logger level))
+  (thread
+    (λ ()
+       (local-require racket/date)
+       (date-display-format 'iso-8601)
+       (let loop ()
+         (match-let ([(vector level msg _ ...) (sync log-receiver)])
+           (eprintf "~a [~a] ~a~n" (date->string (current-date) #t) level msg))
+         (loop))))
+  (current-logger logger))
+
 (module+ main
   (date-display-format 'rfc2822)
   (define one-minute 60)
   (define opt-interval (* 30 one-minute))
   (define opt-backoff one-minute)
+  (define opt-log-level 'info)
   (command-line #:once-each
+                [("-d" "--debug")
+                 "Enable debug logging"
+                 (set! opt-log-level 'debug)]
                 [("-i" "--interval")
                  i "Refresh interval."
                  (set! opt-interval (string->number i))]
@@ -95,6 +112,7 @@
                  (set! opt-backoff (string->number b))]
                 #:args
                 (weather-station-id)
+                (start-logger opt-log-level)
                 (loop weather-station-id
                       (interval opt-interval
                                 opt-backoff
