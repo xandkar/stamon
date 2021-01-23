@@ -62,6 +62,7 @@
                 )))
   (with-handlers
     ; Expecting broken pipes
+    ; TODO Retry failed prints
     ([exn:fail:filesystem:errno? (λ (e) (log-error "Print failed: ~v" e))])
     (printf "(~a°F)\n" (~r temp-f
                            #:min-width 3

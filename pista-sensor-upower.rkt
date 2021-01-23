@@ -88,6 +88,7 @@
   (-> status? void?)
   (with-handlers
     ; Expect broken pipes
+    ; TODO Retry failed prints
     ([exn:fail:filesystem:errno?
        (λ (e) (log-error "print failed: ~v\n" e))])
     (displayln (status->string s))
