@@ -51,7 +51,7 @@ _start() {
         $(start_sensor  4  pista-sensor-backlight)         10   5  \
         $(start_sensor  5  pista-sensor-volume)             8   5  \
         $(start_sensor  6  pista-sensor-mpd)               17   5  \
-        $(start_sensor  7  pista-sensor-weather.rkt \
+        $(start_sensor  7  pista-sensor-weather-gov.rkt \
                              -i $(( 15 * 60 )) KJFK)        8   $(( 30 * 60 )) \
         $(start_sensor  8  pista-sensor-time)              21   2"
 }
