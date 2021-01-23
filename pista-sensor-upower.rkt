@@ -222,7 +222,7 @@
                                       )
                                  show)
                            (log-info "Alert sent: ~v" a)
-                           (filter-not ((curry =) a) alerts)]
+                           (filter (λ (a-i) (< a-i a)) alerts)]
                           [_
                             alerts])]
                        [else
