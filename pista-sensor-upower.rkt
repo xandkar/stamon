@@ -227,7 +227,7 @@
                             alerts])]
                        [else
                          init-discharging-alerts])])
-           (log-debug "Alerts remaining: ~v" alerts)
+           (log-info "Alerts remaining: ~v" alerts)
            (loop curr alerts))]
         ['timeout #:when prev
          (log-debug "Timeout. Reprinting previous status: ~v" prev)
