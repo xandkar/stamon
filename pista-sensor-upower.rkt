@@ -2,6 +2,9 @@
 
 #lang racket
 
+(struct ok  (val))
+(struct err (val))
+
 ; Can we do better than "types"? I hate that I've become That Guy ...
 (module types racket
   (provide (all-defined-out))
@@ -81,15 +84,28 @@
                                     (~r percentage #:precision 0 #:min-width 3)
                                     "___")))
 
+(define (exec/retry retries #:pause pause f)
+  (with-handlers
+    ([exn?
+       (λ (e)
+          (log-error "exec/retry failure. Retries remaining: ~a. Exception: ~v"
+                     retries e)
+          (match retries
+            [0
+              (log-warning "exec/retry failure. 0 retries remains - giving up.")
+              (err e)]
+            [retries
+              (sleep pause)
+              (exec/retry (sub1 retries) #:pause pause f)]))])
+    (ok (f))))
+
 (define/contract (status-print s)
   (-> status? void?)
-  (with-handlers
-    ; Expect broken pipes
-    ; TODO Retry failed prints
-    ([exn:fail:filesystem:errno?
-       (λ (e) (log-error "print failed: ~v\n" e))])
-    (displayln (status->string s))
-    (flush-output)))
+  (define str (status->string s))
+  ; We expect occasional broken pipes:
+  (void (exec/retry 3 #:pause 1 (λ ()
+                                   (displayln str)
+                                   (flush-output)))))
 
 (define/contract (read-msg input)
   (-> input-port? (or/c 'eof battery? line-power?))
@@ -173,7 +189,7 @@
     (thread-send printer (state->status s))
     (match (read-msg input)
       ['eof
-        (thread-send printer 'parser-exit)]
+       (thread-send printer 'parser-exit)]
       [(struct* battery ([path p])) #:when (string-suffix? p "/DisplayDevice")
        (loop s)]
       [(and b (struct* battery ()))
@@ -193,14 +209,14 @@
   ; TODO User-defined alerts
   (define init-discharging-alerts (sort '(100 70 50 30 20 15 10 5 4 3 2 1 0) <))
   (log-info "Alerts defined: ~v" init-discharging-alerts)
-  (let loop ([prev #f]
-             [alerts init-discharging-alerts])
+  (let loop ([prev-status #f]
+             [alerts      init-discharging-alerts])
     (let ([tm (timer-start max-interval 'timeout)])
       (match (thread-receive)
-        [(and curr (status direction percentage))
+        [(and curr-status (status direction percentage))
          (timer-cancel tm)
-         (log-debug "printer status: ~v" curr)
-         (status-print curr)
+         (log-debug "printer status: ~v" curr-status)
+         (status-print curr-status)
          ; TODO Fully-charged alert
          (let ([alerts
                  (cond [(and percentage (equal? '< direction))
@@ -226,14 +242,14 @@
                        [else
                          init-discharging-alerts])])
            (log-info "Alerts remaining: ~v" alerts)
-           (loop curr alerts))]
-        ['timeout #:when prev
-         (log-debug "Timeout. Reprinting previous status: ~v" prev)
-         (status-print prev)
-         (loop prev alerts)]
+           (loop curr-status alerts))]
+        ['timeout #:when prev-status
+         (log-debug "Timeout. Reprinting previous status: ~v" prev-status)
+         (status-print prev-status)
+         (loop prev-status alerts)]
         ['timeout
-         (log-warning "Timeout before ever receiving a status!" prev)
-         (loop prev alerts)]
+         (log-warning "Timeout before ever receiving a status!")
+         (loop prev-status alerts)]
         ['parser-exit
          (void)]))))
 
