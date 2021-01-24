@@ -215,13 +215,13 @@
                                                      [(<= a 30) 'normal]
                                                      [else      'low])])
                                  show)
-                           (log-info "Alert sent: ~v" a)
-                           (filter (λ (a-i) (< a-i a)) alerts)]
+                           (let ([alerts (filter (λ (a-i) (< a-i a)) alerts)])
+                             (log-info "Alert sent: ~a. Remaining: ~v" a alerts)
+                             alerts)]
                           [_
                             alerts])]
                        [else
                          init-discharging-alerts])])
-           (log-info "Alerts remaining: ~v" alerts)
            (loop (status->string new-status) alerts))]
         ['print #:when last-status
          (safe-print last-status)
