@@ -81,12 +81,12 @@
                                     (~r percentage #:precision 0 #:min-width 3)
                                     "___")))
 
-(define/contract (status-print s)
-  (-> status? void?)
+(define/contract (safe-print s)
+  (-> string? void?)
   ; We expect occasional broken pipes:
   (with-handlers
-    ([exn? (λ (e) (log-error "Status print failure. Exception: ~v" e))])
-    (displayln (status->string s))
+    ([exn? (λ (e) (log-error "Print failure. Exception: ~v" e))])
+    (displayln s)
     (flush-output)))
 
 (define/contract (read-msg input)
@@ -222,9 +222,9 @@
                        [else
                          init-discharging-alerts])])
            (log-info "Alerts remaining: ~v" alerts)
-           (loop new-status alerts))]
+           (loop (status->string new-status) alerts))]
         ['print #:when last-status
-         (status-print last-status)
+         (safe-print last-status)
          (loop last-status alerts)]
         ['print
          (log-warning "Time to print, before ever receiving a status!")
