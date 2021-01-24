@@ -2,9 +2,6 @@
 
 #lang racket
 
-(struct ok  (val))
-(struct err (val))
-
 ; Can we do better than "types"? I hate that I've become That Guy ...
 (module types racket
   (provide (all-defined-out))
@@ -84,28 +81,13 @@
                                     (~r percentage #:precision 0 #:min-width 3)
                                     "___")))
 
-(define (exec/retry retries #:pause pause f)
-  (with-handlers
-    ([exn?
-       (λ (e)
-          (log-error "exec/retry failure. Retries remaining: ~a. Exception: ~v"
-                     retries e)
-          (match retries
-            [0
-              (log-warning "exec/retry failure. 0 retries remains - giving up.")
-              (err e)]
-            [retries
-              (sleep pause)
-              (exec/retry (sub1 retries) #:pause pause f)]))])
-    (ok (f))))
-
 (define/contract (status-print s)
   (-> status? void?)
-  (define str (status->string s))
   ; We expect occasional broken pipes:
-  (void (exec/retry 3 #:pause 1 (λ ()
-                                   (displayln str)
-                                   (flush-output)))))
+  (with-handlers
+    ([exn? (λ (e) (log-error "Status print failure. Exception: ~v" e))])
+    (displayln (status->string s))
+    (flush-output)))
 
 (define/contract (read-msg input)
   (-> input-port? (or/c 'eof battery? line-power?))
@@ -204,19 +186,18 @@
 (define timer-cancel
   kill-thread)
 
-(define (start-printer max-interval)
+(define (start-printer interval)
   (local-require libnotify)
   ; TODO User-defined alerts
   (define init-discharging-alerts (sort '(100 70 50 30 20 15 10 5 4 3 2 1 0) <))
   (log-info "Alerts defined: ~v" init-discharging-alerts)
-  (let loop ([prev-status #f]
+  (let loop ([last-status #f]
              [alerts      init-discharging-alerts])
-    (let ([tm (timer-start max-interval 'timeout)])
+    (let ([tm (timer-start interval 'print)])
       (match (thread-receive)
-        [(and curr-status (status direction percentage))
+        [(and new-status (status direction percentage))
          (timer-cancel tm)
-         (log-debug "printer status: ~v" curr-status)
-         (status-print curr-status)
+         (log-debug "New status: ~v" new-status)
          ; TODO Fully-charged alert
          (let ([alerts
                  (cond [(and percentage (equal? '< direction))
@@ -232,8 +213,7 @@
                                       ; TODO User-defined urgency
                                       [urgency (cond [(<= a 10) 'critical]
                                                      [(<= a 30) 'normal]
-                                                     [else      'low])]
-                                      )
+                                                     [else      'low])])
                                  show)
                            (log-info "Alert sent: ~v" a)
                            (filter (λ (a-i) (< a-i a)) alerts)]
@@ -242,14 +222,13 @@
                        [else
                          init-discharging-alerts])])
            (log-info "Alerts remaining: ~v" alerts)
-           (loop curr-status alerts))]
-        ['timeout #:when prev-status
-         (log-debug "Timeout. Reprinting previous status: ~v" prev-status)
-         (status-print prev-status)
-         (loop prev-status alerts)]
-        ['timeout
-         (log-warning "Timeout before ever receiving a status!")
-         (loop prev-status alerts)]
+           (loop new-status alerts))]
+        ['print #:when last-status
+         (status-print last-status)
+         (loop last-status alerts)]
+        ['print
+         (log-warning "Time to print, before ever receiving a status!")
+         (loop last-status alerts)]
         ['parser-exit
          (void)]))))
 
@@ -267,14 +246,14 @@
          (loop))))
   (current-logger logger))
 
-(define (run log-level max-interval)
+(define (run log-level interval)
   (start-logger log-level)
   ; TODO Multiplex ports so we can execute as separate executables instead
   (define cmd "stdbuf -o L upower --dump; stdbuf -o L upower --monitor-detail")
   (log-info "Spawning command: ~v" cmd)
   (match-define (list in-port out-port pid in-err-port ctrl) (process cmd))
   (log-info "Child process PID: ~a" pid)
-  (let* ([printer    (thread (λ () (start-printer max-interval)))]
+  (let* ([printer    (thread (λ () (start-printer interval)))]
          [parser     (thread (λ () (start-parser in-port printer)))]
          [cmd-logger (thread (λ () (let loop ()
                                      (let ([line (read-line in-err-port)])
@@ -294,7 +273,7 @@
 
 (module+ main
   (define opt-log-level 'info)
-  (define opt-interval 30)
+  (define opt-interval 1)
   (command-line #:once-each
                 [("-d" "--debug")
                  "Enable debug logging"
