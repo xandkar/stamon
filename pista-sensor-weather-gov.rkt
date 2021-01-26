@@ -15,8 +15,37 @@
 (define (interval-increase i)
   (struct-copy interval i [error-curr (* 2 (interval-error-curr i))]))
 
+(define data?
+  (listof (cons/c symbol? (or/c string? number?))))
+
+(define/contract (xexpr->data x)
+  (-> xexpr? data?)
+  (define (get-str path [default #f])
+    (let ([val (se-path* (append '(current_observation) path) x)])
+      (cons (car path) (if val val default))))
+  (define (get-num path)
+    ; TODO better handling of missing values than defaulting to 0?
+    (match (get-str path "0")
+      [`(,k . ,v) (cons k (string->number v))]))
+  (list
+    (get-str  '(station_id))
+    (get-str  '(location))
+    (get-str  '(observation_time_rfc822))
+    (get-str  '(suggested_pickup))
+    (get-num  '(suggested_pickup_period))
+    (get-num  '(temp_f))
+    (get-num  '(temp_c))
+    (get-num  '(relative_humidity))
+    (get-str  '(wind_dir))
+    (get-num  '(wind_mph))
+    (get-num  '(visibility_mi))
+    ))
+
+(define data<-port
+  (compose xexpr->data string->xexpr port->string))
+
 (define/contract (data-fetch weather-station-id)
-  (-> string? (or/c (cons/c 'ok xexpr?)
+  (-> string? (or/c (cons/c 'ok data?)
                     (cons/c 'error number?)))
   (define-values (status-line headers data-port)
     (http-sendrecv
@@ -33,38 +62,17 @@
   (define status-code (string->number (second status)))
   (log-debug "status-code: ~v" status-code)
   (if (= 200 status-code)
-      (cons 'ok (string->xexpr (port->string data-port)))
+      (cons 'ok (data<-port data-port))
       (cons 'error status-code)))
 
 (define/contract (data-print data)
-  (-> xexpr? void?)
-  (define (get path [default #f])
-    (let ([val (se-path* (append '(current_observation) path) data)])
-      (if val val default)))
-  (define (get-num path)
-    ; TODO better handling of missing values than defaulting to 0
-    (string->number (get path "0")))
-  (define temp-f (get-num '(temp_f)))
-  (define bar (make-string 25 #\-))
-  (log-info "Known data:~n~a"
-            (pretty-format
-              `((station            ,(get '(station_id)))
-                (location           ,(get '(location)))
-                (timestamp          ,(get '(observation_time_rfc822)))
-                (suggested-pickup   ,(get '(suggested_pickup)))
-                (suggested-interval ,(get-num '(suggested_pickup_period)))
-                (temp-f             ,temp-f)
-                (temp-c             ,(get-num '(temp_c)))
-                (humidity           ,(get-num '(relative_humidity)))
-                (wind-dir           ,(get '(wind_dir)))
-                (wind-speed         ,(get-num '(wind_mph)))
-                (visibility         ,(get-num '(visibility_mi)))
-                )))
+  (-> data? void?)
+  (log-info "Known fetched data:~n~a" (pretty-format data))
   (with-handlers
     ; Expecting broken pipes
     ; TODO Retry failed prints
     ([exn:fail:filesystem:errno? (λ (e) (log-error "Print failed: ~v" e))])
-    (printf "(~a°F)\n" (~r temp-f
+    (printf "(~a°F)\n" (~r (dict-ref data 'temp_f)
                            #:min-width 3
                            #:precision 0))
     (flush-output)))
