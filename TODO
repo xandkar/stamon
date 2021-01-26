@@ -1,0 +1,10 @@
+- [ ] New print-retry strategy:
+  keep retrying until a new value is available.
+  Something like:
+
+  (define (loop old-retry)
+    (define val (thread-receive))
+    (when old-retry
+      (kill-thread old-retry))
+    (define new-retry (thread (thunk (retry val))))
+    (loop new-retry))
