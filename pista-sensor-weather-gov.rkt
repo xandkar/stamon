@@ -33,11 +33,16 @@
     (get-str  '(observation_time_rfc822))
     (get-str  '(suggested_pickup))
     (get-num  '(suggested_pickup_period))
+    (get-str  '(weather))
+    (get-str  '(temperature_string))
     (get-num  '(temp_f))
     (get-num  '(temp_c))
     (get-num  '(relative_humidity))
+    (get-str  '(wind_string))
     (get-str  '(wind_dir))
     (get-num  '(wind_mph))
+    (get-str  '(pressure_string))
+    (get-str  '(dewpoint_string))
     (get-num  '(visibility_mi))
     ))
 
@@ -63,6 +68,29 @@
       (cons 'ok (data<-port data-port))
       (cons 'error status-code)))
 
+(define (data-notify data)
+  (define (get key) (dict-ref data key))
+  (define n->s number->string)
+  (local-require libnotify)
+  (send (new notification%
+             [summary (format "Weather updated")]
+             [body (string-append
+                     (get 'location) "\n"
+                     (get 'observation_time_rfc822) "\n"
+                     "\n"
+                     (get 'weather) "\n"
+                     "\n"
+                     "temperature : "       (get 'temperature_string) "\n"
+                     "humidity    : " (n->s (get 'relative_humidity)) "\n"
+                     "wind        : "       (get 'wind_string) "\n"
+                     "pressure    : "       (get 'pressure_string) "\n"
+                     "dewpoint    : "       (get 'dewpoint_string) "\n"
+                     "visibility  : " (n->s (get 'visibility_mi)) " miles\n"
+                     )]
+
+             [urgency 'low])
+        show))
+
 (define/contract (data-print data)
   (-> data? void?)
   (log-info "Known fetched data:~n~a" (pretty-format data))
@@ -75,17 +103,19 @@
                            #:precision 0))
     (flush-output)))
 
-(define/contract (loop station-id i)
-  (-> string? interval? void?)
+(define/contract (loop station-id i notify?)
+  (-> string? interval? boolean? void?)
   (match (data-fetch station-id)
     [(cons 'error status-code)
      (log-error "Data fetch failed with ~a" status-code)
      (sleep (interval-error-curr i))
-     (loop station-id (interval-increase i))]
+     (loop station-id (interval-increase i) notify?)]
     [(cons 'ok data)
      (data-print data)
+     (when notify?
+       (data-notify data))
      (sleep (interval-normal i))
-     (loop station-id (interval-reset i))]))
+     (loop station-id (interval-reset i) notify?)]))
 
 (define (start-logger level)
   (define logger (make-logger #f #f level #f))
@@ -106,6 +136,7 @@
   (define opt-interval (* 30 one-minute))
   (define opt-backoff one-minute)
   (define opt-log-level 'info)
+  (define opt-notify #f)
   (command-line #:once-each
                 [("-d" "--debug")
                  "Enable debug logging"
@@ -116,12 +147,17 @@
                 [("-b" "--backoff")
                  b "Initial retry backoff period (subsequently doubled)."
                  (set! opt-backoff (string->number b))]
+                [("-n" "--notify")
+                 "Enable notifications"
+                 (set! opt-notify #t)]
                 #:args
                 (station-id)
                 (start-logger opt-log-level)
-                (loop station-id (interval opt-interval
-                                           opt-backoff
-                                           opt-backoff))))
+                (loop station-id
+                      (interval opt-interval
+                                opt-backoff
+                                opt-backoff)
+                      opt-notify)))
 
 ; API docs at https://www.weather.gov/documentation/services-web-api
 
