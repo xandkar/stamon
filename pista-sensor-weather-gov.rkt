@@ -44,15 +44,13 @@
 (define data<-port
   (compose xexpr->data string->xexpr port->string))
 
-(define/contract (data-fetch weather-station-id)
+(define/contract (data-fetch station-id)
   (-> string? (or/c (cons/c 'ok data?)
                     (cons/c 'error number?)))
   (define-values (status-line headers data-port)
     (http-sendrecv
       "api.weather.gov"
-      (string-append "/stations/"
-                     weather-station-id
-                     "/observations/latest?require_qc=false")
+      (format "/stations/~a/observations/latest?require_qc=false" station-id)
       #:ssl? #t
       #:headers '("accept: application/vnd.noaa.obs+xml")))
   (log-debug "headers ~v" headers)
@@ -77,17 +75,17 @@
                            #:precision 0))
     (flush-output)))
 
-(define/contract (loop weather-station-id i)
+(define/contract (loop station-id i)
   (-> string? interval? void?)
-  (match (data-fetch weather-station-id)
+  (match (data-fetch station-id)
     [(cons 'error status-code)
      (log-error "Data fetch failed with ~a" status-code)
      (sleep (interval-error-curr i))
-     (loop weather-station-id (interval-increase i))]
+     (loop station-id (interval-increase i))]
     [(cons 'ok data)
      (data-print data)
      (sleep (interval-normal i))
-     (loop weather-station-id (interval-reset i))]))
+     (loop station-id (interval-reset i))]))
 
 (define (start-logger level)
   (define logger (make-logger #f #f level #f))
@@ -119,12 +117,11 @@
                  b "Initial retry backoff period (subsequently doubled)."
                  (set! opt-backoff (string->number b))]
                 #:args
-                (weather-station-id)
+                (station-id)
                 (start-logger opt-log-level)
-                (loop weather-station-id
-                      (interval opt-interval
-                                opt-backoff
-                                opt-backoff))))
+                (loop station-id (interval opt-interval
+                                           opt-backoff
+                                           opt-backoff))))
 
 ; API docs at https://www.weather.gov/documentation/services-web-api
 
