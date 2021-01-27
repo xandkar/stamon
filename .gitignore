@@ -1,3 +1,4 @@
+compiled/
 *.o
 pista-sensor-battery
 pista-sensor-time
