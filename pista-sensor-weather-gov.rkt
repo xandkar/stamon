@@ -93,32 +93,41 @@
              [urgency 'low])
         show))
 
-(define/contract (data-print data)
-  (-> data? void?)
-  (log-info "Known fetched data:~n~a" (pretty-format data))
-  (with-handlers
-    ; Expecting broken pipes
-    ; TODO Retry failed prints
-    ([exn:fail:filesystem:errno? (λ (e) (log-error "Print failed: ~v" e))])
-    (printf "(~a°F)\n" (~r (dict-ref data 'temp_f)
-                           #:min-width 3
-                           #:precision 0))
-    (flush-output)))
+(define/contract (print/retry s)
+  (-> string? void?)
+  ; We expect occasional broken pipes:
+  (let retry ([backoff 1])
+    (with-handlers
+      ([exn? (λ (e)
+                (log-error "Print failure. Backing off for: ~a seconds. Exception: ~v"
+                           backoff e)
+                (sleep backoff)
+                ; TODO jitter
+                (retry (* 2 backoff)))])
+      (displayln s)
+      (flush-output))))
 
 (define/contract (loop station-id interval notify?)
   (-> string? interval? boolean? void?)
-  (let loop ([i interval])
+  (let loop ([prev-printer #f]
+             [i            interval])
     (match (data-fetch station-id)
       [(cons 'error status-code)
        (log-error "Data fetch failed with ~a" status-code)
        (sleep (interval-error-curr i))
-       (loop (interval-increase i))]
+       (loop prev-printer (interval-increase i))]
       [(cons 'ok data)
-       (data-print data)
-       (when notify?
-         (data-notify data))
-       (sleep (interval-normal i))
-       (loop (interval-reset i))])))
+       (when prev-printer
+         (kill-thread prev-printer))
+       (let ([curr-printer
+               (thread
+                 (λ () (print/retry (format "(~a°F)" (~r (dict-ref data 'temp_f)
+                                                         #:min-width 3
+                                                         #:precision 0)))))])
+         (when notify?
+           (data-notify data))
+         (sleep (interval-normal i))
+         (loop curr-printer (interval-reset i)))])))
 
 (define (start-logger level)
   (define logger (make-logger #f #f level #f))
