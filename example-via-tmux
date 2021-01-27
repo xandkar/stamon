@@ -26,7 +26,7 @@ start_sensor() {
 
     rm -f "$fifo"
     mkfifo "$fifo"
-    tmux_new_win "$win" "$exe $arg > $fifo"
+    tmux_new_win "$win" "$exe $arg > $fifo; notify-send -u critical 'pista-sensor exited!' \"$exe\n\$?\""
     echo "$fifo"
 }
 
