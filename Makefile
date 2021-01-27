@@ -28,5 +28,6 @@ rebuild:
 	@$(MAKE) -s build
 
 install:
+	mkdir -p ~/bin
 	find . -type f -name 'pista-sensor-*' -executable -exec cp -f '{}' ~/bin/ \;
 	cp ./example-via-tmux ~/.xinitrc-pista
