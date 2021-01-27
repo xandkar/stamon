@@ -75,11 +75,13 @@
   (send (new notification%
              [summary (format "Weather updated")]
              [body (string-append
+                     "\n"
                      (get 'location) "\n"
-                     (get 'observation_time_rfc822) "\n"
                      "\n"
-                     (get 'weather) "\n"
+                     "observation : " (get 'observation_time_rfc822) "\n"
+                     "current     : " (date->string (current-date) #t) "\n"
                      "\n"
+                     "weather     : " (get 'weather) "\n"
                      "temperature : "       (get 'temperature_string) "\n"
                      "humidity    : " (n->s (get 'relative_humidity)) "\n"
                      "wind        : "       (get 'wind_string) "\n"
