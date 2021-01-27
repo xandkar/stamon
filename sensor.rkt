@@ -12,11 +12,11 @@
     (with-handlers
       ([exn?
          (λ (e)
-            (log-error "Print failure. Backing off for: ~a seconds. Exception: ~v"
-                       backoff e)
+            (log-error
+              "Print failure. Retrying in ~a seconds. Exception: ~v" backoff e)
             (sleep backoff)
-            ; TODO jitter
-            (retry (* 2 backoff)))])
+            (define jitter (random))
+            (retry (+ jitter (* 2 backoff))))])
       (displayln payload)
       (flush-output))))
 
