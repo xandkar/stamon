@@ -2,10 +2,12 @@
 
 #lang racket
 
-(require net/http-client)
-(require racket/date)
-(require xml)
-(require xml/path)
+(require net/http-client
+         racket/date
+         xml
+         xml/path)
+
+(require "sensor.rkt")
 
 (struct interval (normal error-init error-curr))
 
@@ -93,20 +95,6 @@
              [urgency 'low])
         show))
 
-(define/contract (print/retry s)
-  (-> string? void?)
-  ; We expect occasional broken pipes:
-  (let retry ([backoff 1])
-    (with-handlers
-      ([exn? (λ (e)
-                (log-error "Print failure. Backing off for: ~a seconds. Exception: ~v"
-                           backoff e)
-                (sleep backoff)
-                ; TODO jitter
-                (retry (* 2 backoff)))])
-      (displayln s)
-      (flush-output))))
-
 (define/contract (loop station-id interval notify?)
   (-> string? interval? boolean? void?)
   (let loop ([prev-printer #f]
@@ -121,26 +109,13 @@
          (kill-thread prev-printer))
        (let ([curr-printer
                (thread
-                 (λ () (print/retry (format "(~a°F)" (~r (dict-ref data 'temp_f)
+                 (λ () (sensor:print/retry (format "(~a°F)" (~r (dict-ref data 'temp_f)
                                                          #:min-width 3
                                                          #:precision 0)))))])
          (when notify?
            (data-notify data))
          (sleep (interval-normal i))
          (loop curr-printer (interval-reset i)))])))
-
-(define (start-logger level)
-  (define logger (make-logger #f #f level #f))
-  (define log-receiver (make-log-receiver logger level))
-  (thread
-    (λ ()
-       (local-require racket/date)
-       (date-display-format 'iso-8601)
-       (let loop ()
-         (match-let ([(vector level msg _ ...) (sync log-receiver)])
-           (eprintf "~a [~a] ~a~n" (date->string (current-date) #t) level msg))
-         (loop))))
-  (current-logger logger))
 
 (module+ main
   (date-display-format 'rfc2822)
@@ -164,7 +139,7 @@
                  (set! opt-notify #t)]
                 #:args
                 (station-id)
-                (start-logger opt-log-level)
+                (sensor:logger-start opt-log-level)
                 (loop station-id
                       (interval opt-interval
                                 opt-backoff

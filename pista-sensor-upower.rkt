@@ -72,7 +72,8 @@
   )
 
 (require 'types
-         'state)
+         'state
+         "sensor.rkt")
 
 (define/contract (status->string s)
   (-> status? string?)
@@ -171,19 +172,6 @@
       [(line-power _ online)
        (loop (state-update-plugged-in s online))])))
 
-(define/contract (print/retry s)
-  (-> string? void?)
-  ; We expect occasional broken pipes:
-  (let retry ([backoff 1])
-    (with-handlers
-      ([exn? (λ (e)
-                (log-error "Print failure. Backing off for: ~a seconds. Exception: ~v"
-                           backoff e)
-                (sleep backoff)
-                (retry (* 2 backoff)))])
-      (displayln s)
-      (flush-output))))
-
 (define (start-printer)
   (local-require libnotify)
   ; TODO User-defined alerts
@@ -198,7 +186,7 @@
          (kill-thread prev-printer))
        ; TODO Fully-charged alert
        (let ([curr-printer
-               (thread (λ () (print/retry (status->string s))))]
+               (thread (λ () (sensor:print/retry (status->string s))))]
              [alerts
                (cond [(and percentage (equal? '< direction))
                       (match (dropf alerts (λ (a) (<= a percentage)))
@@ -226,22 +214,8 @@
       ['parser-exit
        (void)])))
 
-(define (start-logger level)
-  ; TODO implement graceful stop, flushing before exiting
-  (define logger (make-logger #f #f level #f))
-  (define log-receiver (make-log-receiver logger level))
-  (thread
-    (λ ()
-       (local-require racket/date)
-       (date-display-format 'iso-8601)
-       (let loop ()
-         (match-let ([(vector level msg _ ...) (sync log-receiver)])
-           (eprintf "~a [~a] ~a~n" (date->string (current-date) #t) level msg))
-         (loop))))
-  (current-logger logger))
-
 (define (run log-level)
-  (start-logger log-level)
+  (sensor:logger-start log-level)
   ; TODO Multiplex ports so we can execute as separate executables instead
   (define cmd "stdbuf -o L upower --dump; stdbuf -o L upower --monitor-detail")
   (log-info "Spawning command: ~v" cmd)
