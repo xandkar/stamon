@@ -105,19 +105,20 @@
                            #:precision 0))
     (flush-output)))
 
-(define/contract (loop station-id i notify?)
+(define/contract (loop station-id interval notify?)
   (-> string? interval? boolean? void?)
-  (match (data-fetch station-id)
-    [(cons 'error status-code)
-     (log-error "Data fetch failed with ~a" status-code)
-     (sleep (interval-error-curr i))
-     (loop station-id (interval-increase i) notify?)]
-    [(cons 'ok data)
-     (data-print data)
-     (when notify?
-       (data-notify data))
-     (sleep (interval-normal i))
-     (loop station-id (interval-reset i) notify?)]))
+  (let loop ([i interval])
+    (match (data-fetch station-id)
+      [(cons 'error status-code)
+       (log-error "Data fetch failed with ~a" status-code)
+       (sleep (interval-error-curr i))
+       (loop (interval-increase i))]
+      [(cons 'ok data)
+       (data-print data)
+       (when notify?
+         (data-notify data))
+       (sleep (interval-normal i))
+       (loop (interval-reset i))])))
 
 (define (start-logger level)
   (define logger (make-logger #f #f level #f))
