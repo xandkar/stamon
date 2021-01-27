@@ -1,4 +1,4 @@
-- [ ] New print-retry strategy:
+- [x] New print-retry strategy:
   keep retrying until a new value is available.
   Something like:
 

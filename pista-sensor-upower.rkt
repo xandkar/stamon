@@ -81,14 +81,6 @@
                                     (~r percentage #:precision 0 #:min-width 3)
                                     "___")))
 
-(define/contract (safe-print s)
-  (-> string? void?)
-  ; We expect occasional broken pipes:
-  (with-handlers
-    ([exn? (λ (e) (log-error "Print failure. Exception: ~v" e))])
-    (displayln s)
-    (flush-output)))
-
 (define/contract (read-msg input)
   (-> input-port? (or/c 'eof battery? line-power?))
   ; msg = #f
@@ -179,58 +171,60 @@
       [(line-power _ online)
        (loop (state-update-plugged-in s online))])))
 
-(define (timer-start seconds msg)
-  (let ([parent (current-thread)])
-    (thread (λ () (sleep seconds) (thread-send parent msg)))))
+(define/contract (print/retry s)
+  (-> string? void?)
+  ; We expect occasional broken pipes:
+  (let retry ([backoff 1])
+    (with-handlers
+      ([exn? (λ (e)
+                (log-error "Print failure. Backing off for: ~a seconds. Exception: ~v"
+                           backoff e)
+                (sleep backoff)
+                (retry (* 2 backoff)))])
+      (displayln s)
+      (flush-output))))
 
-(define timer-cancel
-  kill-thread)
-
-(define (start-printer interval)
+(define (start-printer)
   (local-require libnotify)
   ; TODO User-defined alerts
   (define init-discharging-alerts (sort '(100 70 50 30 20 15 10 5 4 3 2 1 0) <))
   (log-info "Alerts defined: ~v" init-discharging-alerts)
-  (let loop ([last-status #f]
-             [alerts      init-discharging-alerts])
-    (let ([tm (timer-start interval 'print)])
-      (match (thread-receive)
-        [(and new-status (status direction percentage))
-         (timer-cancel tm)
-         (log-debug "New status: ~v" new-status)
-         ; TODO Fully-charged alert
-         (let ([alerts
-                 (cond [(and percentage (equal? '< direction))
-                        (match (dropf alerts (λ (a) (<= a percentage)))
-                          [(cons a _)
-                           (send (new notification%
-                                      ; TODO User-defined summary
-                                      [summary (format "Battery power bellow ~a%!" a)]
+  (let loop ([prev-printer #f]
+             [alerts       init-discharging-alerts])
+    (match (thread-receive)
+      [(and s (status direction percentage))
+       (log-debug "New status: ~v" s)
+       (when prev-printer
+         (kill-thread prev-printer))
+       ; TODO Fully-charged alert
+       (let ([curr-printer
+               (thread (λ () (print/retry (status->string s))))]
+             [alerts
+               (cond [(and percentage (equal? '< direction))
+                      (match (dropf alerts (λ (a) (<= a percentage)))
+                        [(cons a _)
+                         (send (new notification%
+                                    ; TODO User-defined summary
+                                    [summary (format "Battery power bellow ~a%!" a)]
 
-                                      ; TODO User-defined body
-                                      [body (~r percentage #:precision 2)]
+                                    ; TODO User-defined body
+                                    [body (~r percentage #:precision 2)]
 
-                                      ; TODO User-defined urgency
-                                      [urgency (cond [(<= a 10) 'critical]
-                                                     [(<= a 30) 'normal]
-                                                     [else      'low])])
-                                 show)
-                           (let ([alerts (filter (λ (a-i) (< a-i a)) alerts)])
-                             (log-info "Alert sent: ~a. Remaining: ~v" a alerts)
-                             alerts)]
-                          [_
-                            alerts])]
-                       [else
-                         init-discharging-alerts])])
-           (loop (status->string new-status) alerts))]
-        ['print #:when last-status
-         (safe-print last-status)
-         (loop last-status alerts)]
-        ['print
-         (log-warning "Time to print, before ever receiving a status!")
-         (loop last-status alerts)]
-        ['parser-exit
-         (void)]))))
+                                    ; TODO User-defined urgency
+                                    [urgency (cond [(<= a 10) 'critical]
+                                                   [(<= a 30) 'normal]
+                                                   [else      'low])])
+                               show)
+                         (let ([alerts (filter (λ (a-i) (< a-i a)) alerts)])
+                           (log-info "Alert sent: ~a. Remaining: ~v" a alerts)
+                           alerts)]
+                        [_
+                          alerts])]
+                     [else
+                       init-discharging-alerts])])
+         (loop curr-printer alerts))]
+      ['parser-exit
+       (void)])))
 
 (define (start-logger level)
   ; TODO implement graceful stop, flushing before exiting
@@ -246,14 +240,14 @@
          (loop))))
   (current-logger logger))
 
-(define (run log-level interval)
+(define (run log-level)
   (start-logger log-level)
   ; TODO Multiplex ports so we can execute as separate executables instead
   (define cmd "stdbuf -o L upower --dump; stdbuf -o L upower --monitor-detail")
   (log-info "Spawning command: ~v" cmd)
   (match-define (list in-port out-port pid in-err-port ctrl) (process cmd))
   (log-info "Child process PID: ~a" pid)
-  (let* ([printer    (thread (λ () (start-printer interval)))]
+  (let* ([printer    (thread (λ () (start-printer)))]
          [parser     (thread (λ () (start-parser in-port printer)))]
          [cmd-logger (thread (λ () (let loop ()
                                      (let ([line (read-line in-err-port)])
@@ -273,12 +267,8 @@
 
 (module+ main
   (define opt-log-level 'info)
-  (define opt-interval 1)
   (command-line #:once-each
                 [("-d" "--debug")
                  "Enable debug logging"
-                 (set! opt-log-level 'debug)]
-                [("-i" "--interval")
-                 i "Maximum interval between state prints"
-                 (set! opt-interval (string->number i))])
-  (run opt-log-level opt-interval))
+                 (set! opt-log-level 'debug)])
+  (run opt-log-level))
