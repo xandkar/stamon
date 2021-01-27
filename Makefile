@@ -29,3 +29,4 @@ rebuild:
 
 install:
 	find . -type f -name 'pista-sensor-*' -executable -exec cp -f '{}' ~/bin/ \;
+	cp ./example-via-tmux ~/.xinitrc-pista
