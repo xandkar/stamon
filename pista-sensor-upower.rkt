@@ -1,28 +1,37 @@
 #! /usr/bin/env racket
 
-#lang racket
+#lang typed/racket
 
 ; Can we do better than "types"? I hate that I've become That Guy ...
-(module types racket
+(module types typed/racket
   (provide (all-defined-out))
 
   (struct device
-          (path native-path))
+          ([path        : String]
+           [native-path : (Option String)]))
 
   (struct line-power
-          (path online)
+          ([path   : String]
+           [online : Boolean])
           #:transparent)
 
   (struct battery
-          (path state energy energy-full)
+          ([path        : String]
+           [state       : (Option String)]
+           [energy      : (Option Real)]
+           [energy-full : (Option Real)])
           #:transparent)
 
   (struct status
-          (direction percentage)
+          ([direction  : (U '= '< '> '?)]
+           [percentage : (Option Real)])
           #:transparent)
+
+  (define-type Batteries
+    (Immutable-HashTable String battery))
   ) ; Does this make you angry?
 
-(module state racket
+(module state typed/racket
   (provide state-init
            state-update-plugged-in
            state-update-batteries
@@ -31,30 +40,35 @@
   (require (submod ".." types))
 
   (struct state
-          (plugged-in? batteries clock) ; clock is just for debugging
+          ([plugged-in? : Boolean]
+           [batteries   : Batteries]
+           [clock       : Natural]) ; clock is just for debugging
           #:transparent)
 
+  (: state-init (-> state))
   (define (state-init)
-    (state #f '() 0))
+    (state #f #hash() 0))
 
+  (: clock-incr (-> state state))
   (define (clock-incr s)
     (struct-copy state s [clock (+ 1 (state-clock s))]))
 
-  (define/contract (state-update-batteries s b)
-    (-> state? battery? state?)
-    (define batteries (dict-set (state-batteries s) (battery-path b) b))
+  (: state-update-batteries (-> state battery state))
+  (define (state-update-batteries s b)
+    (define batteries (hash-set (state-batteries s) (battery-path b) b))
     (clock-incr (struct-copy state s [batteries batteries])))
 
-  (define/contract (state-update-plugged-in s online)
-    (-> state? (or/c "yes" "no") state?)
-    (define plugged-in? (match online ["yes" #t] ["no" #f]))
-    (clock-incr (struct-copy state s [plugged-in? plugged-in?])))
+  (: state-update-plugged-in (-> state Boolean state))
+  (define (state-update-plugged-in s online)
+    (clock-incr (struct-copy state s [plugged-in? online])))
 
-  (define unique (compose set->list list->set))
+  (: unique (∀ (α) (-> (Listof α) (Listof α))))
+  (define (unique xs)
+    (set->list (list->set xs)))
 
-  (define/contract (state->status s)
-    (-> state? status?)
-    (define batteries (dict-values (state-batteries s)))
+  (: state->status (-> state status))
+  (define (state->status s)
+    (define batteries (hash-values (state-batteries s)))
     (let ([direction
             (let ([states (map battery-state batteries)])
               (cond [(not (state-plugged-in? s))                 '<]
@@ -65,29 +79,50 @@
           [percentage
             (if (empty? batteries)
                 #f
-                (let ([cur (apply + (map battery-energy batteries))]
-                      [max (apply + (map battery-energy-full batteries))])
+                (let ([cur (apply + (filter-map battery-energy batteries))]
+                      [max (apply + (filter-map battery-energy-full batteries))])
                   (* 100 (/ cur max))))])
       (status direction percentage)))
   )
 
-(require 'types
-         'state
-         "sensor.rkt")
+(module notify racket
+  (provide notify)
 
-(define/contract (status->string s)
-  (-> status? string?)
+  (require libnotify)
+
+  (define/contract (notify summary body urgency)
+    (-> string? string? (or/c 'critical 'normal 'low) void?)
+    (send (new notification%
+               [summary summary]
+               [body    body]
+               [urgency urgency])
+          show)))
+
+(require 'types
+         'state)
+
+(require/typed 'notify
+               [notify (-> String String (U 'critical 'normal 'low) Void)])
+
+(require/typed "sensor.rkt"
+               [sensor:logger-start (-> Log-Level Void)]
+               [sensor:print/retry  (->* (String) (Natural) Void)])
+
+(: status->string (-> status String))
+(define (status->string s)
   (match-define (status direction percentage) s)
   (format "(⚡ ~a~a%)" direction (if percentage
                                     (~r percentage #:precision 0 #:min-width 3)
                                     "___")))
 
-(define/contract (read-msg input)
-  (-> input-port? (or/c 'eof battery? line-power?))
+(: read-msg (-> Input-Port (U 'eof battery line-power)))
+(define (read-msg input)
   ; msg = #f
   ;     | device?
   ;     | battery?
   ;     | line-power?
+  (: next (-> (Option (U device line-power battery))
+              (U 'eof line-power battery)))
   (define (next msg)
     (define line (read-line input))
     (if (eof-object? line)
@@ -100,7 +135,7 @@
              (if msg
                  (begin
                    (log-debug "msg: ~v" msg)
-                   msg)
+                   (cast msg (U battery line-power)))
                  (begin
                    (log-debug "EOM for unknown msg")
                    (next msg)))]
@@ -134,13 +169,17 @@
 
             [(and (battery? msg)
                   (string-prefix? line "    energy:"))
-             (next (struct-copy battery msg [energy
-                                              (string->number (second fields))]))]
+             (next (struct-copy battery
+                                msg
+                                [energy
+                                  (cast (string->number (second fields)) Real)]))]
 
             [(and (battery? msg)
                   (string-prefix? line "    energy-full:"))
-             (next (struct-copy battery msg [energy-full
-                                              (string->number (second fields))]))]
+             (next (struct-copy battery
+                                msg
+                                [energy-full
+                                  (cast (string->number (second fields)) Real)]))]
             ; -- END battery
 
             ; -- BEGIN line-power
@@ -150,13 +189,16 @@
                (next (line-power (if native-path native-path path) #f)))]
 
             [(and (line-power? msg) (string-prefix? line "    online:"))
-             (next (struct-copy line-power msg [online (second fields)]))]
+             (next (struct-copy line-power msg [online (match (second fields)
+                                                         ["yes" #t]
+                                                         ["no" #f])]))]
             ; -- END line-power
 
             [else
               (next msg)]))))
   (next #f))
 
+(: start-parser (-> Input-Port Thread Void))
 (define (start-parser input printer)
   (log-info "Starting loop ...")
   (let loop ([s (state-init)])
@@ -167,53 +209,53 @@
        (thread-send printer 'parser-exit)]
       [(struct* battery ([path p])) #:when (string-suffix? p "/DisplayDevice")
        (loop s)]
+      ; TODO (: state-update (-> State Msg State))
       [(and b (struct* battery ()))
        (loop (state-update-batteries s b))]
       [(line-power _ online)
        (loop (state-update-plugged-in s online))])))
 
+(: start-printer (-> Void))
 (define (start-printer)
-  (local-require libnotify)
   ; TODO User-defined alerts
   (define init-discharging-alerts (sort '(100 70 50 30 20 15 10 5 4 3 2 1 0) <))
   (log-info "Alerts defined: ~v" init-discharging-alerts)
-  (let loop ([prev-printer #f]
-             [alerts       init-discharging-alerts])
+  (let loop ([printer : (Option Thread)  #f]
+             [alerts                     init-discharging-alerts])
+    (for-each (λ (a) (assert a natural?)) alerts)
     (match (thread-receive)
       [(and s (status direction percentage))
        (log-debug "New status: ~v" s)
-       (when prev-printer
-         (kill-thread prev-printer))
+       (when printer
+         (kill-thread printer))
        ; TODO Fully-charged alert
-       (let ([curr-printer
+       (let ([printer
                (thread (λ () (sensor:print/retry (status->string s))))]
              [alerts
                (cond [(and percentage (equal? '< direction))
-                      (match (dropf alerts (λ (a) (<= a percentage)))
+                      (match (dropf alerts (λ ([a : Real]) (<= a percentage)))
                         [(cons a _)
-                         (send (new notification%
-                                    ; TODO User-defined summary
-                                    [summary (format "Battery power bellow ~a%!" a)]
-
-                                    ; TODO User-defined body
-                                    [body (~r percentage #:precision 2)]
-
-                                    ; TODO User-defined urgency
-                                    [urgency (cond [(<= a 10) 'critical]
-                                                   [(<= a 30) 'normal]
-                                                   [else      'low])])
-                               show)
-                         (let ([alerts (filter (λ (a-i) (< a-i a)) alerts)])
+                         (notify
+                           ; TODO User-defined summary
+                           (format "Battery power bellow ~a%!" a)
+                           ; TODO User-defined body
+                           (~r percentage #:precision 2)
+                           ; TODO User-defined urgency
+                           (cond [(<= a 10) 'critical]
+                                 [(<= a 30) 'normal]
+                                 [else      'low]))
+                         (let ([alerts (filter (λ ([a-i : Real]) (< a-i a)) alerts)])
                            (log-info "Alert sent: ~a. Remaining: ~v" a alerts)
                            alerts)]
                         [_
                           alerts])]
                      [else
                        init-discharging-alerts])])
-         (loop curr-printer alerts))]
+         (loop printer alerts))]
       ['parser-exit
        (void)])))
 
+(: run (-> Log-Level Void))
 (define (run log-level)
   (sensor:logger-start log-level)
   ; TODO Multiplex ports so we can execute as separate executables instead
@@ -234,13 +276,13 @@
   (ctrl 'wait)
   (define code (ctrl 'exit-code))
   (log-info "upower exit code: ~a" code)
-  (when (> code 0)
+  (when (and code (> code 0))
     ; FIXME We exit faster than the logger can print. Need to flush before exit.
     (log-error "non-zero exit code from upower: ~a" code))
   (exit code))
 
 (module+ main
-  (define opt-log-level 'info)
+  (define opt-log-level : Log-Level 'info)
   (command-line #:once-each
                 [("-d" "--debug")
                  "Enable debug logging"
