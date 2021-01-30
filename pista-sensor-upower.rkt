@@ -2,34 +2,34 @@
 
 #lang typed/racket
 
-; Can we do better than "types"? I hate that I've become That Guy ...
-(module types typed/racket
+(module msg typed/racket
   (provide (all-defined-out))
 
-  (struct device
+  (struct msg:device
           ([path        : String]
            [native-path : (Option String)]))
 
-  (struct line-power
+  (struct msg:line-power
           ([path   : String]
            [online : Boolean])
           #:transparent)
 
-  (struct battery
+  (struct msg:battery
           ([path        : String]
            [state       : (Option String)]
            [energy      : (Option Real)]
            [energy-full : (Option Real)])
           #:transparent)
+  ) ; Does this make you angry?
+
+(module status typed/racket
+  (provide (all-defined-out))
 
   (struct status
           ([direction  : (U '= '< '> '?)]
            [percentage : (Option Real)])
           #:transparent)
-
-  (define-type Batteries
-    (Immutable-HashTable String battery))
-  ) ; Does this make you angry?
+  )
 
 (module state typed/racket
   (provide state-init
@@ -37,7 +37,11 @@
            state-update-batteries
            state->status)
 
-  (require (submod ".." types))
+  (require (submod ".." msg)
+           (submod ".." status))
+
+  (define-type Batteries
+    (Immutable-HashTable String msg:battery))
 
   (struct state
           ([plugged-in? : Boolean]
@@ -53,9 +57,9 @@
   (define (clock-incr s)
     (struct-copy state s [clock (+ 1 (state-clock s))]))
 
-  (: state-update-batteries (-> state battery state))
+  (: state-update-batteries (-> state msg:battery state))
   (define (state-update-batteries s b)
-    (define batteries (hash-set (state-batteries s) (battery-path b) b))
+    (define batteries (hash-set (state-batteries s) (msg:battery-path b) b))
     (clock-incr (struct-copy state s [batteries batteries])))
 
   (: state-update-plugged-in (-> state Boolean state))
@@ -70,7 +74,7 @@
   (define (state->status s)
     (define batteries (hash-values (state-batteries s)))
     (let ([direction
-            (let ([states (map battery-state batteries)])
+            (let ([states (map msg:battery-state batteries)])
               (cond [(not (state-plugged-in? s))                 '<]
                     [(member      "discharging"         states)  '<]
                     [(member         "charging"         states)  '>]
@@ -79,8 +83,8 @@
           [percentage
             (if (empty? batteries)
                 #f
-                (let ([cur (apply + (filter-map battery-energy batteries))]
-                      [max (apply + (filter-map battery-energy-full batteries))])
+                (let ([cur (apply + (filter-map msg:battery-energy batteries))]
+                      [max (apply + (filter-map msg:battery-energy-full batteries))])
                   (* 100 (/ cur max))))])
       (status direction percentage)))
   )
@@ -98,7 +102,8 @@
                [urgency urgency])
           show)))
 
-(require 'types
+(require 'msg
+         'status
          'state)
 
 (require/typed 'notify
@@ -115,14 +120,14 @@
                                     (~r percentage #:precision 0 #:min-width 3)
                                     "___")))
 
-(: read-msg (-> Input-Port (U 'eof battery line-power)))
+(: read-msg (-> Input-Port (U 'eof msg:battery msg:line-power)))
 (define (read-msg input)
   ; msg = #f
   ;     | device?
   ;     | battery?
   ;     | line-power?
-  (: next (-> (Option (U device line-power battery))
-              (U 'eof line-power battery)))
+  (: next (-> (Option (U msg:device msg:line-power msg:battery))
+              (U 'eof msg:line-power msg:battery)))
   (define (next msg)
     (define line (read-line input))
     (if (eof-object? line)
@@ -135,7 +140,7 @@
              (if msg
                  (begin
                    (log-debug "msg: ~v" msg)
-                   (cast msg (U battery line-power)))
+                   (cast msg (U msg:battery msg:line-power)))
                  (begin
                    (log-debug "EOM for unknown msg")
                    (next msg)))]
@@ -143,53 +148,53 @@
             ; BOM when --dump
             [(and (not msg)
                   (string-prefix? line "Device: "))
-             (next (device (second fields) #f))]
+             (next (msg:device (second fields) #f))]
 
             ; BOM when --monitor-detail
             [(and (not msg)
                   (regexp-match?
                     #rx"^\\[[0-9]+:[0-9]+:[0-9]+\\.[0-9]+\\][ \t]+device changed:[ \t]+"
                     line))
-             (next (device (fourth fields) #f))]
+             (next (msg:device (fourth fields) #f))]
 
-            [(and (device? msg)
+            [(and (msg:device? msg)
                   (string-prefix? line "  native-path:"))
-             (next (struct-copy device msg [native-path (second fields)]))]
+             (next (struct-copy msg:device msg [native-path (second fields)]))]
 
             ; -- BEGIN battery
-            [(and (device? msg)
+            [(and (msg:device? msg)
                   (string=? line "  battery"))
-             (let ([path (device-path msg)]
-                   [native-path (device-native-path msg)])
-               (next (battery (if native-path native-path path) #f #f #f)))]
+             (let ([path (msg:device-path msg)]
+                   [native-path (msg:device-native-path msg)])
+               (next (msg:battery (if native-path native-path path) #f #f #f)))]
 
-            [(and (battery? msg)
+            [(and (msg:battery? msg)
                   (string-prefix? line "    state:"))
-             (next (struct-copy battery msg [state (second fields)]))]
+             (next (struct-copy msg:battery msg [state (second fields)]))]
 
-            [(and (battery? msg)
+            [(and (msg:battery? msg)
                   (string-prefix? line "    energy:"))
-             (next (struct-copy battery
+             (next (struct-copy msg:battery
                                 msg
                                 [energy
                                   (cast (string->number (second fields)) Real)]))]
 
-            [(and (battery? msg)
+            [(and (msg:battery? msg)
                   (string-prefix? line "    energy-full:"))
-             (next (struct-copy battery
+             (next (struct-copy msg:battery
                                 msg
                                 [energy-full
                                   (cast (string->number (second fields)) Real)]))]
             ; -- END battery
 
             ; -- BEGIN line-power
-            [(and (device? msg) (string=? line "  line-power"))
-             (let ([path (device-path msg)]
-                   [native-path (device-native-path msg)])
-               (next (line-power (if native-path native-path path) #f)))]
+            [(and (msg:device? msg) (string=? line "  line-power"))
+             (let ([path (msg:device-path msg)]
+                   [native-path (msg:device-native-path msg)])
+               (next (msg:line-power (if native-path native-path path) #f)))]
 
-            [(and (line-power? msg) (string-prefix? line "    online:"))
-             (next (struct-copy line-power msg [online (match (second fields)
+            [(and (msg:line-power? msg) (string-prefix? line "    online:"))
+             (next (struct-copy msg:line-power msg [online (match (second fields)
                                                          ["yes" #t]
                                                          ["no" #f])]))]
             ; -- END line-power
@@ -207,12 +212,12 @@
     (match (read-msg input)
       ['eof
        (thread-send printer 'parser-exit)]
-      [(struct* battery ([path p])) #:when (string-suffix? p "/DisplayDevice")
+      [(struct* msg:battery ([path p])) #:when (string-suffix? p "/DisplayDevice")
        (loop s)]
       ; TODO (: state-update (-> State Msg State))
-      [(and b (struct* battery ()))
+      [(and b (struct* msg:battery ()))
        (loop (state-update-batteries s b))]
-      [(line-power _ online)
+      [(msg:line-power _ online)
        (loop (state-update-plugged-in s online))])))
 
 (: start-printer (-> Void))
