@@ -19,8 +19,7 @@
            [state       : (Option String)]
            [energy      : (Option Real)]
            [energy-full : (Option Real)])
-          #:transparent)
-  ) ; Does this make you angry?
+          #:transparent))
 
 (module status typed/racket
   (provide (all-defined-out))
@@ -28,8 +27,7 @@
   (struct status
           ([direction  : (U '= '< '> '?)]
            [percentage : (Option Real)])
-          #:transparent)
-  )
+          #:transparent))
 
 (module state typed/racket
   (provide state-init
@@ -86,8 +84,7 @@
                 (let ([cur (apply + (filter-map msg:battery-energy batteries))]
                       [max (apply + (filter-map msg:battery-energy-full batteries))])
                   (* 100 (/ cur max))))])
-      (status direction percentage)))
-  )
+      (status direction percentage))))
 
 (module notify racket
   (provide notify)
@@ -195,8 +192,8 @@
 
             [(and (msg:line-power? msg) (string-prefix? line "    online:"))
              (next (struct-copy msg:line-power msg [online (match (second fields)
-                                                         ["yes" #t]
-                                                         ["no" #f])]))]
+                                                             ["yes" #t]
+                                                             ["no" #f])]))]
             ; -- END line-power
 
             [else
