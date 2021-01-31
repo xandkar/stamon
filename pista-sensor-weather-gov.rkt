@@ -77,18 +77,19 @@
     (format "Weather updated")
     (string-append
       "\n"
+      (get 'weather) "\n"
+      (get 'temperature_string) "\n"
+      "\n"
+      "humidity   : " (n->s (get 'relative_humidity)) "%\n"
+      "wind       : "       (get 'wind_string) "\n"
+      "pressure   : "       (get 'pressure_string) "\n"
+      "dewpoint   : "       (get 'dewpoint_string) "\n"
+      "visibility : " (n->s (get 'visibility_mi)) " miles\n"
+      "\n"
       (get 'location) "\n"
-      "\n"
-      "observation : " (get 'observation_time_rfc822) "\n"
-      "current     : " (date->string (current-date) #t) "\n"
-      "\n"
-      "weather     : " (get 'weather) "\n"
-      "temperature : "       (get 'temperature_string) "\n"
-      "humidity    : " (n->s (get 'relative_humidity)) "\n"
-      "wind        : "       (get 'wind_string) "\n"
-      "pressure    : "       (get 'pressure_string) "\n"
-      "dewpoint    : "       (get 'dewpoint_string) "\n"
-      "visibility  : " (n->s (get 'visibility_mi)) " miles\n")
+      (get 'observation_time_rfc822) "\n"
+      (date->string (current-date) #t) "\n"
+      )
     'low))
 
 (define/contract (loop station-id interval notify?)
