@@ -1,4 +1,7 @@
 compiled/
 *.o
 pista-sensor-battery
+pista-sensor-openweather
 pista-sensor-time
+pista-sensor-upower
+pista-sensor-weather-gov

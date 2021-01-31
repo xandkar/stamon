@@ -38,8 +38,8 @@ wifi_if=$(iwconfig | grep -v '^lo' | awk '/^[^\ ]/ {print $1}')
 ./pista-sensor-bluetooth        > "$fifo_blue"   &
 ./pista-sensor-wifi "$wifi_if" 5 > "$fifo_wifi"   &
 ./pista-sensor-battery          > "$fifo_batt"   &
-./pista-sensor-upower.rkt       > "$fifo_upow"   &
-./pista-sensor-weather-gov.rkt -n -i $(( 15 * 60)) KJFK > "$fifo_weather" &
+./pista-sensor-upower           > "$fifo_upow"   &
+./pista-sensor-weather-gov     -n -i $(( 15 * 60)) KJFK > "$fifo_weather" &
 
 pista \
     -l 0 \

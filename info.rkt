@@ -18,12 +18,10 @@
     "libnotify"
     "openweather"))
 
-(define racket-launcher-names
-  '("pista-sensor-openweather"
-    "pista-sensor-upower"
-    "pista-sensor-weather-gov"))
-
 (define racket-launcher-libraries
   '("pista-sensor-openweather.rkt"
     "pista-sensor-upower.rkt"
     "pista-sensor-weather-gov.rkt"))
+
+(define racket-launcher-names
+  racket-launcher-libraries)
