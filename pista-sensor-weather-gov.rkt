@@ -5,7 +5,8 @@
 (require net/http-client
          racket/date
          xml
-         xml/path)
+         xml/path
+         (prefix-in srfi/19: srfi/19))
 
 (require (prefix-in sensor: "sensor.rkt"))
 
@@ -70,6 +71,12 @@
       (cons 'ok (data<-port data-port))
       (cons 'error status-code)))
 
+(define (rfc2822->date str)
+  (seconds->date
+    (srfi/19:time-second
+      (srfi/19:date->time-utc
+        (srfi/19:string->date str "~a, ~d ~b ~y ~H:~M:~S ~z")))))
+
 (define (data-notify data)
   (define (get key) (dict-ref data key))
   (define n->s number->string)
@@ -87,7 +94,7 @@
       "visibility : " (n->s (get 'visibility_mi)) " miles\n"
       "\n"
       (get 'location) "\n"
-      (get 'observation_time_rfc822) "\n"
+      (date->string (rfc2822->date (get 'observation_time_rfc822)) #t) "\n"
       (date->string (current-date) #t) "\n"
       )
     'low))
