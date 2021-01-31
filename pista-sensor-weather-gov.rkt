@@ -73,27 +73,23 @@
 (define (data-notify data)
   (define (get key) (dict-ref data key))
   (define n->s number->string)
-  (local-require libnotify)
-  (send (new notification%
-             [summary (format "Weather updated")]
-             [body (string-append
-                     "\n"
-                     (get 'location) "\n"
-                     "\n"
-                     "observation : " (get 'observation_time_rfc822) "\n"
-                     "current     : " (date->string (current-date) #t) "\n"
-                     "\n"
-                     "weather     : " (get 'weather) "\n"
-                     "temperature : "       (get 'temperature_string) "\n"
-                     "humidity    : " (n->s (get 'relative_humidity)) "\n"
-                     "wind        : "       (get 'wind_string) "\n"
-                     "pressure    : "       (get 'pressure_string) "\n"
-                     "dewpoint    : "       (get 'dewpoint_string) "\n"
-                     "visibility  : " (n->s (get 'visibility_mi)) " miles\n"
-                     )]
-
-             [urgency 'low])
-        show))
+  (sensor:notify
+    (format "Weather updated")
+    (string-append
+      "\n"
+      (get 'location) "\n"
+      "\n"
+      "observation : " (get 'observation_time_rfc822) "\n"
+      "current     : " (date->string (current-date) #t) "\n"
+      "\n"
+      "weather     : " (get 'weather) "\n"
+      "temperature : "       (get 'temperature_string) "\n"
+      "humidity    : " (n->s (get 'relative_humidity)) "\n"
+      "wind        : "       (get 'wind_string) "\n"
+      "pressure    : "       (get 'pressure_string) "\n"
+      "dewpoint    : "       (get 'dewpoint_string) "\n"
+      "visibility  : " (n->s (get 'visibility_mi)) " miles\n")
+    'low))
 
 (define/contract (loop station-id interval notify?)
   (-> string? interval? boolean? void?)
@@ -110,8 +106,8 @@
        (let ([curr-printer
                (thread
                  (λ () (sensor:print/retry (format "(~a°F)" (~r (dict-ref data 'temp_f)
-                                                         #:min-width 3
-                                                         #:precision 0)))))])
+                                                                #:min-width 3
+                                                                #:precision 0)))))])
          (when notify?
            (data-notify data))
          (sleep (interval-normal i))

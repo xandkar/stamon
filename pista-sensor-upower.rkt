@@ -86,29 +86,17 @@
                   (* 100 (/ cur max))))])
       (status direction percentage))))
 
-(module notify racket
-  (provide notify)
-
-  (require libnotify)
-
-  (define/contract (notify summary body urgency)
-    (-> string? string? (or/c 'critical 'normal 'low) void?)
-    (send (new notification%
-               [summary summary]
-               [body    body]
-               [urgency urgency])
-          show)))
-
 (require 'msg
          'status
          'state)
 
-(require/typed 'notify
-               [notify (-> String String (U 'critical 'normal 'low) Void)])
-
 (require/typed "sensor.rkt"
-               [sensor:logger-start (-> Log-Level Void)]
-               [sensor:print/retry  (->* (String) (Natural) Void)])
+               [sensor:logger-start
+                 (-> Log-Level Void)]
+               [sensor:notify
+                 (-> String String (U 'critical 'normal 'low) Void)]
+               [sensor:print/retry
+                 (->* (String) (Natural) Void)])
 
 (: status->string (-> status String))
 (define (status->string s)
@@ -237,7 +225,7 @@
                (cond [(and percentage (equal? '< direction))
                       (match (dropf alerts (λ ([a : Real]) (<= a percentage)))
                         [(cons a _)
-                         (notify
+                         (sensor:notify
                            ; TODO User-defined summary
                            (format "Battery power bellow ~a%!" a)
                            ; TODO User-defined body

@@ -2,8 +2,11 @@
 
 (require racket/logging)
 
+(require libnotify)
+
 (provide sensor:print/retry
-         sensor:logger-start)
+         sensor:logger-start
+         sensor:notify)
 
 (define/contract (sensor:print/retry payload [init-backoff 1])
   (-> string? void?)
@@ -43,3 +46,11 @@
            (eprintf "~a [~a] ~a~n" (date->string (current-date) #t) level msg))
          (loop))))
   (current-logger logger))
+
+(define/contract (sensor:notify summary body urgency)
+  (-> string? string? (or/c 'critical 'normal 'low) void?)
+  (send (new notification%
+             [summary summary]
+             [body    body]
+             [urgency urgency])
+        show))
