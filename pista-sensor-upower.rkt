@@ -5,16 +5,16 @@
 (module msg typed/racket
   (provide (all-defined-out))
 
-  (struct msg:device
+  (struct device
           ([path        : String]
            [native-path : (Option String)]))
 
-  (struct msg:line-power
+  (struct line-power
           ([path   : String]
            [online : Boolean])
           #:transparent)
 
-  (struct msg:battery
+  (struct battery
           ([path        : String]
            [state       : (Option String)]
            [energy      : (Option Real)]
@@ -35,7 +35,7 @@
            state-update-batteries
            state->status)
 
-  (require (submod ".." msg)
+  (require (prefix-in msg: (submod ".." msg))
            (submod ".." status))
 
   (define-type Batteries
@@ -86,11 +86,11 @@
                   (* 100 (/ cur max))))])
       (status direction percentage))))
 
-(require 'msg
+(require (prefix-in msg: 'msg)
          'status
          'state)
 
-(require/typed "sensor.rkt"
+(require/typed (prefix-in sensor: "sensor.rkt")
                [sensor:logger-start
                  (-> Log-Level Void)]
                [sensor:notify

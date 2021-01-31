@@ -4,11 +4,11 @@
 
 (require libnotify)
 
-(provide sensor:print/retry
-         sensor:logger-start
-         sensor:notify)
+(provide print/retry
+         logger-start
+         notify)
 
-(define/contract (sensor:print/retry payload [init-backoff 1])
+(define/contract (print/retry payload [init-backoff 1])
   (-> string? void?)
   ; Q: Why do we expect print failures?
   ; A: We expect our stdout to be redirected to a FIFO, which is then read by
@@ -32,7 +32,7 @@
       (displayln payload)
       (flush-output))))
 
-(define/contract (sensor:logger-start level)
+(define/contract (logger-start level)
   (-> log-level/c void?)
   ; TODO implement graceful stop, flushing before exiting
   (define logger (make-logger #f #f level #f))
@@ -47,7 +47,7 @@
          (loop))))
   (current-logger logger))
 
-(define/contract (sensor:notify summary body urgency)
+(define/contract (notify summary body urgency)
   (-> string? string? (or/c 'critical 'normal 'low) void?)
   (send (new notification%
              [summary summary]

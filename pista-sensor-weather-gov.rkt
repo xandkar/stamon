@@ -7,7 +7,7 @@
          xml
          xml/path)
 
-(require "sensor.rkt")
+(require (prefix-in sensor: "sensor.rkt"))
 
 (struct interval (normal error-init error-curr))
 
