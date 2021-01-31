@@ -53,7 +53,7 @@ _start() {
         $(start_sensor  6  pista-sensor-mpd)               17   5  \
         $(start_sensor  7  pista-sensor-weather-gov \
                              -n \
-                             -i $(( 15 * 60 )) KJFK)        8   $(( 30 * 60 )) \
+                             -i $(( 30 * 60 )) KJFK)        8   $(( 30 * 60 )) \
         $(start_sensor  8  pista-sensor-time)              21   2"
 }
 
