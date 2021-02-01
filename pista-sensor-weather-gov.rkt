@@ -71,11 +71,13 @@
       (cons 'ok (data<-port data-port))
       (cons 'error status-code)))
 
+(define (rfc2822->seconds str)
+  (srfi/19:time-second
+    (srfi/19:date->time-utc
+      (srfi/19:string->date str "~a, ~d ~b ~y ~H:~M:~S ~z"))))
+
 (define (rfc2822->date str)
-  (seconds->date
-    (srfi/19:time-second
-      (srfi/19:date->time-utc
-        (srfi/19:string->date str "~a, ~d ~b ~y ~H:~M:~S ~z")))))
+  (seconds->date (rfc2822->seconds str)))
 
 (define (data-notify data)
   (define (get key) (dict-ref data key))
@@ -102,12 +104,13 @@
 (define/contract (loop station-id interval notify?)
   (-> string? interval? boolean? void?)
   (let loop ([prev-printer #f]
+             [prev-observ  0]
              [i            interval])
     (match (data-fetch station-id)
       [(cons 'error status-code)
        (log-error "Data fetch failed with ~a" status-code)
        (sleep (interval-error-curr i))
-       (loop prev-printer (interval-increase i))]
+       (loop prev-printer prev-observ (interval-increase i))]
       [(cons 'ok data)
        (when prev-printer
          (kill-thread prev-printer))
@@ -115,11 +118,13 @@
                (thread
                  (λ () (sensor:print/retry (format "(~a°F)" (~r (dict-ref data 'temp_f)
                                                                 #:min-width 3
-                                                                #:precision 0)))))])
-         (when notify?
+                                                                #:precision 0)))))]
+             [curr-observ (rfc2822->seconds (dict-ref data 'observation_time_rfc822))])
+         (when (and notify?
+                    (> curr-observ prev-observ))
            (data-notify data))
          (sleep (interval-normal i))
-         (loop curr-printer (interval-reset i)))])))
+         (loop curr-printer curr-observ (interval-reset i)))])))
 
 (module+ main
   (date-display-format 'rfc2822)
