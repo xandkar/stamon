@@ -86,17 +86,10 @@
                   (* 100 (/ cur max))))])
       (status direction percentage))))
 
-(require (prefix-in msg: 'msg)
+(require (prefix-in sensor: "sensor.rkt")
+         (prefix-in msg: 'msg)
          'status
          'state)
-
-(require/typed (prefix-in sensor: "sensor.rkt")
-               [sensor:logger-start
-                 (-> Log-Level Void)]
-               [sensor:notify
-                 (-> String String (U 'critical 'normal 'low) Void)]
-               [sensor:print/retry
-                 (->* (String) (Natural) Void)])
 
 (: status->string (-> status String))
 (define (status->string s)

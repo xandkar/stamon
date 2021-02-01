@@ -1,15 +1,24 @@
-#lang racket
+#lang typed/racket
 
-(require racket/logging)
+(require/typed racket/base
+               ; TODO Why make-logger default type isn't compatible with my usage?
+               [make-logger
+                 (-> False False Log-Level False Logger)])
 
-(require libnotify)
+(require/typed libnotify
+               [notification%
+                 (Class (init [summary String]
+                              [body    String]
+                              [urgency (U 'critical 'normal 'low)])
+                        [show (-> Void)]
+                        [close (-> Void)])])
 
 (provide print/retry
          logger-start
          notify)
 
-(define/contract (print/retry payload [init-backoff 1])
-  (-> string? void?)
+(: print/retry (->* (String) (Positive-Real) Void))
+(define (print/retry payload [init-backoff 1.0])
   ; Q: Why do we expect print failures?
   ; A: We expect our stdout to be redirected to a FIFO, which is then read by
   ; pista, which closes the pipe between message reads. We therefore expect
@@ -20,26 +29,28 @@
   ; from the burst are still being written.
   ;
   ; Perhaps pista should allow more than a single message before pipe closure?
-  (let retry ([backoff init-backoff])
+  (let retry ([backoff : Positive-Real init-backoff])
     (with-handlers
       ([exn?
          (λ (e)
             (log-error
               "Print failure. Retrying in ~a seconds. Exception: ~v" backoff e)
             (sleep backoff)
-            (define jitter (random))
-            (retry (+ jitter (* 2 backoff))))])
+            (let* ([jitter  (cast (random) Positive-Real)]
+                   [backoff (+ jitter (* 2 backoff))])
+              (retry backoff))
+            )])
       (displayln payload)
       (flush-output))))
 
-(define/contract (logger-start level)
-  (-> log-level/c void?)
+(: logger-start (-> Log-Level Void))
+(define (logger-start level)
   ; TODO implement graceful stop, flushing before exiting
   (define logger (make-logger #f #f level #f))
   (define log-receiver (make-log-receiver logger level))
   (thread
     (λ ()
-       (local-require racket/date)
+       (local-require typed/racket/date)
        (date-display-format 'iso-8601)
        (let loop ()
          (match-let ([(vector level msg _ ...) (sync log-receiver)])
@@ -47,8 +58,8 @@
          (loop))))
   (current-logger logger))
 
-(define/contract (notify summary body urgency)
-  (-> string? string? (or/c 'critical 'normal 'low) void?)
+(: notify (-> String String (U 'critical 'normal 'low) Void))
+(define (notify summary body urgency)
   (send (new notification%
              [summary summary]
              [body    body]
