@@ -8,3 +8,16 @@
       (kill-thread old-retry))
     (define new-retry (thread (thunk (retry val))))
     (loop new-retry))
+
+- [ ] Handle notify exception:
+    $ pista-sensor-weather-gov -n -i 1800 KJFK > /home/siraaj/.pista-in/pista-sensor-weather-gov; notify-send -u critical 'pista-sensor exited!' "pista-sensor-weather-gov\n$?"
+    GError-message: contract violation
+      expected: GError?
+      given: #<cpointer>
+      context...:
+       GError-message
+       /home/siraaj/.racket/7.9/pkgs/libnotify/libnotify.rkt:72:4: show method in notification%
+       /usr/share/racket/pkgs/typed-racket-lib/typed-racket/utils/simple-result-arrow.rkt:39:12
+       /home/siraaj/proj/pub/pista-sensors/pista-sensor-weather-gov.rkt:106:2: loop
+       /usr/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
+       '|#%mzc:pista-sensor-weather-gov(main)|: [running body]
