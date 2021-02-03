@@ -7,6 +7,7 @@ BINS := \
     pista-sensor-battery \
     pista-sensor-time \
     pista-sensor-upower \
+    pista-sensor-mpd \
     pista-sensor-openweather \
     pista-sensor-weather-gov
 
@@ -21,6 +22,9 @@ pista-sensor-battery: \
 pista-sensor-time: \
 	pista_log.o \
 	pista_time.o
+
+pista-sensor-mpd: pista-sensor-mpd.rkt
+	raco exe -o $@ $<
 
 pista-sensor-openweather: pista-sensor-openweather.rkt
 	raco exe -o $@ $<
