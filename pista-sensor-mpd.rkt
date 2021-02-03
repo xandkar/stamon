@@ -62,14 +62,17 @@
     ['pause '=]
     ['stop  '-]))
 
+(define seconds-in-minute : Natural 60)
+(define seconds-in-hour   : Natural (* 60 seconds-in-minute))
+
 (: status->string (-> Status String))
 (define (status->string s)
   (define time
-    (let* ([s   (status-elapsed s)]
-           [h   (floor (/ (/ s 60) 60))]
-           [s   (- s (* 60 (* 60 h)))] ; seconds beyond hours
-           [m   (floor (/ s 60))]
-           [s   (- s (* 60 m))]  ; seconds beyond minutes
+    (let* ([s   (status-elapsed s)]              ; seconds (total)
+           [h   (floor (/ s seconds-in-hour))]   ; hours
+           [s   (- s (* h seconds-in-hour))]     ; seconds (beyond hours)
+           [m   (floor (/ s seconds-in-minute))] ; minutes
+           [s   (- s (* m seconds-in-minute))]   ; seconds (beyond minutes)
            [fmt (λ ([t : Real]) (~r t #:precision 0 #:min-width 2 #:pad-string "0"))]
            [hh  (if (> h 0) `(,(fmt h)) '())]
            [mm  `(,(fmt m))]
