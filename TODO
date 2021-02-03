@@ -26,3 +26,6 @@
        '|#%mzc:pista-sensor-weather-gov(main)|: [running body]
 
 - [ ] Handle crashed threads. Perhaps something OTP-inspired?
+
+- [ ] Grab power updates from D-Bus, rather than "upower --monitor-detail"
+  See: https://docs.racket-lang.org/dbus/
