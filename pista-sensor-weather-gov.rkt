@@ -19,7 +19,7 @@
   (struct-copy interval i [error-curr (* 2 (interval-error-curr i))]))
 
 (define data/c
-  (listof (cons/c symbol? (or/c string? number?))))
+  (listof (cons/c symbol? (or/c string? number? #f))))
 
 (define/contract (xexpr->data x)
   (-> xexpr? data/c)
@@ -80,7 +80,7 @@
   (seconds->date (rfc2822->seconds str)))
 
 (define (data-notify data)
-  (define (get key) (dict-ref data key))
+  (define (get key) (dict-ref data key ""))
   (define n->s number->string)
   (sensor:notify
     (format "Weather updated")
