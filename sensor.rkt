@@ -29,19 +29,26 @@
   ; from the burst are still being written.
   ;
   ; Perhaps pista should allow more than a single message before pipe closure?
-  (let retry ([backoff : Positive-Real init-backoff])
+  (let retry ([backoff : Positive-Real init-backoff]
+              [attempt : Natural       1])
     (with-handlers
       ([exn?
          (λ (e)
             (log-error
-              "Print failure. Retrying in ~a seconds. Exception: ~v" backoff e)
+              "Print failure ~a. Retrying in ~a seconds. Exception: ~v"
+              attempt
+              backoff
+              e)
             (sleep backoff)
             (let* ([jitter  (cast (random) Positive-Real)]
-                   [backoff (+ jitter (* 2 backoff))])
-              (retry backoff))
+                   [backoff (+ jitter (* 2 backoff))]
+                   [attempt (+ 1 attempt)])
+              (retry backoff attempt))
             )])
       (displayln payload)
-      (flush-output))))
+      (flush-output)
+      (when (> attempt 1)
+        (log-info "Print success after ~a attempts." attempt)))))
 
 (: logger-start (-> Log-Level Void))
 (define (logger-start level)
