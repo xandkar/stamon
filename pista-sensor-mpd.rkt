@@ -17,9 +17,9 @@
   (Immutable-HashTable String String))
 
 (struct status
-        ([state           : State]
-         [seconds-current : Nonnegative-Integer]
-         [seconds-total   : Nonnegative-Integer])
+        ([state    : State]
+         [elapsed  : Nonnegative-Real]
+         [duration : Nonnegative-Real])
         #:type-name Status)
 
 (: read-msg (-> Input-Port Msg))
@@ -45,14 +45,15 @@
 (: msg->status (-> Msg Status))
 (define (msg->status msg)
   (log-debug "(msg->status ~a)" (pretty-format msg))
-  (define time (map string->number (string-split (hash-ref msg "time") ":")))
   (define state (match (hash-ref msg "state")
                   ["play"  'play]
                   ["pause" 'pause]
                   ["stop"  'stop]))
+  (define elapsed  (string->number (hash-ref msg "elapsed")))
+  (define duration (string->number (hash-ref msg "duration")))
   (status state
-          (cast (first  time) Nonnegative-Integer)
-          (cast (second time) Nonnegative-Integer)))
+          (cast elapsed  Nonnegative-Real)
+          (cast duration Nonnegative-Real)))
 
 (: state->symbol (-> State Symbol))
 (define (state->symbol s)
@@ -64,7 +65,7 @@
 (: status->string (-> Status String))
 (define (status->string s)
   (define time
-    (let* ([s   (status-seconds-current s)]
+    (let* ([s   (status-elapsed s)]
            [h   (floor (/ (/ s 60) 60))]
            [s   (- s (* 60 (* 60 h)))] ; seconds beyond hours
            [m   (floor (/ s 60))]
@@ -75,9 +76,9 @@
            [ss  `(,(fmt s))])
       (string-join (append hh mm ss) ":")))
   (define percentage
-    (let ([cur (status-seconds-current s)]
-          [tot (status-seconds-total s)])
-      (if (> (status-seconds-total s) 0)
+    (let ([cur (status-elapsed s)]
+          [tot (status-duration s)])
+      (if (> (status-duration s) 0)
           (format "~a%" (~r (* 100 (/ cur tot)) #:precision 0 #:min-width 3))
           "~")))
   (format "(~a ~a ~a)"
