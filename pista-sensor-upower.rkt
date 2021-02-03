@@ -7,7 +7,8 @@
 
   (struct device
           ([path        : String]
-           [native-path : (Option String)]))
+           [native-path : (Option String)])
+          #:transparent)
 
   (struct line-power
           ([path   : String]
@@ -115,14 +116,14 @@
           (cond
             ; EOM
             [(string=? line "")
-             (if msg
+             (if (or (msg:battery? msg)
+                     (msg:line-power? msg))
                  (begin
                    (log-debug "msg: ~v" msg)
-                   ; FIXME Handle when msg is still device here
-                   (cast msg (U msg:battery msg:line-power)))
+                   msg)
                  (begin
-                   (log-debug "EOM for unknown msg")
-                   (next msg)))]
+                   (log-debug "EOM for unknown msg: ~a" (pretty-format msg))
+                   (next #f)))]
 
             ; BOM when --dump
             [(and (not msg)
