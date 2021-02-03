@@ -19,11 +19,11 @@
   (struct-copy interval i [error-curr (* 2 (interval-error-curr i))]))
 
 (define data/c
-  (listof (cons/c symbol? (or/c string? number? #f))))
+  (listof (cons/c symbol? (or/c string? number?))))
 
 (define/contract (xexpr->data x)
   (-> xexpr? data/c)
-  (define (str path [default #f])
+  (define (str path [default ""])
     (let ([val (se-path* (append '(current_observation) path) x)])
       (cons (car path) (if val val default))))
   (define (num path)
@@ -80,7 +80,7 @@
   (seconds->date (rfc2822->seconds str)))
 
 (define (data-notify data)
-  (define (get key) (dict-ref data key ""))
+  (define (get key) (dict-ref data key))
   (define n->s number->string)
   (sensor:notify
     (format "Weather updated")
