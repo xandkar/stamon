@@ -21,3 +21,5 @@
        /home/siraaj/proj/pub/pista-sensors/pista-sensor-weather-gov.rkt:106:2: loop
        /usr/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
        '|#%mzc:pista-sensor-weather-gov(main)|: [running body]
+
+- [ ] Handle crashed threads. Perhaps something OTP-inspired?

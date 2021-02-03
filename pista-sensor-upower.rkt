@@ -118,6 +118,7 @@
              (if msg
                  (begin
                    (log-debug "msg: ~v" msg)
+                   ; FIXME Handle when msg is still device here
                    (cast msg (U msg:battery msg:line-power)))
                  (begin
                    (log-debug "EOM for unknown msg")
