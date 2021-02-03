@@ -18,11 +18,11 @@
 (define (interval-increase i)
   (struct-copy interval i [error-curr (* 2 (interval-error-curr i))]))
 
-(define data?
+(define data/c
   (listof (cons/c symbol? (or/c string? number?))))
 
 (define/contract (xexpr->data x)
-  (-> xexpr? data?)
+  (-> xexpr? data/c)
   (define (str path [default #f])
     (let ([val (se-path* (append '(current_observation) path) x)])
       (cons (car path) (if val val default))))
@@ -53,7 +53,7 @@
   (compose xexpr->data string->xexpr port->string))
 
 (define/contract (data-fetch station-id)
-  (-> string? (or/c (cons/c 'ok data?)
+  (-> string? (or/c (cons/c 'ok data/c)
                     (cons/c 'error number?)))
   (define-values (status-line headers data-port)
     (http-sendrecv
