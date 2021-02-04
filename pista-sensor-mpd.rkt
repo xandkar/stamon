@@ -109,13 +109,22 @@
 (: main (->* (#:host String #:port Integer Nonnegative-Real) () Void))
 (define (main #:host host #:port port interval)
   (let loop ([c       : (Option Conn)   #f]
-             [printer : (Option Thread) #f])
+             [printer : (Option Thread) #f]
+             [failures : Natural         0]
+             [backoff  : Nonnegative-Real interval])
     (with-handlers*
       ([exn:fail?
          (λ (e)
-            (log-error "Network failure: ~v" e)
-            (sleep interval) ; TODO Backoff?
-            (loop #f printer))])
+            (let* ([failures (+ 1 failures)]
+                   [next-backoff (+ interval backoff)]
+                   [next-backoff (if (<= next-backoff 60) next-backoff 60)])
+              (log-error
+                "Network failure ~a. Backing off for ~a seconds. Exception: ~v"
+                failures
+                backoff
+                e)
+              (sleep backoff)
+              (loop #f printer failures next-backoff)))])
       (let* ([c
                : Conn
                (if c c (conn-open host port))]
@@ -128,7 +137,7 @@
                  (when printer (kill-thread printer))
                  (thread (λ () (print/retry status))))])
         (sleep interval)
-        (loop c printer))))
+        (loop c printer 0 interval))))
   (flush-output (current-error-port)))
 
 (module+ main
