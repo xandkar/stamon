@@ -16,31 +16,48 @@
 (define-type Msg
   (Immutable-HashTable String String))
 
+(struct conn
+        ([ip : Input-Port]
+         [op : Output-Port])
+        #:type-name Conn)
+
 (struct status
         ([state    : State]
          [elapsed  : Nonnegative-Real]
          [duration : Nonnegative-Real])
         #:type-name Status)
 
-(: read-msg (-> Input-Port Msg))
-(define (read-msg ip)
+(: conn-open (-> String Integer Conn))
+(define (conn-open host port)
+  (define-values (ip op) (tcp-connect host port))
+  (let ([server-version-line (read-line ip)])
+    (log-info "Connected to: ~v" server-version-line))
+  (conn ip op))
+
+(: recv (-> Input-Port Msg))
+(define (recv ip)
   (let loop ([msg : Msg #hash()])
     (define line (read-line ip))
     (log-debug "Msg line read: ~v" line)
-    (cond [(eof-object? line) (assert #f)]
-          [(string-prefix? line "OK") msg]
+    (cond [(eof-object? line)
+           (error 'eof-on-recv)]
+          [(string-prefix? line "OK")
+           msg]
           [else
             (match (regexp-match #rx"^([A-Za-z-]+)(: +)(.*$)" line)
               [(list _ k _ v) #:when (and (string? k)
                                           (string? v))
                (loop (hash-set msg k v))])])))
 
-(: send/recv (-> Input-Port Output-Port Cmd Msg))
-(define (send/recv ip op cmd)
+(: send (-> Output-Port Cmd Void))
+(define (send op cmd)
   (displayln cmd op)
-  (flush-output op)
-  (define msg (read-msg ip))
-  msg)
+  (flush-output op))
+
+(: send/recv (-> Conn Cmd Msg))
+(define (send/recv c cmd)
+  (send (conn-op c) cmd)
+  (recv (conn-ip c)))
 
 (: msg->status (-> Msg Status))
 (define (msg->status msg)
@@ -91,21 +108,28 @@
 
 (: main (->* (#:host String #:port Integer Nonnegative-Real) () Void))
 (define (main #:host host #:port port interval)
-  (with-handlers
-    ([exn:fail:network?
-       (λ (_)
-          ; TODO Connection retry loop
-          (log-fatal "Connection could not be established to: ~a ~a" host port))])
-    (define-values (ip op) (tcp-connect host port))
-    (let ([init-line (read-line ip)])
-      (log-info "Server version: ~v" init-line))
-    (let loop ()
-      (displayln (status->string (msg->status (send/recv ip op 'status))))
-      (flush-output)
-      (sleep interval)
-      (loop))
-    (close-input-port ip)
-    (close-output-port op))
+  (let loop ([c       : (Option Conn)   #f]
+             [printer : (Option Thread) #f])
+    (with-handlers
+      ([exn:fail?
+         (λ (e)
+            ; FIXME Why do we lose keyboard interrupt ability here?
+            (log-error "Network failure: ~v" e)
+            (sleep interval) ; TODO Backoff?
+            (loop #f printer))])
+      (let* ([c
+               : Conn
+               (if c c (conn-open host port))]
+             [status
+               : String
+               (status->string (msg->status (send/recv c 'status)))]
+             [printer
+               : Thread
+               (begin
+                 (when printer (kill-thread printer))
+                 (thread (λ () (print/retry status))))])
+        (sleep interval)
+        (loop c printer))))
   (flush-output (current-error-port)))
 
 (module+ main
