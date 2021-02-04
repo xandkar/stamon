@@ -34,6 +34,11 @@
     (log-info "Connected to: ~v" server-version-line))
   (conn ip op))
 
+(: conn-close (-> Conn Void))
+(define (conn-close c)
+  (close-input-port  (conn-ip c))
+  (close-output-port (conn-op c)))
+
 (: recv (-> Input-Port Msg))
 (define (recv ip)
   (let loop ([msg : Msg #hash()])
@@ -115,6 +120,8 @@
     (with-handlers*
       ([exn:fail?
          (λ (e)
+            (when c
+              (conn-close c))
             (let* ([failures (+ 1 failures)]
                    [next-backoff (+ interval backoff)]
                    [next-backoff (if (<= next-backoff 60) next-backoff 60)])
