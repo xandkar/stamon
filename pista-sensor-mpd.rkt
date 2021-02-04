@@ -71,8 +71,9 @@
                   ["play"  'play]
                   ["pause" 'pause]
                   ["stop"  'stop]))
-  (define elapsed  (string->number (hash-ref msg "elapsed")))
-  (define duration (string->number (hash-ref msg "duration")))
+  ; TODO Restructure to handle #f rather than hand-waving a 0
+  (define elapsed  (string->number (hash-ref msg "elapsed"  (λ () "0"))))
+  (define duration (string->number (hash-ref msg "duration" (λ () "0"))))
   (status state
           (cast elapsed  Nonnegative-Real)
           (cast duration Nonnegative-Real)))
@@ -105,7 +106,7 @@
           [tot (status-duration s)])
       (if (> (status-duration s) 0)
           (format "~a%" (~r (* 100 (/ cur tot)) #:precision 0 #:min-width 3))
-          "~")))
+          "   ~")))
   (format "(~a ~a ~a)"
           (state->symbol (status-state s))
           (~a time #:width 8 #:align 'right)
