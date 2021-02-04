@@ -110,10 +110,9 @@
 (define (main #:host host #:port port interval)
   (let loop ([c       : (Option Conn)   #f]
              [printer : (Option Thread) #f])
-    (with-handlers
+    (with-handlers*
       ([exn:fail?
          (λ (e)
-            ; FIXME Why do we lose keyboard interrupt ability here?
             (log-error "Network failure: ~v" e)
             (sleep interval) ; TODO Backoff?
             (loop #f printer))])

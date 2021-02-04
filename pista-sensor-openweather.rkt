@@ -30,7 +30,7 @@
         (sleep (interval-error-curr i))
         (loop (interval-increase i))]
       [temp
-        (with-handlers
+        (with-handlers*
           ; Expecting broken pipes
           ([exn:fail:filesystem:errno? (λ (e) (log-error "Print failed: ~v" e))])
           (printf "(~a°F)\n" (~r temp #:min-width 3 #:precision 0))

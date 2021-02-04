@@ -31,8 +31,8 @@
   ; Perhaps pista should allow more than a single message before pipe closure?
   (let retry ([backoff : Positive-Real init-backoff]
               [attempt : Natural       1])
-    (with-handlers
-      ([exn?
+    (with-handlers*
+      ([exn:fail?
          (λ (e)
             (log-error
               "Print failure ~a. Retrying in ~a seconds. Exception: ~v"
