@@ -104,7 +104,7 @@
   (define percentage
     (let ([cur (status-elapsed s)]
           [tot (status-duration s)])
-      (if (> (status-duration s) 0)
+      (if (> tot 0)
           (format "~a%" (~r (* 100 (/ cur tot)) #:precision 0 #:min-width 3))
           "   ~")))
   (format "(~a ~a ~a)"
