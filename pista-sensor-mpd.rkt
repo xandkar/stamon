@@ -83,7 +83,7 @@
   (match s
     ['play  ">"]
     ['pause "="]
-    ['stop  "-"]))
+    ['stop  " "]))
 
 (define seconds-in-minute : Natural 60)
 (define seconds-in-hour   : Natural (* 60 seconds-in-minute))
