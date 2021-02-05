@@ -78,12 +78,12 @@
           (cast elapsed  Nonnegative-Real)
           (cast duration Nonnegative-Real)))
 
-(: state->symbol (-> State Symbol))
-(define (state->symbol s)
+(: state->string (-> State String))
+(define (state->string s)
   (match s
-    ['play  '>]
-    ['pause '=]
-    ['stop  '-]))
+    ['play  ">"]
+    ['pause "="]
+    ['stop  "-"]))
 
 (define seconds-in-minute : Natural 60)
 (define seconds-in-hour   : Natural (* 60 seconds-in-minute))
@@ -108,7 +108,7 @@
           (format "~a%" (~r (* 100 (/ cur tot)) #:precision 0 #:min-width 3))
           "   ~")))
   (format "(~a ~a ~a)"
-          (state->symbol (status-state s))
+          (state->string (status-state s))
           (~a time #:width 8 #:align 'right)
           percentage))
 
