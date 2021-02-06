@@ -16,11 +16,11 @@ Notes
 
 #### How to switch from intervaled polling to reactive updates?
 
-  $ pactl subscribe | awk '/^Event .+ on sink .+$/'
-  Event 'change' on sink #0
-  Event 'change' on sink #0
-  Event 'change' on sink #0
-  ^CGot SIGINT, exiting.
+    $ pactl subscribe | awk '/^Event .+ on sink .+$/'
+    Event 'change' on sink #0
+    Event 'change' on sink #0
+    Event 'change' on sink #0
+    ^CGot SIGINT, exiting.
 
 seems to do the main trick, but still requires to trigger another call to check
 the volume value. Is there any event on the system that carries this value?
