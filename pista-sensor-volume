@@ -62,8 +62,11 @@ current_state() {
 
 trap '' PIPE
 
-while :
+# Initial reading
+current_state
+
+pactl subscribe | grep --line-buffered "^Event 'change' on sink .\+$" \
+| while read -r _
 do
-	printf "%s\n" "$(current_state)"
-	sleep 1
+    current_state
 done
