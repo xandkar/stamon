@@ -83,34 +83,45 @@
   (match s
     ['play  ">"]
     ['pause "="]
-    ['stop  " "]))
+    ['stop  "-"]))
 
 (define seconds-in-minute : Natural 60)
 (define seconds-in-hour   : Natural (* 60 seconds-in-minute))
 
+(: status->percentage-string (-> Status String))
+(define (status->percentage-string s)
+  (define width 4)
+  (match (status-state s)
+    ['stop
+     "---"]
+    [_
+      (let ([cur (status-elapsed s)]
+            [tot (status-duration s)])
+        (~r (* 100 (/ cur tot)) #:precision 0))]))
+
+(: status->time-string (-> Status String))
+(define (status->time-string s)
+  (match (status-state s)
+    ['stop
+     "--:--"]
+    [_
+      (let* ([s   (status-elapsed s)]              ; seconds (total)
+             [h   (floor (/ s seconds-in-hour))]   ; hours
+             [s   (- s (* h seconds-in-hour))]     ; seconds (beyond hours)
+             [m   (floor (/ s seconds-in-minute))] ; minutes
+             [s   (- s (* m seconds-in-minute))]   ; seconds (beyond minutes)
+             [fmt (λ ([t : Real]) (~r t #:precision 0 #:min-width 2 #:pad-string "0"))]
+             [hh  (if (> h 0) `(,(fmt h)) '())]
+             [mm  `(,(fmt m))]
+             [ss  `(,(fmt s))])
+        (string-join (append hh mm ss) ":"))]))
+
 (: status->string (-> Status String))
 (define (status->string s)
-  (define time
-    (let* ([s   (status-elapsed s)]              ; seconds (total)
-           [h   (floor (/ s seconds-in-hour))]   ; hours
-           [s   (- s (* h seconds-in-hour))]     ; seconds (beyond hours)
-           [m   (floor (/ s seconds-in-minute))] ; minutes
-           [s   (- s (* m seconds-in-minute))]   ; seconds (beyond minutes)
-           [fmt (λ ([t : Real]) (~r t #:precision 0 #:min-width 2 #:pad-string "0"))]
-           [hh  (if (> h 0) `(,(fmt h)) '())]
-           [mm  `(,(fmt m))]
-           [ss  `(,(fmt s))])
-      (string-join (append hh mm ss) ":")))
-  (define percentage
-    (let ([cur (status-elapsed s)]
-          [tot (status-duration s)])
-      (if (> tot 0)
-          (format "~a%" (~r (* 100 (/ cur tot)) #:precision 0 #:min-width 3))
-          "   ~")))
-  (format "(~a ~a ~a)"
+  (format "(~a ~a ~a%)"
           (state->string (status-state s))
-          (~a time #:width 8 #:align 'right)
-          percentage))
+          (~a (status->time-string s)       #:width 8 #:align 'right)
+          (~a (status->percentage-string s) #:width 3 #:align 'right)))
 
 (: main (->* (#:host String #:port Integer Nonnegative-Real) () Void))
 (define (main #:host host #:port port interval)
