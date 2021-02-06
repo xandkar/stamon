@@ -90,7 +90,6 @@
 
 (: status->percentage-string (-> Status String))
 (define (status->percentage-string s)
-  (define width 4)
   (match (status-state s)
     ['stop
      "---"]
