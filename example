@@ -43,7 +43,7 @@ wifi_if=$(iwconfig | grep -v '^lo' | awk '/^[^\ ]/ {print $1}')
 
 pista \
     -l 0 \
-    -i 0.5 \
+    -i 0 \
     -s '  ' \
     "$fifo_upow"   11 60 \
     "$fifo_wifi"    8 10  \

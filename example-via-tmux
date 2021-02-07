@@ -46,7 +46,7 @@ _start() {
         0 \
         "pista \
         -l 3 \
-        -i 0.25 \
+        -i 0 \
         -s '  ' \
         -x \
         $(start_sensor  1  pista-sensor-upower)            11 120  \
