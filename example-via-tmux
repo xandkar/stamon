@@ -58,7 +58,8 @@ _start() {
         $(start_sensor  7  pista-sensor-weather-gov \
                              -n \
                              -i $(( 30 * 60 )) KJFK)        8   $(( 30 * 60 )) \
-        $(start_sensor  8  pista-sensor-time)              21   2"
+        $(start_sensor  8  pista-sensor-time)              21   2 \
+        ; notify-send -u critical 'pista exited!' \"$exe\n\$?\""
 }
 
 _stop() {
