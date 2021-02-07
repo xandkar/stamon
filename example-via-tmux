@@ -45,8 +45,8 @@ _start() {
     tmux_new_win \
         0 \
         "pista \
-        -l 0 \
-        -i 0.5 \
+        -l 3 \
+        -i 0.25 \
         -s '  ' \
         -x \
         $(start_sensor  1  pista-sensor-upower)            11 120  \
