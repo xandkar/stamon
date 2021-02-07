@@ -49,7 +49,7 @@ pista \
     "$fifo_wifi"    8 10  \
     "$fifo_blue"    9 10  \
     "$fifo_light"  10  5   \
-    "$fifo_vol"     8  5   \
+    "$fifo_vol"     8  $(( 60 * 60 ))   \
     "$fifo_mpd"    17  5   \
     "$fifo_weather" 8 $(( 30 * 60 ))   \
     "$fifo_time"   21  2
