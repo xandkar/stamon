@@ -67,8 +67,10 @@
 
 (: notify (-> String String (U 'critical 'normal 'low) Void))
 (define (notify summary body urgency)
-  (send (new notification%
-             [summary summary]
-             [body    body]
-             [urgency urgency])
-        show))
+  (with-handlers*
+    ([exn:fail? (λ (e) (log-error "Notification failure: ~v" e))])
+    (send (new notification%
+               [summary summary]
+               [body    body]
+               [urgency urgency])
+          show)))
