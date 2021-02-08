@@ -7,7 +7,7 @@ BASE_DIR="$HOME/.pista-in"
 
 # Now that volume is switched from polling to reacting to change events - we
 # need a long TTL, until pista implements infinity TTLs:
-TTL_VOLUME=$(( 60 * 60 ))
+TTL_VOLUME=$(( 24 * 60 * 60 ))
 
 tmux_new_win() {
     # Have to pass the window id because incrementing a global is futile, since
