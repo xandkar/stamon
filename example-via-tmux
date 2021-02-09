@@ -48,7 +48,7 @@ _start() {
         $(start_sensor  1  pista-sensor-upower)            11 120  \
         $(start_sensor  2  pista-sensor-wifi $wifi_if 5)    8  10  \
         $(start_sensor  3  pista-sensor-bluetooth)          9  10  \
-        $(start_sensor  4  pista-sensor-backlight)         10   5  \
+        $(start_sensor  4  pista-sensor-backlight)         10  -1  \
         $(start_sensor  5  pista-sensor-volume)             8  -1  \
         $(start_sensor  6  pista-sensor-mpd)               17   5  \
         $(start_sensor  7  pista-sensor-weather-gov \

@@ -19,8 +19,20 @@ current_state() {
 
 trap '' PIPE
 
-while :
+current_state
+
+# So technically, fswatch's poll_monitor just does a simple, periodic poll, as
+# stated in the man page:
+#
+# > The poll monitor, a monitor which periodically stats the file system, saves
+# > file modification times in memory and manually calculates file system
+# > changes ...
+#
+# My thinking is that while it is still the same idea in principle, it is less
+# work than us forking awk every second.
+#
+fswatch -m poll_monitor "$path/brightness" \
+| while read -r _
 do
-        printf "%s\n" "$(current_state)"
-        sleep 1
+    current_state
 done

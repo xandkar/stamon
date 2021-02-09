@@ -9,6 +9,11 @@ Example configurations
 - [example-via-tmux](example-via-tmux): init-like setup with tmux, can be
   conveniently (re)started at any time, independently of `.xinitrc`
 
+Dependencies
+------------
+
+- [`fswatch`](https://github.com/emcrisostomo/fswatch) for backlight
+
 Notes
 -----
 
