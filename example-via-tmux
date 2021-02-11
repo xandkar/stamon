@@ -75,10 +75,10 @@ main() {
     local -r cmd="$1"
     cd "$BASE_DIR"
     case "$cmd" in
-        'start') _start;;
-        'stop') _stop;;
-        'restart') _restart;;
-        'attach') _attach;;
+        'start'   ) _start;;
+        'stop'    ) _stop;;
+        'restart' ) _restart;;
+        'attach'  ) _attach;;
         *)
             echo "[error] Unknown command: \"$cmd\". Known: start|stop|restart|attach"
             exit 1;;
