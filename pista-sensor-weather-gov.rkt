@@ -106,25 +106,35 @@
   (let loop ([prev-printer #f]
              [prev-observ  0]
              [i            interval])
-    (match (data-fetch station-id)
-      [(cons 'error status-code)
-       (log-error "Data fetch failed with ~a" status-code)
-       (sleep (interval-error-curr i))
-       (loop prev-printer prev-observ (interval-increase i))]
-      [(cons 'ok data)
-       (when prev-printer
-         (kill-thread prev-printer))
-       (let ([curr-printer
-               (thread
-                 (λ () (sensor:print/retry (format "(~a°F)" (~r (dict-ref data 'temp_f)
-                                                                #:min-width 3
-                                                                #:precision 0)))))]
-             [curr-observ (rfc2822->seconds (dict-ref data 'observation_time_rfc822))])
-         (when (and notify?
-                    (> curr-observ prev-observ))
-           (data-notify data))
-         (sleep (interval-normal i))
-         (loop curr-printer curr-observ (interval-reset i)))])))
+    (with-handlers*
+      ([exn:fail?
+         (λ (e)
+            (log-error
+              "Network failure. Backing off for ~a seconds. Exception: ~v"
+              (interval-error-curr i)
+              e)
+            (sleep (interval-error-curr i))
+            (loop prev-printer prev-observ (interval-increase i)))])
+      (match (data-fetch station-id)
+        [(cons 'error status-code)
+         (log-error "Data fetch failed with ~a" status-code)
+         (sleep (interval-error-curr i))
+         (loop prev-printer prev-observ (interval-increase i))]
+        [(cons 'ok data)
+         (when prev-printer
+           (kill-thread prev-printer))
+         (let ([curr-printer
+                 (thread
+                   (λ () (sensor:print/retry (format "(~a°F)" (~r (dict-ref data 'temp_f)
+                                                                  #:min-width 3
+                                                                  #:precision 0)))))]
+               [curr-observ (rfc2822->seconds (dict-ref data 'observation_time_rfc822))])
+           (when (and notify?
+                      (> curr-observ prev-observ))
+             (data-notify data))
+           (sleep (interval-normal i))
+           (loop curr-printer curr-observ (interval-reset i)))]))
+    ))
 
 (module+ main
   (date-display-format 'rfc2822)
