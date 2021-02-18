@@ -79,27 +79,30 @@
 (define (rfc2822->date str)
   (seconds->date (rfc2822->seconds str)))
 
-(define (data-notify data)
+(define (data-summary data)
   (define (get key) (dict-ref data key))
   (define n->s number->string)
-  (sensor:notify
-    (format "Weather updated")
-    (string-append
-      "\n"
-      (get 'weather) "\n"
-      (get 'temperature_string) "\n"
-      "\n"
-      "humidity   : " (n->s (get 'relative_humidity)) "%\n"
-      "wind       : "       (get 'wind_string) "\n"
-      "pressure   : "       (get 'pressure_string) "\n"
-      "dewpoint   : "       (get 'dewpoint_string) "\n"
-      "visibility : " (n->s (get 'visibility_mi)) " miles\n"
-      "\n"
-      (get 'location) "\n"
-      (date->string (rfc2822->date (get 'observation_time_rfc822)) #t) "\n"
-      (date->string (current-date) #t) "\n"
-      )
-    'low))
+  (string-append
+    "\n"
+    (get 'weather) "\n"
+    (get 'temperature_string) "\n"
+    "\n"
+    "humidity   : " (n->s (get 'relative_humidity)) "%\n"
+    "wind       : "       (get 'wind_string) "\n"
+    "pressure   : "       (get 'pressure_string) "\n"
+    "dewpoint   : "       (get 'dewpoint_string) "\n"
+    "visibility : " (n->s (get 'visibility_mi)) " miles\n"
+    "\n"
+    (get 'location) "\n"
+    (date->string (rfc2822->date (get 'observation_time_rfc822)) #t) "\n"
+    (date->string (current-date) #t) "\n"
+    ))
+
+(define (data-notify data)
+  (define subject "Weather updated")
+  (define body (data-summary data))
+  (define priority 'low)
+  (sensor:notify subject body priority))
 
 (define/contract (loop station-id interval notify?)
   (-> string? interval? boolean? void?)
@@ -129,6 +132,7 @@
                                                                   #:min-width 3
                                                                   #:precision 0)))))]
                [curr-observ (rfc2822->seconds (dict-ref data 'observation_time_rfc822))])
+           (log-debug "Data summary: ~a" (data-summary data))
            (when (and notify?
                       (> curr-observ prev-observ))
              (data-notify data))
