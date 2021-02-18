@@ -29,3 +29,8 @@
 
 - [ ] Grab power updates from D-Bus, rather than "upower --monitor-detail"
   See: https://docs.racket-lang.org/dbus/
+
+- [ ] Abstract weather and unify gov and openweather as backend options for
+  this abstract weather sensor.
+
+- [ ] Microfone in-use sensor. See: `notes/microphone-use.txt`

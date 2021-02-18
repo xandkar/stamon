@@ -1,0 +1,75 @@
+1 Identify mic file
+-------------------
+
+When mic not in-use:
+
+    $ lsof | grep '/dev/snd'
+    pulseaudi  3899                 siraaj   17u      CHR             116,13       0t0        548 /dev/snd/controlC0
+    pulseaudi  3899                 siraaj   24u      CHR             116,13       0t0        548 /dev/snd/controlC0
+    pulseaudi  3899                 siraaj   30u      CHR             116,13       0t0        548 /dev/snd/controlC0
+    alsa-sink  3899  3911           siraaj   17u      CHR             116,13       0t0        548 /dev/snd/controlC0
+    alsa-sink  3899  3911           siraaj   24u      CHR             116,13       0t0        548 /dev/snd/controlC0
+    alsa-sink  3899  3911           siraaj   30u      CHR             116,13       0t0        548 /dev/snd/controlC0
+    alsa-sour  3899  3912           siraaj   17u      CHR             116,13       0t0        548 /dev/snd/controlC0
+    alsa-sour  3899  3912           siraaj   24u      CHR             116,13       0t0        548 /dev/snd/controlC0
+    alsa-sour  3899  3912           siraaj   30u      CHR             116,13       0t0        548 /dev/snd/controlC0
+    snapd-gli  3899  3913           siraaj   17u      CHR             116,13       0t0        548 /dev/snd/controlC0
+    snapd-gli  3899  3913           siraaj   24u      CHR             116,13       0t0        548 /dev/snd/controlC0
+    snapd-gli  3899  3913           siraaj   30u      CHR             116,13       0t0        548 /dev/snd/controlC0
+
+When mic in-use:
+
+    $ lsof | grep '/dev/snd'
+    pulseaudi  3899                 siraaj  mem       CHR              116,3                  530 /dev/snd/pcmC0D0c
+    pulseaudi  3899                 siraaj   17u      CHR             116,13       0t0        548 /dev/snd/controlC0
+    pulseaudi  3899                 siraaj   24u      CHR             116,13       0t0        548 /dev/snd/controlC0
+    pulseaudi  3899                 siraaj   30u      CHR             116,13       0t0        548 /dev/snd/controlC0
+    pulseaudi  3899                 siraaj   46u      CHR              116,3       0t0        530 /dev/snd/pcmC0D0c
+    alsa-sink  3899  3911           siraaj  mem       CHR              116,3                  530 /dev/snd/pcmC0D0c
+    alsa-sink  3899  3911           siraaj   17u      CHR             116,13       0t0        548 /dev/snd/controlC0
+    alsa-sink  3899  3911           siraaj   24u      CHR             116,13       0t0        548 /dev/snd/controlC0
+    alsa-sink  3899  3911           siraaj   30u      CHR             116,13       0t0        548 /dev/snd/controlC0
+    alsa-sink  3899  3911           siraaj   46u      CHR              116,3       0t0        530 /dev/snd/pcmC0D0c
+    alsa-sour  3899  3912           siraaj  mem       CHR              116,3                  530 /dev/snd/pcmC0D0c
+    alsa-sour  3899  3912           siraaj   17u      CHR             116,13       0t0        548 /dev/snd/controlC0
+    alsa-sour  3899  3912           siraaj   24u      CHR             116,13       0t0        548 /dev/snd/controlC0
+    alsa-sour  3899  3912           siraaj   30u      CHR             116,13       0t0        548 /dev/snd/controlC0
+    alsa-sour  3899  3912           siraaj   46u      CHR              116,3       0t0        530 /dev/snd/pcmC0D0c
+    snapd-gli  3899  3913           siraaj  mem       CHR              116,3                  530 /dev/snd/pcmC0D0c
+    snapd-gli  3899  3913           siraaj   17u      CHR             116,13       0t0        548 /dev/snd/controlC0
+    snapd-gli  3899  3913           siraaj   24u      CHR             116,13       0t0        548 /dev/snd/controlC0
+    snapd-gli  3899  3913           siraaj   30u      CHR             116,13       0t0        548 /dev/snd/controlC0
+    snapd-gli  3899  3913           siraaj   46u      CHR              116,3       0t0        530 /dev/snd/pcmC0D0c
+
+2 watch for file changes
+------------------------
+    $ while :; do inotifywait /dev/snd/pcmC0D0c; sleep 0.1; done
+    Setting up watches.
+    Watches established.
+    /dev/snd/pcmC0D0c OPEN
+    Setting up watches.
+    Watches established.
+    /dev/snd/pcmC0D0c CLOSE_WRITE,CLOSE
+    Setting up watches.
+    Watches established.
+    /dev/snd/pcmC0D0c OPEN
+    Setting up watches.
+    Watches established.
+    /dev/snd/pcmC0D0c CLOSE_WRITE,CLOSE
+    Setting up watches.
+    Watches established.
+
+3 query current file user PID
+-----------------------------
+
+    $ fuser /dev/snd/pcmC0D0c
+    /dev/snd/pcmC0D0c:    3899m
+
+4 look-up command/program of PID
+--------------------------------
+
+    $ cat /proc/3899/comm
+    pulseaudio
+
+5 Ask pulseaudio who is using the microphone
+--------------------------------------------
