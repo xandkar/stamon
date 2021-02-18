@@ -132,6 +132,8 @@
                                                                   #:min-width 3
                                                                   #:precision 0)))))]
                [curr-observ (rfc2822->seconds (dict-ref data 'observation_time_rfc822))])
+           ; TODO Option to write data to a given file path
+           ;      So that another tool may read current weather status.
            (log-debug "Data summary: ~a" (data-summary data))
            (when (and notify?
                       (> curr-observ prev-observ))
