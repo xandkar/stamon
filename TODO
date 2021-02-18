@@ -11,7 +11,7 @@
       (define new-retry (thread (thunk (retry val))))
       (loop new-retry))
 
-- [ ] Handle notify exception:
+- [x] Handle notify exception:
 
     $ pista-sensor-weather-gov -n -i 1800 KJFK > /home/siraaj/.pista-in/pista-sensor-weather-gov; notify-send -u critical 'pista-sensor exited!' "pista-sensor-weather-gov\n$?"
     GError-message: contract violation
