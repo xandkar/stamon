@@ -90,13 +90,14 @@
 
 (: status->percentage-string (-> Status String))
 (define (status->percentage-string s)
-  (match (status-state s)
-    ['stop
-     "---"]
-    [_
-      (let ([cur (status-elapsed s)]
-            [tot (status-duration s)])
-        (~r (* 100 (/ cur tot)) #:precision 0))]))
+  (define cur (status-elapsed s))
+  (define tot (status-duration s))
+  (cond [(equal? 'stop (status-state s))
+         "---"]
+        [(not (> tot 0))  ; streaming
+         "~~~"]
+        [else
+          (~r (* 100 (/ cur tot)) #:precision 0)]))
 
 (: status->time-string (-> Status String))
 (define (status->time-string s)
