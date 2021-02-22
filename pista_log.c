@@ -4,4 +4,4 @@
 
 #include "pista_log.h"
 
-LogLevel _pista_log_level = Debug;
+const LogLevel _pista_log_level = Debug;

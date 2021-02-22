@@ -12,4 +12,4 @@ typedef enum pista_LogLevel {
 	Debug
 } LogLevel;
 
-LogLevel _pista_log_level;
+extern const LogLevel _pista_log_level;
