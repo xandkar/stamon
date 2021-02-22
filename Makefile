@@ -48,6 +48,8 @@ rebuild:
 install:
 	mkdir -p ~/bin
 	find . -type f -name 'pista-sensor-*' -executable -exec cp -f '{}' ~/bin/ \;
+
+install_init:
 	cp ./example-via-tmux ~/.xinitrc-pista
 
 reinstall:
