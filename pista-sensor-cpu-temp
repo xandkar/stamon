@@ -1,0 +1,46 @@
+#! /bin/bash
+
+_input_file=
+
+input_file_set() {
+    local hwmon label
+
+    for hwmon in /sys/class/hwmon/*
+    do
+        # TODO "k10temp" if for my Ryzen 9, what about other CPUs?
+	if [[ "$(< "$hwmon/name")" =~ k10temp ]]
+	then
+	    for label in "$hwmon"/temp*_label
+	    do
+                # TODO "Tdie" is the real temp on Ryzen 9, what about other CPUs?
+                # Tdie: real temperature
+                # Tctl: real + offset, for use with fans
+                # Tctl vs Tdie info sources:
+                # - https://www.reddit.com/r/Amd/comments/9drxgs/hwinfo64_cputctl_or_cputdie/e5jp4f7/
+                # - https://www.guru3d.com/articles-pages/amd-ryzen-threadripper-1950x-review,8.html
+                # - https://community.amd.com/t5/blogs/amd-ryzen-community-update/ba-p/415608
+		if [[ "$(< "$label")" =~ Tdie ]]
+		then
+		    _input_file=${label/_label/_input}
+		fi
+	    done
+	fi
+    done
+}
+
+input_file_read() {
+    awk '{printf "(c %6.2f)\n", $1 / 1000; exit}' "$_input_file"
+}
+
+trap '' PIPE
+
+main() {
+    input_file_set
+    while :
+    do
+        input_file_read
+        sleep "$1"
+    done
+}
+
+main "$*"
