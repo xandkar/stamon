@@ -29,7 +29,7 @@ input_file_set() {
 }
 
 input_file_read() {
-    awk '{printf "(c %6.2f)\n", $1 / 1000; exit}' "$_input_file"
+    awk '{printf "(c %3d°C)\n", $1 / 1000; exit}' "$_input_file"
 }
 
 trap '' PIPE
