@@ -1,0 +1,23 @@
+#! /bin/bash
+
+set -e
+set -o pipefail
+
+main() {
+    local -r address="$1"
+    local -r interval="$2"
+
+    local balance
+
+    trap '' PIPE
+
+    while :
+    do
+        # HNT coefficient: 100000000
+        balance=$(curl https://api.helium.io/v1/accounts/"$address" | jq '.data.balance / 100000000')
+        printf '(H %.2f)\n' "$balance"
+        sleep "$interval"
+    done
+}
+
+main "$@"
