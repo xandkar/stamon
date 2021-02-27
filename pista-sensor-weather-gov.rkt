@@ -98,12 +98,6 @@
     (date->string (current-date) #t) "\n"
     ))
 
-(define (data-notify data)
-  (define subject "Weather updated")
-  (define body (data-summary data))
-  (define priority 'low)
-  (sensor:notify subject body priority))
-
 (define/contract (loop station-id summary-file interval notify?)
   (-> string? path? interval? boolean? void?)
   (let loop ([prev-printer #f]
@@ -131,17 +125,20 @@
                    (λ () (sensor:print/retry (format "(~a°F)" (~r (dict-ref data 'temp_f)
                                                                   #:min-width 3
                                                                   #:precision 0)))))]
-               [curr-observ (rfc2822->seconds (dict-ref data 'observation_time_rfc822))])
-           (log-debug "Data summary: ~a" (data-summary data))
-           (when (and notify?
-                      (> curr-observ prev-observ))
-             (data-notify data))
-           (when (and summary-file
-                      (> curr-observ prev-observ))
-             (with-output-to-file
-               summary-file
-               (λ () (display (data-summary data)))
-               #:exists 'replace))
+               [curr-observ
+                 (rfc2822->seconds (dict-ref data 'observation_time_rfc822))]
+               [summary
+                 (data-summary data)])
+           (log-debug "Data summary: ~a" summary)
+           (when (> curr-observ prev-observ)
+             (when notify?
+               (sensor:notify "Weather updated" summary 'low))
+             (when summary-file
+               ; TODO Error handling
+               (with-output-to-file
+                 summary-file
+                 (λ () (display summary))
+                 #:exists 'replace)))
            (sleep (interval-normal i))
            (loop curr-printer curr-observ (interval-reset i)))]))
     ))
