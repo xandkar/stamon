@@ -14,7 +14,7 @@ main() {
     while :
     do
         # HNT coefficient: 100000000
-        balance=$(curl https://api.helium.io/v1/accounts/"$address" | jq '.data.balance / 100000000')
+        balance=$(curl https://api.helium.io/v1/accounts/"$address" | jq '.data.balance / 100000000' || true)
         printf '(H %.2f)\n' "$balance"
         sleep "$interval"
     done
