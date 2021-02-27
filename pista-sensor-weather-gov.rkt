@@ -104,8 +104,8 @@
   (define priority 'low)
   (sensor:notify subject body priority))
 
-(define/contract (loop station-id interval notify?)
-  (-> string? interval? boolean? void?)
+(define/contract (loop station-id summary-file interval notify?)
+  (-> string? path? interval? boolean? void?)
   (let loop ([prev-printer #f]
              [prev-observ  0]
              [i            interval])
@@ -132,12 +132,16 @@
                                                                   #:min-width 3
                                                                   #:precision 0)))))]
                [curr-observ (rfc2822->seconds (dict-ref data 'observation_time_rfc822))])
-           ; TODO Option to write data to a given file path
-           ;      So that another tool may read current weather status.
            (log-debug "Data summary: ~a" (data-summary data))
            (when (and notify?
                       (> curr-observ prev-observ))
              (data-notify data))
+           (when (and summary-file
+                      (> curr-observ prev-observ))
+             (with-output-to-file
+               summary-file
+               (λ () (display (data-summary data)))
+               #:exists 'replace))
            (sleep (interval-normal i))
            (loop curr-printer curr-observ (interval-reset i)))]))
     ))
@@ -149,6 +153,7 @@
   (define opt-backoff one-minute)
   (define opt-log-level 'info)
   (define opt-notify #f)
+  (define opt-summary-file #f)
   (command-line #:once-each
                 [("-d" "--debug")
                  "Enable debug logging"
@@ -159,6 +164,9 @@
                 [("-b" "--backoff")
                  b "Initial retry backoff period (subsequently doubled)."
                  (set! opt-backoff (string->number b))]
+                [("-s" "--summary-file")
+                 s "Write summary to the given filepath."
+                 (set! opt-summary-file (string->path s))]
                 [("-n" "--notify")
                  "Enable notifications"
                  (set! opt-notify #t)]
@@ -166,6 +174,7 @@
                 (station-id)
                 (sensor:logger-start opt-log-level)
                 (loop station-id
+                      opt-summary-file
                       (interval opt-interval
                                 opt-backoff
                                 opt-backoff)
