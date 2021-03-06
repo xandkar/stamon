@@ -3,6 +3,8 @@
 ;
 #lang typed/racket
 
+(require typed/racket/date)
+
 (require "sensor.rkt")
 
 (define-type State
@@ -116,6 +118,15 @@
              [ss  `(,(fmt s))])
         (string-join (append hh mm ss) ":"))]))
 
+(: log-memory-usage (-> (Option Output-Port) Void))
+(define (log-memory-usage mem-log)
+  ; TODO Handle IO errors
+  (when mem-log
+    (displayln (format "~a ~a"
+                       (date->seconds (current-date))
+                       (current-memory-use))
+               mem-log)))
+
 (: status->string (-> Status String))
 (define (status->string s)
   (format "(~a ~a ~a%)"
@@ -123,8 +134,18 @@
           (~a (status->time-string s)       #:width 8 #:align 'right)
           (~a (status->percentage-string s) #:width 3 #:align 'right)))
 
-(: main (->* (#:host String #:port Integer Nonnegative-Real) () Void))
-(define (main #:host host #:port port interval)
+(: main (->* (
+              #:host     String
+              #:port     Integer
+              #:interval Nonnegative-Real
+              #:mem-log  (Option Output-Port))
+             ()
+             Void))
+(define (main #:host host
+              #:port port
+              #:interval interval
+              #:mem-log mem-log)
+  (log-memory-usage mem-log)
   (let loop ([c       : (Option Conn)   #f]
              [printer : (Option Thread) #f]
              [failures : Natural         0]
@@ -155,6 +176,7 @@
                (begin
                  (when printer (kill-thread printer))
                  (thread (λ () (print/retry status))))])
+        (log-memory-usage mem-log)
         (sleep interval)
         (loop c printer 0 interval))))
   (flush-output (current-error-port)))
@@ -164,6 +186,7 @@
   (define opt-port 6600)
   (define opt-log-level : Log-Level 'info)
   (define opt-interval-seconds : Nonnegative-Real 1)
+  (define opt-mem-log : (Option Path-String) #f)
   (command-line
     #:once-each
     [("-d" "--debug")
@@ -172,9 +195,15 @@
     [("-i" "--interval")
      i "Poll interval"
      (set! opt-interval-seconds
-           (cast (string->number (cast i String)) Nonnegative-Real))])
+           (cast (string->number (cast i String)) Nonnegative-Real))]
+    [("-m" "--mem-log")
+     m "Path to a file to which memory usage will be logged"
+     (set! opt-mem-log (string->path (cast m String)))])
   (define log-handler (logger-start opt-log-level))
   (main
     #:host opt-host
     #:port opt-port
-    opt-interval-seconds))
+    #:interval opt-interval-seconds
+    #:mem-log (if opt-mem-log
+                  (open-output-file (assert opt-mem-log) #:exists 'append)
+                  #f)))
