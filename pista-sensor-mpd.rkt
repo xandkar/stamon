@@ -125,7 +125,8 @@
     (displayln (format "~a ~a"
                        (date->seconds (current-date))
                        (current-memory-use))
-               mem-log)))
+               mem-log)
+    (flush-output mem-log)))
 
 (: status->string (-> Status String))
 (define (status->string s)
