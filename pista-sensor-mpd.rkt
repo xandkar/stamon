@@ -199,7 +199,7 @@
     [("-m" "--mem-log")
      m "Path to a file to which memory usage will be logged"
      (set! opt-mem-log (string->path (cast m String)))])
-  (define log-handler (logger-start opt-log-level))
+  (logger-start opt-log-level)
   (main
     #:host opt-host
     #:port opt-port
