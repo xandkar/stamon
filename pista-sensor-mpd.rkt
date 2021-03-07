@@ -146,11 +146,11 @@
               #:port port
               #:interval interval
               #:mem-log mem-log)
-  (log-memory-usage mem-log)
   (let loop ([c       : (Option Conn)   #f]
              [printer : (Option Thread) #f]
              [failures : Natural         0]
              [backoff  : Nonnegative-Real interval])
+    (log-memory-usage mem-log)
     (with-handlers*
       ([exn:fail?
          (λ (e)
@@ -177,7 +177,6 @@
                (begin
                  (when printer (kill-thread printer))
                  (thread (λ () (print/retry status))))])
-        (log-memory-usage mem-log)
         (sleep interval)
         (loop c printer 0 interval))))
   (flush-output (current-error-port)))
