@@ -98,11 +98,21 @@
     (date->string (current-date) #t) "\n"
     ))
 
-(define/contract (loop station-id summary-file interval notify?)
-  (-> string? path? interval? boolean? void?)
+(define (log-memory-usage mem-log)
+  ; TODO Handle IO errors
+  (when mem-log
+    (displayln (format "~a ~a"
+                       (date->seconds (current-date))
+                       (current-memory-use))
+               mem-log)
+    (flush-output mem-log)))
+
+(define/contract (loop station-id summary-file interval notify? #:mem-log mem-log)
+  (-> string? (or/c #f path?) interval? boolean? #:mem-log (or/c #f port?) void?)
   (let loop ([prev-printer #f]
              [prev-observ  0]
              [i            interval])
+    (log-memory-usage mem-log)
     (with-handlers*
       ([exn:fail?
          (λ (e)
@@ -151,6 +161,7 @@
   (define opt-log-level 'info)
   (define opt-notify #f)
   (define opt-summary-file #f)
+  (define opt-mem-log #f)
   (command-line #:once-each
                 [("-d" "--debug")
                  "Enable debug logging"
@@ -167,6 +178,9 @@
                 [("-n" "--notify")
                  "Enable notifications"
                  (set! opt-notify #t)]
+                [("-m" "--mem-log")
+                 m "Path to a file to which memory usage will be logged"
+                 (set! opt-mem-log (string->path m))]
                 #:args
                 (station-id)
                 (sensor:logger-start opt-log-level)
@@ -175,7 +189,10 @@
                       (interval opt-interval
                                 opt-backoff
                                 opt-backoff)
-                      opt-notify)))
+                      opt-notify
+                      #:mem-log (if opt-mem-log
+                                    (open-output-file opt-mem-log #:exists 'append)
+                                    #f))))
 
 ; API docs at https://www.weather.gov/documentation/services-web-api
 
