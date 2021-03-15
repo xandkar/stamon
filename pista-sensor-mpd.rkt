@@ -39,7 +39,8 @@
 (: conn-close (-> Conn Void))
 (define (conn-close c)
   (close-input-port  (conn-ip c))
-  (close-output-port (conn-op c)))
+  (close-output-port (conn-op c))
+  (log-info "Disconnected."))
 
 (: recv (-> Input-Port Msg))
 (define (recv ip)
@@ -146,16 +147,15 @@
               #:port port
               #:interval interval
               #:mem-log mem-log)
-  (let loop ([c       : (Option Conn)   #f]
-             [printer : (Option Thread) #f]
-             [failures : Natural         0]
-             [backoff  : Nonnegative-Real interval])
+  (define printer : (Option Thread) #f)
+  (define c       : (Option Conn)   #f)
+  (let retry ([failures : Natural          0]
+              [backoff  : Nonnegative-Real interval])
     (log-memory-usage mem-log)
     (with-handlers*
       ([exn:fail?
          (λ (e)
-            (when c
-              (conn-close c))
+            (when c (conn-close (assert c)))
             (let* ([failures (+ 1 failures)]
                    [next-backoff (+ interval backoff)]
                    [next-backoff (if (<= next-backoff 60) next-backoff 60)])
@@ -165,20 +165,15 @@
                 backoff
                 e)
               (sleep backoff)
-              (loop #f printer failures next-backoff)))])
-      (let* ([c
-               : Conn
-               (if c c (conn-open host port))]
-             [status
-               : String
-               (status->string (msg->status (send/recv c 'status)))]
-             [printer
-               : Thread
-               (begin
-                 (when printer (kill-thread printer))
-                 (thread (λ () (print/retry status))))])
+              (retry failures next-backoff)))])
+      (set! c (conn-open host port))
+      (let poll ([c : Conn (assert c)])
+        (log-memory-usage mem-log)
+        (let ([s : String (status->string (msg->status (send/recv c 'status)))])
+          (when printer (kill-thread (assert printer)))
+          (set! printer (thread (λ () (print/retry s)))))
         (sleep interval)
-        (loop c printer 0 interval))))
+        (poll c))))
   (flush-output (current-error-port)))
 
 (module+ main
