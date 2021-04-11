@@ -107,7 +107,8 @@
 
 (: seconds->hms (-> Nonnegative-Real (List Real Real Real)))
 (define (seconds->hms s)
-  (let* ([h (floor (/ s seconds-in-hour))]   ; hours
+  (let* ([s (floor s)]
+         [h (floor (/ s seconds-in-hour))]   ; hours
          [s (- s (* h seconds-in-hour))]     ; seconds (beyond hours)
          [m (floor (/ s seconds-in-minute))] ; minutes
          [s (- s (* m seconds-in-minute))])  ; seconds (beyond minutes)
@@ -148,6 +149,7 @@
   (check-equal? (status->time-string (status 'play 60 0)) "01:00")
   (check-equal? (status->time-string (status 'play 60 100)) "01:00") ; duration noop
   (check-equal? (status->time-string (status 'play (* 32 60) 0)) "32:00")
+  (check-equal? (status->time-string (status 'play 59.5 0)) "00:59")
   (check-equal? (status->time-string (status 'play 7269 0)) "02:01:09")
   )
 
