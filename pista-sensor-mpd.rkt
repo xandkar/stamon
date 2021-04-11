@@ -7,6 +7,9 @@
 
 (require "sensor.rkt")
 
+(module+ test
+  (require typed/rackunit))
+
 (define-type State
   (U 'play
      'pause
@@ -102,22 +105,51 @@
         [else
           (~r (* 100 (/ cur tot)) #:precision 0)]))
 
+(: seconds->hms (-> Nonnegative-Real (List Real Real Real)))
+(define (seconds->hms s)
+  (let* ([h (floor (/ s seconds-in-hour))]   ; hours
+         [s (- s (* h seconds-in-hour))]     ; seconds (beyond hours)
+         [m (floor (/ s seconds-in-minute))] ; minutes
+         [s (- s (* m seconds-in-minute))])  ; seconds (beyond minutes)
+    (list h m s)))
+
+(module+ test
+  (check-equal? (seconds->hms        0)  (list 0  0  0))
+  (check-equal? (seconds->hms        1)  (list 0  0  1))
+  (check-equal? (seconds->hms        5)  (list 0  0  5))
+  (check-equal? (seconds->hms       10)  (list 0  0 10))
+  (check-equal? (seconds->hms (* 31 60)) (list 0 31  0))
+  (check-equal? (seconds->hms       60)  (list 0  1  0))
+  (check-equal? (seconds->hms      120)  (list 0  2  0))
+  (check-equal? (seconds->hms     3600)  (list 1  0  0))
+  (check-equal? (seconds->hms     7200)  (list 2  0  0))
+  (check-equal? (seconds->hms     7260)  (list 2  1  0))
+  (check-equal? (seconds->hms     7269)  (list 2  1  9))
+  )
+
 (: status->time-string (-> Status String))
 (define (status->time-string s)
   (match (status-state s)
     ['stop
      "--:--"]
     [_
-      (let* ([s   (status-elapsed s)]              ; seconds (total)
-             [h   (floor (/ s seconds-in-hour))]   ; hours
-             [s   (- s (* h seconds-in-hour))]     ; seconds (beyond hours)
-             [m   (floor (/ s seconds-in-minute))] ; minutes
-             [s   (- s (* m seconds-in-minute))]   ; seconds (beyond minutes)
-             [fmt (λ ([t : Real]) (~r t #:precision 0 #:min-width 2 #:pad-string "0"))]
-             [hh  (if (> h 0) `(,(fmt h)) '())]
-             [mm  `(,(fmt m))]
-             [ss  `(,(fmt s))])
-        (string-join (append hh mm ss) ":"))]))
+      (match (seconds->hms (status-elapsed s))
+        [(list h m s)
+         (let* ([fmt (λ ([t : Real]) (~r t #:precision 0 #:min-width 2 #:pad-string "0"))]
+                [hh  (if (> h 0) `(,(fmt h)) '())]
+                [mm  `(,(fmt m))]
+                [ss  `(,(fmt s))])
+           (string-join (append hh mm ss) ":"))])]))
+
+(module+ test
+  (check-equal? (status->time-string (status 'stop 0 0)) "--:--")
+  (check-equal? (status->time-string (status 'stop 10 5)) "--:--")
+  (check-equal? (status->time-string (status 'play 0 0)) "00:00")
+  (check-equal? (status->time-string (status 'play 60 0)) "01:00")
+  (check-equal? (status->time-string (status 'play 60 100)) "01:00") ; duration noop
+  (check-equal? (status->time-string (status 'play (* 32 60) 0)) "32:00")
+  (check-equal? (status->time-string (status 'play 7269 0)) "02:01:09")
+  )
 
 (: log-memory-usage (-> (Option Output-Port) Void))
 (define (log-memory-usage mem-log)

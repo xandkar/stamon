@@ -15,6 +15,10 @@ BINS := \
 
 build: $(BINS)
 
+.PHONY: test
+test:
+	raco test ./pista-sensor-mpd.rkt
+
 pista-sensor-battery: \
 	pista_log.o \
 	pista_time.o
