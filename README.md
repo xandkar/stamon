@@ -1,6 +1,6 @@
 example sensors for use with [pista](https://github.com/xandkar/pista)
 ===============================================================================
-
+[![Build Status](https://travis-ci.org/xandkar/pista-sensors.svg?branch=master)](https://travis-ci.org/xandkar/pista-sensors)
 ![Screenshot](screenshot.jpg)
 
 Example configurations
