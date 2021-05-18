@@ -12,7 +12,12 @@ Example configurations
 Dependencies
 ------------
 
-- [`fswatch`](https://github.com/emcrisostomo/fswatch) for backlight
+- [`fswatch`](https://github.com/emcrisostomo/fswatch) for `pista-sensor-backlight`
+- OpenBSD `netcat` for `pista-sensor-mpd.sh`
+- `jq` for multiple things
+- `curl` for multiple things
+- `hxpipe` for `pista-sensor-weather`
+- `iwconfig` for `pista-sensor-wifi`
 
 Notes
 -----
