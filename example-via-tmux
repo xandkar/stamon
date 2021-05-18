@@ -73,6 +73,8 @@ _attach() {
 
 main() {
     local -r cmd="$1"
+
+    mkdir -p "$BASE_DIR"
     cd "$BASE_DIR"
     case "$cmd" in
         'start'   ) _start;;
