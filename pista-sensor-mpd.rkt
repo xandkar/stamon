@@ -43,7 +43,7 @@
 (define (conn-close c)
   (close-input-port  (conn-ip c))
   (close-output-port (conn-op c))
-  (log-info "Disconnected."))
+  (log-debug "Disconnected."))
 
 (: recv (-> Input-Port Msg))
 (define (recv ip)
@@ -193,7 +193,7 @@
             (let* ([failures (+ 1 failures)]
                    [next-backoff (+ interval backoff)]
                    [next-backoff (if (<= next-backoff 60) next-backoff 60)])
-              (log-error
+              (log-debug
                 "Network failure ~a. Backing off for ~a seconds. Exception: ~v"
                 failures
                 backoff
