@@ -11,7 +11,7 @@ BINS := \
     pista-sensor-openweather \
     pista-sensor-weather-gov
 
-.PHONY: build clean rebuild install reinstall
+.PHONY: build clean rebuild install reinstall deps
 
 build: $(BINS)
 
@@ -58,4 +58,6 @@ install_init:
 
 reinstall:
 	raco pkg remove pista-sensors || true
+
+deps:
 	raco pkg install --deps search-auto
