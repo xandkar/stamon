@@ -28,16 +28,16 @@ pista-sensor-time: \
 	pista_time.o
 
 pista-sensor-mpd: pista-sensor-mpd.rkt
-	raco exe -o $@ $<
+	raco exe --orig-exe -o $@ $<
 
 pista-sensor-openweather: pista-sensor-openweather.rkt
-	raco exe -o $@ $<
+	raco exe --orig-exe -o $@ $<
 
 pista-sensor-upower: pista-sensor-upower.rkt
-	raco exe -o $@ $<
+	raco exe --orig-exe -o $@ $<
 
 pista-sensor-weather-gov: pista-sensor-weather-gov.rkt
-	raco exe -o $@ $<
+	raco exe --orig-exe -o $@ $<
 
 pista_time.o: pista_log.o
 
