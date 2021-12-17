@@ -60,7 +60,7 @@
        (local-require typed/racket/date)
        (date-display-format 'iso-8601)
        (let loop ()
-         (match-let ([(vector level msg _ ...) (sync log-receiver)])
+         (match-let ([(vector level msg _ _) (sync log-receiver)])
            (eprintf "~a [~a] ~a~n" (date->string (current-date) #t) level msg))
          (loop))))
   (current-logger logger))
