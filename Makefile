@@ -44,6 +44,7 @@ pista_time.o: pista_log.o
 clean:
 	rm -f *.o
 	rm -f $(BINS)
+	rm -rf compiled/
 
 rebuild:
 	@$(MAKE) -s clean
