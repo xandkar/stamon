@@ -84,6 +84,8 @@
   (define n->s number->string)
   (string-append
     "\n"
+    (get 'location) "\n"
+    "\n"
     (get 'weather) "\n"
     (get 'temperature_string) "\n"
     "\n"
@@ -93,9 +95,8 @@
     "dewpoint   : "       (get 'dewpoint_string) "\n"
     "visibility : " (n->s (get 'visibility_mi)) " miles\n"
     "\n"
-    (get 'location) "\n"
-    (date->string (rfc2822->date (get 'observation_time_rfc822)) #t) "\n"
-    (date->string (current-date) #t) "\n"
+    "observed   : " (date->string (rfc2822->date (get 'observation_time_rfc822)) #t) "\n"
+    "downloaded : " (date->string (current-date) #t) "\n"
     ))
 
 (define (log-memory-usage mem-log)
