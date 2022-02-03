@@ -39,7 +39,7 @@ do
         }
 
         END {
-            printf("(w %3d%%)\n", link[requested_interface]);
+            printf("w %3d%%\n", link[requested_interface]);
         }
     '
     sleep "$2"

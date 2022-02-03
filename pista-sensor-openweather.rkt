@@ -33,7 +33,7 @@
         (with-handlers*
           ; Expecting broken pipes
           ([exn:fail:filesystem:errno? (λ (e) (log-error "Print failed: ~v" e))])
-          (printf "(~a°F)\n" (~r temp #:min-width 3 #:precision 0))
+          (printf "~a°F\n" (~r temp #:min-width 4 #:precision 0))
           (flush-output))
         (sleep (interval-normal i))
         (loop (interval-reset i))])))

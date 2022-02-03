@@ -43,7 +43,9 @@ _start() {
         "pista \
         -l 3 \
         -i 0 \
-        -s '  ' \
+        -f ' (' \
+        -s ')  (' \
+        -r ') ' \
         -x \
         $(start_sensor  1  pista-sensor-upower)            11 120  \
         $(start_sensor  2  pista-sensor-wifi $wifi_if 5)    8  10  \

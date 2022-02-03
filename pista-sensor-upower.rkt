@@ -95,9 +95,9 @@
 (: status->string (-> status String))
 (define (status->string s)
   (match-define (status direction percentage) s)
-  (format "(⚡ ~a~a%)" direction (if percentage
-                                    (~r percentage #:precision 0 #:min-width 3)
-                                    "___")))
+  (format "⚡ ~a~a%" direction (if percentage
+                                  (~r percentage #:precision 0 #:min-width 3)
+                                  "___")))
 
 (: read-msg (-> Input-Port (U 'eof msg:battery msg:line-power)))
 (define (read-msg input)

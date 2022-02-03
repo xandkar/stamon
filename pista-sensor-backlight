@@ -11,7 +11,7 @@ current_state() {
         awk '
             FILENAME ~ "/max_brightness$" {max = $1; next}
             FILENAME ~     "/brightness$" {cur = $1; next}
-            END                           {printf("(☀ %3d%%)\n", (cur / max) * 100)}
+            END                           {printf("☀ %3d%%\n", (cur / max) * 100)}
         ' \
         "$path/max_brightness" \
         "$path/brightness"

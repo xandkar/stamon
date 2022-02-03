@@ -23,7 +23,7 @@
 char *argv0 = NULL;
 
 double opt_interval = 1.0;
-char *opt_fmt = "(%a %b %d %H:%M:%S)";
+char *opt_fmt = "%a %b %d %H:%M:%S";
 
 void
 print_usage()

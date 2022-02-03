@@ -16,8 +16,8 @@
 #define usage(...) {print_usage(); fprintf(stderr, "Error:\n    " __VA_ARGS__); exit(EXIT_FAILURE);}
 
 #define MAX_LEN 20
-#define PREFIX "(⚡ "
-#define POSTFIX "%)"
+#define PREFIX "⚡ "
+#define POSTFIX "%"
 #define BUF_SIZE sizeof(PREFIX) + sizeof("100") + sizeof(POSTFIX) + sizeof(NULL)
 
 char *argv0;

@@ -165,7 +165,7 @@
 
 (: status->string (-> Status String))
 (define (status->string s)
-  (format "(~a ~a ~a%)"
+  (format "~a ~a ~a%"
           (state->string (status-state s))
           (~a (status->time-string s)       #:width 8 #:align 'right)
           (~a (status->percentage-string s) #:width 3 #:align 'right)))

@@ -53,7 +53,7 @@ current_state() {
 			else
 			    printf("Unexpected value for mute field: %s\n" mute[sink]) > "/dev/stderr"
 
-                        printf("(v %4s)\n", show)
+                        printf("v %4s\n", show)
 		    }
 		}
 	    }

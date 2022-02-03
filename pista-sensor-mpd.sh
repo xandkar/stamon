@@ -57,7 +57,7 @@ current_state() {
                 exit 1
             }
 
-            printf "(%s %8s %4s)\n", symbol, time_min_units, time_percentage
+            printf "%s %8s %4s\n", symbol, time_min_units, time_percentage
         }
 
         function format_time(time_str, time_arr,    \

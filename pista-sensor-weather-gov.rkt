@@ -133,9 +133,9 @@
            (kill-thread prev-printer))
          (let ([curr-printer
                  (thread
-                   (λ () (sensor:print/retry (format "(~a°F)" (~r (dict-ref data 'temp_f)
-                                                                  #:min-width 3
-                                                                  #:precision 0)))))]
+                   (λ () (sensor:print/retry (format "~a°F" (~r (dict-ref data 'temp_f)
+                                                                #:min-width 4
+                                                                #:precision 0)))))]
                [curr-observ
                  (rfc2822->seconds (dict-ref data 'observation_time_rfc822))]
                [summary

@@ -45,9 +45,9 @@ data_files_set() {
 data_files_read() {
     awk \
         '
-        BEGIN {printf "(t"}
+        BEGIN {printf "t"}
         {printf " %3d°C", $1 / 1000}
-        END {printf ")\n"}
+        END {printf "\n"}
         ' \
         ${_data_files:?'ERROR: No temperature data files found!'}
 }
