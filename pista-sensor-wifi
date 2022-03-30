@@ -1,5 +1,7 @@
 #! /bin/sh
 
+set -e
+
 case "$1" in
     '') echo 'Which interface?' 1>&2; exit 1;;
      *) wifi_interface="$1"
