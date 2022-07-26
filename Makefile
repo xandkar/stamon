@@ -12,7 +12,7 @@ BINS := \
     pista-sensor-weather-gov \
     pista-sensor-helium-account-balance-rs
 
-.PHONY: build clean rebuild install reinstall deps
+.PHONY: build clean_all clean_bins clean_deps rebuild install reinstall deps
 
 build: $(BINS)
 
@@ -45,14 +45,18 @@ pista-sensor-weather-gov: pista-sensor-weather-gov.rkt
 
 pista_time.o: pista_log.o
 
-clean:
+clean_all: clean_bins clean_deps
+
+clean_bins:
 	rm -f *.o
 	rm -f $(BINS)
+
+clean_deps:
 	rm -rf compiled/
 	rm -rf *-rs.src/target/
 
 rebuild:
-	@$(MAKE) -s clean
+	@$(MAKE) -s clean_bins
 	@$(MAKE) -s build
 
 install:
