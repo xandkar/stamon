@@ -9,7 +9,8 @@ BINS := \
     pista-sensor-upower \
     pista-sensor-mpd \
     pista-sensor-openweather \
-    pista-sensor-weather-gov
+    pista-sensor-weather-gov \
+    pista-sensor-helium-account-balance-rs
 
 .PHONY: build clean rebuild install reinstall deps
 
@@ -26,6 +27,9 @@ pista-sensor-battery: \
 pista-sensor-time: \
 	pista_log.o \
 	pista_time.o
+
+%-rs:
+	cd $@.src && cargo build && mv target/debug/$@ ../
 
 pista-sensor-mpd: pista-sensor-mpd.rkt
 	raco exe --orig-exe -o $@ $<
@@ -45,6 +49,7 @@ clean:
 	rm -f *.o
 	rm -f $(BINS)
 	rm -rf compiled/
+	rm -rf *-rs.src/target/
 
 rebuild:
 	@$(MAKE) -s clean
