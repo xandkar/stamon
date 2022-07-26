@@ -23,7 +23,7 @@ fn binance_fetch_average_price(symbol: &str) -> Result<f64> {
     let market: binance::market::Market = binance::api::Binance::new(None, None);
     match market.get_average_price(symbol) {
         Err(e) => {
-            // TODO How to propogate the error?
+            // TODO How to propagate the error?
             //       "`(dyn std::error::Error + Send + 'static)`
             //       cannot be shared between threads safely"
             let msg = format!("binance API failure: {:?}", e);
