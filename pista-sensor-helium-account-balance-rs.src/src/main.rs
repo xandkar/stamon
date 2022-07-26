@@ -63,7 +63,7 @@ fn main() -> Result<()> {
             balance_usdt
         );
         println!(
-            "H {:.2} {:.2} {:.2}",
+            "H {:.2} ${:.2} ${:.2}",
             balance_hnt, price_hnt_in_usdt, balance_usdt
         );
         std::thread::sleep(std::time::Duration::from_secs(args.interval));
