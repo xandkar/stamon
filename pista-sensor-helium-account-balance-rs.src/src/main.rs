@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use clap::Parser;
 
 #[derive(Debug, Parser)]
@@ -21,29 +21,19 @@ fn helium_fetch_balance_hnt(account: &str) -> Result<f64> {
             Ok(balance)
         }
         balance => {
-            let msg = format!("unexpected balance format: {:?}", balance);
-            Err(anyhow::Error::msg(msg))
+            Err(anyhow!("unexpected balance format: {:?}", balance))
         }
     }
 }
 
 fn binance_fetch_average_price(symbol: &str) -> Result<f64> {
-    let market: binance::market::Market =
-        binance::api::Binance::new(None, None);
-    match market.get_average_price(symbol) {
-        Err(e) => {
-            // TODO How to propagate the error?
-            //       "`(dyn std::error::Error + Send + 'static)`
-            //       cannot be shared between threads safely"
-            let msg = format!("binance API failure: {:?}", e);
-            Err(anyhow::Error::msg(msg))
-        }
-        Ok(average_price) => {
-            let average_price = average_price.price;
-            log::debug!("average_price {}: {}", symbol, average_price);
-            Ok(average_price)
-        }
-    }
+    let mrkt: binance::market::Market = binance::api::Binance::new(None, None);
+    // XXX binance's error doesn't implement Sync and
+    //     isn't compatible with anyhow as is and thus cannot just be propagated
+    //     with '?'.
+    mrkt.get_average_price(symbol)
+        .map_err(|e| anyhow!("{:?}", e))
+        .map(|p| p.price)
 }
 
 fn main_loop(account: &str, interval: u64) {
