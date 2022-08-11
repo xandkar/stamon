@@ -39,6 +39,7 @@ fn binance_fetch_average_price(symbol: &str) -> Result<f64> {
 fn main_loop(account: &str, interval: u64) {
     // TODO Independent intervals of update, but recompute when either updated,
     //      with the other pulled from cache.
+    // TODO Put them in threads and read channels? spawn async jobs with tokio?
     // TODO Maybe add max age/TTL?
     let mut price_hnt_in_usdt: Option<f64> = None;
     let mut balance_hnt: Option<f64> = None;
