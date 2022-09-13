@@ -10,7 +10,7 @@ BINS := \
     pista-sensor-mpd \
     pista-sensor-openweather \
     pista-sensor-weather-gov \
-    pista-sensor-helium-account-balance-rs
+    pista-sensor-helium-account-balance
 
 .PHONY: build clean_all clean_bins clean_deps rebuild install reinstall deps
 
@@ -18,7 +18,8 @@ build: $(BINS)
 
 .PHONY: test
 test:
-	raco test ./pista-sensor-mpd.rkt
+	raco test ./*.rkt
+	cargo test
 
 pista-sensor-battery: \
 	pista_log.o \
@@ -28,8 +29,9 @@ pista-sensor-time: \
 	pista_log.o \
 	pista_time.o
 
-%-rs:
-	cd $@.src && cargo build && mv target/debug/$@ ../
+pista-sensor-helium-account-balance:
+	cargo build --release
+	mv target/release/$@ ./
 
 pista-sensor-mpd: pista-sensor-mpd.rkt
 	raco exe --orig-exe -o $@ $<
@@ -53,7 +55,7 @@ clean_bins:
 
 clean_deps:
 	rm -rf compiled/
-	rm -rf *-rs.src/target/
+	rm -rf target/
 
 rebuild:
 	@$(MAKE) -s clean_bins

@@ -1,9 +1,10 @@
 compiled/
 *.o
 pista-sensor-battery
-pista-sensor-helium-account-balance-rs
+pista-sensor-helium-account-balance
 pista-sensor-mpd
 pista-sensor-openweather
 pista-sensor-time
 pista-sensor-upower
 pista-sensor-weather-gov
+/target/
