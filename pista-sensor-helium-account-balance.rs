@@ -20,14 +20,13 @@ fn helium_fetch_balance_hnt(account: &str) -> Result<f64> {
             log::debug!("HNT account balance: {:?}", balance);
             Ok(balance)
         }
-        balance => {
-            Err(anyhow!("unexpected balance format: {:?}", balance))
-        }
+        balance => Err(anyhow!("unexpected balance format: {:?}", balance)),
     }
 }
 
 fn binance_fetch_average_price(symbol: &str) -> Result<f64> {
-    let mrkt: binance::market::Market = binance::api::Binance::new(None, None);
+    let mrkt: binance::market::Market =
+        binance::api::Binance::new(None, None);
     // XXX binance's error doesn't implement Sync and
     //     isn't compatible with anyhow as is and thus cannot just be propagated
     //     with '?'.
