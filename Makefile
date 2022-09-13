@@ -1,5 +1,5 @@
 N_CPUS    := $(shell nproc 2> /dev/null || gnproc 2> /dev/null || sysctl -n hw.ncpu 2> /dev/null)
-MAKEFLAGS := -j $(N_CPUS)
+MAKEFLAGS := -j $(N_CPUS) --no-print-directory
 CPPFLAGS := -D_POSIX_C_SOURCE=200809L
 CFLAGS   := -std=c99 -Wall -Wextra
 
@@ -58,8 +58,8 @@ clean_deps:
 	rm -rf target/
 
 rebuild:
-	@$(MAKE) -s clean_bins
-	@$(MAKE) -s build
+	$(MAKE) clean_bins
+	$(MAKE) build
 
 install:
 	mkdir -p ~/bin
