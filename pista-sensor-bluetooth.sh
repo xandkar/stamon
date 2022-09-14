@@ -7,7 +7,7 @@ count_powered_controllers() {
 }
 
 count_connected_devices() {
-    echo 'paired-devices' \
+    echo 'devices Paired' \
     | bluetoothctl \
     | awk '{print $2}' \
     | xargs -I % bluetoothctl -- info % \
