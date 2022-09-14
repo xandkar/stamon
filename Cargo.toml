@@ -19,6 +19,10 @@ name = "pista-sensor-backlight-laptop"
 path = "pista-sensor-backlight-laptop.rs"
 
 [[bin]]
+name = "pista-sensor-bluetooth"
+path = "pista-sensor-bluetooth.rs"
+
+[[bin]]
 name = "pista-sensor-helium-account-balance"
 path = "pista-sensor-helium-account-balance.rs"
 
