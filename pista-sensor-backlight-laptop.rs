@@ -24,9 +24,8 @@ struct Paths {
 }
 
 impl Paths {
-    fn new(device: &String) -> Paths {
-        let dev: PathBuf =
-            ["/sys/class/backlight/", device.as_str()].iter().collect();
+    fn new(device: &str) -> Paths {
+        let dev: PathBuf = ["/sys/class/backlight/", device].iter().collect();
         Paths {
             max: [&dev, &PathBuf::from("max_brightness")].iter().collect(),
             cur: [&dev, &PathBuf::from("brightness")].iter().collect(),
