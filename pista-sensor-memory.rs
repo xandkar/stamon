@@ -18,7 +18,7 @@ struct Meminfo {
 }
 
 impl Meminfo {
-    fn read() -> Result<Meminfo> {
+    fn read() -> Result<Self> {
         let path = "/proc/meminfo";
         let file = std::fs::File::open(&path)?;
         let reader = std::io::BufReader::new(file);
@@ -50,7 +50,7 @@ impl Meminfo {
                 }
             }
         }
-        Ok(Meminfo {
+        Ok(Self {
             total: total.unwrap_or(0),
             free: free.unwrap_or(0),
         })
