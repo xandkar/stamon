@@ -21,3 +21,7 @@ path = "pista-sensor-backlight-laptop.rs"
 [[bin]]
 name = "pista-sensor-helium-account-balance"
 path = "pista-sensor-helium-account-balance.rs"
+
+[[bin]]
+name = "pista-sensor-memory"
+path = "pista-sensor-memory.rs"

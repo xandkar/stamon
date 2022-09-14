@@ -8,6 +8,7 @@ BINS := \
     pista-sensor-battery \
     pista-sensor-time \
     pista-sensor-upower \
+    pista-sensor-memory \
     pista-sensor-mpd \
     pista-sensor-openweather \
     pista-sensor-weather-gov \
@@ -35,6 +36,10 @@ pista-sensor-backlight-laptop:
 	mv target/release/$@ ./
 
 pista-sensor-helium-account-balance:
+	cargo build --release
+	mv target/release/$@ ./
+
+pista-sensor-memory:
 	cargo build --release
 	mv target/release/$@ ./
 
