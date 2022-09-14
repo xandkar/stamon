@@ -5,6 +5,7 @@ pista-sensor-backlight-laptop
 pista-sensor-helium-account-balance
 pista-sensor-memory
 pista-sensor-mpd
+pista-sensor-mpd-rkt
 pista-sensor-openweather
 pista-sensor-time
 pista-sensor-upower

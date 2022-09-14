@@ -10,6 +10,7 @@ BINS := \
     pista-sensor-upower \
     pista-sensor-memory \
     pista-sensor-mpd \
+    pista-sensor-mpd-rkt \
     pista-sensor-openweather \
     pista-sensor-weather-gov \
     pista-sensor-helium-account-balance
@@ -31,19 +32,23 @@ pista-sensor-time: \
 	pista_log.o \
 	pista_time.o
 
-pista-sensor-backlight-laptop:
-	cargo build --release
+pista-sensor-backlight-laptop: | rust
 	mv target/release/$@ ./
 
-pista-sensor-helium-account-balance:
-	cargo build --release
+pista-sensor-helium-account-balance: | rust
 	mv target/release/$@ ./
 
-pista-sensor-memory:
-	cargo build --release
+pista-sensor-memory: | rust
 	mv target/release/$@ ./
 
-pista-sensor-mpd: pista-sensor-mpd.rkt
+pista-sensor-mpd: | rust
+	mv target/release/$@ ./
+
+.PHONY: rust
+rust:
+	cargo build --release
+
+pista-sensor-mpd-rkt: pista-sensor-mpd-rkt.rkt
 	raco exe --orig-exe -o $@ $<
 
 pista-sensor-openweather: pista-sensor-openweather.rkt

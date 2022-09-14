@@ -9,6 +9,7 @@ binance = "0.18.4"
 clap = {version = "3.0", features = ["derive"]}
 env_logger = "0.9.0"
 log = "0.4.17"
+mpd = "0.0.12"
 notify = "5.0.0"
 reqwest = {version = "0.11.11", features = ["blocking"]}
 #serde = "1.0.140"
@@ -29,3 +30,7 @@ path = "pista-sensor-helium-account-balance.rs"
 [[bin]]
 name = "pista-sensor-memory"
 path = "pista-sensor-memory.rs"
+
+[[bin]]
+name = "pista-sensor-mpd"
+path = "pista-sensor-mpd.rs"
