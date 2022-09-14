@@ -64,23 +64,28 @@ fn main() -> Result<()> {
     print(&cli.prefix, max, cur);
     for event in receiver {
         match event {
-            Ok(event) => match event {
-                Event {
+            Ok(event) => {
+                if let Event {
                     kind: Modify(ModifyKind::Data(DataChange::Any)),
                     ..
-                } => match file_to_u64(&paths.cur) {
-                    Err(e) => {
-                        log::error!("Failure to read current value: {:?}", e)
-                    }
-                    Ok(cur) => {
-                        if cur != pre {
-                            print(&cli.prefix, max, cur);
+                } = event
+                {
+                    match file_to_u64(&paths.cur) {
+                        Err(e) => {
+                            log::error!(
+                                "Failure to read current value: {:?}",
+                                e
+                            )
                         }
-                        pre = cur;
+                        Ok(cur) => {
+                            if cur != pre {
+                                print(&cli.prefix, max, cur);
+                            }
+                            pre = cur;
+                        }
                     }
-                },
-                _ => (),
-            },
+                }
+            }
             Err(err) => log::error!("watch error: {:?}", err),
         }
     }
