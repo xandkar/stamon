@@ -4,6 +4,7 @@ CPPFLAGS := -D_POSIX_C_SOURCE=200809L
 CFLAGS   := -std=c99 -Wall -Wextra
 
 BINS := \
+    pista-sensor-backlight-laptop \
     pista-sensor-battery \
     pista-sensor-time \
     pista-sensor-upower \
@@ -28,6 +29,10 @@ pista-sensor-battery: \
 pista-sensor-time: \
 	pista_log.o \
 	pista_time.o
+
+pista-sensor-backlight-laptop:
+	cargo build --release
+	mv target/release/$@ ./
 
 pista-sensor-helium-account-balance:
 	cargo build --release
