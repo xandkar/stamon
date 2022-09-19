@@ -13,7 +13,9 @@ BINS := \
     pista-sensor-mpd-rkt \
     pista-sensor-openweather \
     pista-sensor-weather-gov \
-    pista-sensor-helium-account-balance
+    pista-sensor-helium-account-balance \
+    pista-sensor-x11-keymap \
+
 
 .PHONY: build clean_all clean_bins clean_deps rebuild install reinstall deps
 
@@ -42,6 +44,9 @@ pista-sensor-memory: | rust
 	mv target/release/$@ ./
 
 pista-sensor-mpd: | rust
+	mv target/release/$@ ./
+
+pista-sensor-x11-keymap: | rust
 	mv target/release/$@ ./
 
 .PHONY: rust

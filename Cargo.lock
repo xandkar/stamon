@@ -798,6 +798,7 @@ dependencies = [
  "notify",
  "reqwest",
  "serde_json",
+ "x11",
 ]
 
 [[package]]
@@ -1537,4 +1538,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "80d0f4e272c85def139476380b12f9ac60926689dd2e01d4923222f40580869d"
 dependencies = [
  "winapi",
+]
+
+[[package]]
+name = "x11"
+version = "2.20.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f7ae97874a928d821b061fce3d1fc52f08071dd53c89a6102bc06efcac3b2908"
+dependencies = [
+ "libc",
+ "pkg-config",
 ]
