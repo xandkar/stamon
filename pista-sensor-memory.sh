@@ -9,7 +9,13 @@ loop() {
 
     while :
     do
-        free | awk '$1 == "Mem:" {printf("m %3d%%\n", ($3 / $2) * 100); exit 0}'
+        free | awk '$1 == "Mem:" {
+            total = $2
+            available = $7
+            used = total - available
+            printf("m %3d%%\n", (used / total) * 100);
+            exit 0
+        }'
         sleep "$interval"
     done
 }

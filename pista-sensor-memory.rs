@@ -14,7 +14,7 @@ struct Cli {
 
 struct Meminfo {
     total: u64,
-    free: u64,
+    available: u64,
 }
 
 impl Meminfo {
@@ -23,9 +23,9 @@ impl Meminfo {
         let file = std::fs::File::open(&path)?;
         let reader = std::io::BufReader::new(file);
         let mut total = None;
-        let mut free = None;
+        let mut avail = None;
         for line_result in reader.lines() {
-            match (total, free) {
+            match (total, avail) {
                 (Some(_), Some(_)) => break,
                 (_, _) => {
                     let line = line_result?;
@@ -39,11 +39,11 @@ impl Meminfo {
                             total = num.parse().ok();
                         }
                         (
-                            Some("MemFree:"),
+                            Some("MemAvailable:"),
                             Some(num),
                             Some(_), // Ignoring units since we only report percentage.
                         ) => {
-                            free = num.parse().ok();
+                            avail = num.parse().ok();
                         }
                         (_, _, _) => (),
                     }
@@ -52,8 +52,16 @@ impl Meminfo {
         }
         Ok(Self {
             total: total.unwrap_or(0),
-            free: free.unwrap_or(0),
+            available: avail.unwrap_or(0),
         })
+    }
+
+    fn used(&self) -> u64 {
+        self.total - self.available
+    }
+
+    pub fn used_pct(&self) -> f64 {
+        (self.used() as f64 / self.total as f64) * 100.0
     }
 }
 
@@ -67,11 +75,7 @@ fn main() {
     loop {
         match Meminfo::read() {
             Ok(m) => {
-                println!(
-                    "{}{:3.0}%",
-                    &cli.prefix,
-                    m.free as f64 / m.total as f64 * 100.0
-                )
+                println!("{}{:3.0}%", &cli.prefix, m.used_pct())
             }
             Err(e) => log::error!("Failure to read /proc/meminfo: {:?}", e),
         }
