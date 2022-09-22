@@ -109,9 +109,12 @@ impl UserAgent {
             admin_email: cli.admin_email.to_string(),
         }
     }
+}
 
-    pub fn to_string(&self) -> String {
-        format!(
+impl std::fmt::Display for UserAgent {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(
+            f,
             "{}/{} ({}; {})",
             self.app_name, self.app_version, self.app_url, self.admin_email
         )
