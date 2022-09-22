@@ -5,8 +5,11 @@ use clap::Parser;
 struct CurrentObservation {
     dewpoint_string: String,
     location: String,
+
+    #[serde(with = "serde_rfc2822")]
+    observation_time_rfc822: chrono::DateTime<chrono::FixedOffset>,
+
     //ob_url: String, // METAR file URL
-    observation_time_rfc822: String,
     pressure_string: String,
     relative_humidity: String,
     station_id: String,
@@ -21,15 +24,9 @@ struct CurrentObservation {
 impl CurrentObservation {
     pub fn summary(
         &self,
-        time_downloaded: chrono::DateTime<chrono::Local>,
-    ) -> Result<String> {
-        let time_observed = chrono::DateTime::parse_from_rfc2822(
-            self.observation_time_rfc822.as_str(),
-        )?
-        .with_timezone(&chrono::Local)
-        .to_rfc2822();
-        let time_downloaded = time_downloaded.to_rfc2822();
-        let summary = format!(
+        download_time: chrono::DateTime<chrono::Local>,
+    ) -> String {
+        format!(
             "\n\
             {} ({})\n\
             \n\
@@ -54,10 +51,28 @@ impl CurrentObservation {
             self.pressure_string,
             self.dewpoint_string,
             self.visibility_mi,
-            time_observed,
-            time_downloaded
-        );
-        Ok(summary)
+            self.observation_time_rfc822
+                .with_timezone(&chrono::Local)
+                .to_rfc2822(),
+            download_time.to_rfc2822()
+        )
+    }
+}
+
+// TODO Do we really need the custom module? Is there nothing in chrono already?
+// https://serde.rs/custom-date-format.html
+mod serde_rfc2822 {
+    use serde::Deserialize; // String::deserialize method
+
+    pub fn deserialize<'de, D>(
+        deserializer: D,
+    ) -> Result<chrono::DateTime<chrono::FixedOffset>, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        chrono::DateTime::parse_from_rfc2822(s.as_str())
+            .map_err(serde::de::Error::custom)
     }
 }
 
@@ -138,11 +153,12 @@ fn download(
             let payload = resp.text()?;
             let observation: CurrentObservation =
                 serde_xml_rs::from_str(&payload)?;
-            let time_downloaded = chrono::offset::Local::now();
-            let summary = observation.summary(time_downloaded)?;
             match summary_file {
                 None => (),
-                Some(path) => std::fs::write(path, summary)?,
+                Some(path) => std::fs::write(
+                    path,
+                    observation.summary(chrono::offset::Local::now()),
+                )?,
             };
             Ok(observation.temp_f)
         }
