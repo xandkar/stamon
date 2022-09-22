@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<current_observation version="1.0" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.weather.gov/view/current_observation.xsd">
+    <credit>NOAA's National Weather Service</credit>
+    <credit_URL>http://weather.gov/</credit_URL>
+    <image>
+        <url>http://weather.gov/images/xml_logo.gif</url>
+        <title>NOAA's National Weather Service</title>
+        <link>http://weather.gov/</link>
+    </image>
+    <suggested_pickup>15 minutes after the hour</suggested_pickup>
+    <suggested_pickup_period>60</suggested_pickup_period>
+    <location>Manchester Airport, NH</location>
+    <station_id>KMHT</station_id>
+    <latitude>42.92964</latitude>
+    <longitude>-71.43559</longitude>
+    <observation_time>Last Updated on Sep 21 2022, 02:53 pm GMT+0000</observation_time>
+    <observation_time_rfc822>Wed, 21 Sep 22 14:53:00 +0000</observation_time_rfc822>
+    <weather>Mostly Cloudy</weather>
+    <temperature_string>64 F (17.8 C)</temperature_string>
+    <temp_f>64</temp_f>
+    <temp_c>17.8</temp_c>
+    <relative_humidity>63</relative_humidity>
+    <wind_string>NW at 11.4 MPH (10 KT)</wind_string>
+    <wind_dir>NW</wind_dir>
+    <wind_degrees>310</wind_degrees>
+    <wind_mph>11.4</wind_mph>
+    <wind_kt>10</wind_kt>
+    <pressure_string>1013.9 mb</pressure_string>
+    <pressure_mb>1013.9</pressure_mb>
+    <pressure_in>29.94</pressure_in>
+    <dewpoint_string>51.1 F (10.6 C)</dewpoint_string>
+    <dewpoint_f>51.1</dewpoint_f>
+    <dewpoint_c>10.6</dewpoint_c>
+    <visibility_mi>10</visibility_mi>
+    <icon_url_base>https://api.weather.gov/icons/land</icon_url_base>
+    <two_day_history_url>https://forecast-v3.weather.gov/obs/KMHT/history</two_day_history_url>
+    <icon_url_name>day</icon_url_name>
+    <ob_url>https://www.weather.gov/data/METAR/KMHT.1.txt</ob_url>
+    <disclaimer_url>https://weather.gov/disclaimer.html</disclaimer_url>
+    <copyright_url>https://weather.gov/disclaimer.html</copyright_url>
+    <privacy_policy_url>https://weather.gov/notice.html</privacy_policy_url>
+</current_observation>
