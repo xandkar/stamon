@@ -12,6 +12,7 @@ BINS := \
     pista-sensor-mpd \
     pista-sensor-mpd-rkt \
     pista-sensor-openweather \
+    pista-sensor-weather \
     pista-sensor-weather-gov \
     pista-sensor-helium-account-balance \
     pista-sensor-x11-keymap \
@@ -44,6 +45,9 @@ pista-sensor-memory: | rust
 	mv target/release/$@ ./
 
 pista-sensor-mpd: | rust
+	mv target/release/$@ ./
+
+pista-sensor-weather: | rust
 	mv target/release/$@ ./
 
 pista-sensor-x11-keymap: | rust

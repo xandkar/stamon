@@ -9,6 +9,7 @@ pista-sensor-mpd-rkt
 pista-sensor-openweather
 pista-sensor-time
 pista-sensor-upower
+pista-sensor-weather
 pista-sensor-weather-gov
 pista-sensor-x11-keymap
 /target/
