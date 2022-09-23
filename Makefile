@@ -10,10 +10,7 @@ BINS := \
     pista-sensor-upower \
     pista-sensor-memory \
     pista-sensor-mpd \
-    pista-sensor-mpd-rkt \
-    pista-sensor-openweather \
     pista-sensor-weather \
-    pista-sensor-weather-gov \
     pista-sensor-helium-account-balance \
     pista-sensor-x11-keymap \
 
@@ -57,16 +54,7 @@ pista-sensor-x11-keymap: | rust
 rust:
 	cargo build --release
 
-pista-sensor-mpd-rkt: pista-sensor-mpd-rkt.rkt
-	raco exe --orig-exe -o $@ $<
-
-pista-sensor-openweather: pista-sensor-openweather.rkt
-	raco exe --orig-exe -o $@ $<
-
 pista-sensor-upower: pista-sensor-upower.rkt
-	raco exe --orig-exe -o $@ $<
-
-pista-sensor-weather-gov: pista-sensor-weather-gov.rkt
 	raco exe --orig-exe -o $@ $<
 
 pista_time.o: pista_log.o
