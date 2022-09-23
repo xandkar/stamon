@@ -13,6 +13,12 @@ struct Cli {
 
     #[clap(long = "interval", short = 'i', default_value = "1")]
     interval: u64,
+
+    #[clap(long = "prefix", default_value = "")]
+    prefix: String,
+
+    #[clap(long = "postfix", default_value = "")]
+    postfix: String,
 }
 
 fn status_to_string(s: mpd::status::Status) -> String {
@@ -76,7 +82,12 @@ fn main() -> Result<()> {
         if let Some(ref mut conn) = conn_opt {
             match conn.status() {
                 Ok(s) => {
-                    println!("{}", status_to_string(s))
+                    println!(
+                        "{}{}{}",
+                        &cli.prefix,
+                        status_to_string(s),
+                        &cli.postfix
+                    )
                 }
                 Err(e) => {
                     log::error!("Failure to get status: {:?}", e);
