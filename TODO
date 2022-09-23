@@ -1,5 +1,6 @@
 # vim: tabstop=2:softtabstop=2:shiftwidth=2:
 
+- [ ] configurable format strings https://github.com/vitiral/strfmt
 - [ ] configurable prefix in each sensor
 - [ ] indicate cached data with diff parens, like [] or {} or <>
 
