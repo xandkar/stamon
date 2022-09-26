@@ -90,7 +90,7 @@ mod x11 {
 use anyhow::Result;
 use clap::Parser;
 
-#[derive(Parser)]
+#[derive(Debug, Parser)]
 struct Cli {
     #[clap(long = "interval", short = 'i', default_value = "1.0")]
     interval: f32,
@@ -102,6 +102,7 @@ fn main() -> Result<()> {
     )
     .init();
     let cli = Cli::parse();
+    log::info!("cli: {:?}", &cli);
     let x11 = x11::X11::init()?;
     loop {
         match x11.keymap() {
