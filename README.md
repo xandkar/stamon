@@ -5,8 +5,8 @@ example sensors for use with [pista](https://github.com/xandkar/pista)
 
 Example configurations
 ----------------------
-- [example](example): basic setup, can be forked from `.xinitrc`
-- [example-via-tmux](example-via-tmux): init-like setup with tmux, can be
+- [direct.sh](examples/direct.sh): basic setup, can be forked from `.xinitrc`
+- [via-tmux.sh](examples/via-tmux.sh): init-like setup with tmux, can be
   conveniently (re)started at any time, independently of `.xinitrc`
 
 Dependencies
