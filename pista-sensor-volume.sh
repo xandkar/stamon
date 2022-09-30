@@ -1,8 +1,11 @@
-#! /bin/sh
+#! /bin/bash
 
 current_state() {
+        local -r prefix="$1"
+
 	pactl list sinks \
 	| awk \
+	    -v prefix="$prefix" \
 	    -v default_sink="$(pactl info | awk '/^Default Sink:/ {print $3}')" \
 	    '
 	    /^Sink \#[0-9]+$/ {
@@ -53,7 +56,7 @@ current_state() {
 			else
 			    printf("Unexpected value for mute field: %s\n" mute[sink]) > "/dev/stderr"
 
-                        printf("v %4s\n", show)
+                        printf("%s %4s\n", prefix, show)
 		    }
 		}
 	    }
@@ -62,11 +65,13 @@ current_state() {
 
 trap '' PIPE
 
+prefix="${1-v}"
+
 # Initial reading
-current_state
+current_state "$prefix"
 
 pactl subscribe | grep --line-buffered "^Event 'change' on sink .\+$" \
 | while read -r _
 do
-    current_state
+    current_state "$prefix"
 done
