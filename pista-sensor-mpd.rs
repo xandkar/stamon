@@ -19,15 +19,23 @@ struct Cli {
 
     #[clap(long = "postfix", default_value = "")]
     postfix: String,
+
+    #[clap(long = "symbol-play", default_value = ">")]
+    symbol_play: String,
+
+    #[clap(long = "symbol-pause", default_value = "=")]
+    symbol_pause: String,
+
+    #[clap(long = "symbol-stop", default_value = "-")]
+    symbol_stop: String,
 }
 
-fn status_to_string(s: mpd::status::Status) -> String {
+fn status_to_string(s: mpd::status::Status, c: &Cli) -> String {
     let state = match s.state {
-        mpd::status::State::Play => ">",
-        mpd::status::State::Pause => "=",
-        mpd::status::State::Stop => "-",
-    }
-    .to_string();
+        mpd::status::State::Play => &c.symbol_play,
+        mpd::status::State::Pause => &c.symbol_pause,
+        mpd::status::State::Stop => &c.symbol_stop,
+    };
     let percentage = match (s.state, s.duration, s.elapsed) {
         (mpd::status::State::Stop, _, _) => "---".to_string(),
         (_, None, Some(_)) => "~~~".to_string(), // streaming
@@ -85,7 +93,7 @@ fn main() -> Result<()> {
                     println!(
                         "{}{}{}",
                         &cli.prefix,
-                        status_to_string(s),
+                        status_to_string(s, &cli),
                         &cli.postfix
                     )
                 }
