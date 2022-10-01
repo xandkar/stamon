@@ -94,6 +94,9 @@ use clap::Parser;
 struct Cli {
     #[clap(long = "interval", short = 'i', default_value = "1.0")]
     interval: f32,
+
+    #[clap(long = "prefix", short = 'p', default_value = "")]
+    prefix: String,
 }
 
 fn main() -> Result<()> {
@@ -106,7 +109,7 @@ fn main() -> Result<()> {
     let x11 = x11::X11::init()?;
     loop {
         match x11.keymap() {
-            Ok(symbol) => println!("{}", symbol),
+            Ok(symbol) => println!("{}{}", &cli.prefix, symbol),
             Err(err) => log::error!("Failure to lookup keymap: {:?}", err),
         }
         std::thread::sleep(std::time::Duration::from_secs_f32(cli.interval));
