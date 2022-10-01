@@ -92,12 +92,13 @@
          'status
          'state)
 
-(: status->string (-> status String))
-(define (status->string s)
+(: status->string (-> String status String))
+(define (status->string prefix s)
   (match-define (status direction percentage) s)
-  (format "⚡ ~a~a%" direction (if percentage
-                                  (~r percentage #:precision 0 #:min-width 3)
-                                  "___")))
+  (let ([percentage (if percentage
+                        (~r percentage #:precision 0 #:min-width 3)
+                        "___")])
+    (format "~a~a~a%" prefix direction percentage)))
 
 (: read-msg (-> Input-Port (U 'eof msg:battery msg:line-power)))
 (define (read-msg input)
@@ -200,8 +201,8 @@
       [(msg:line-power _ online)
        (loop (state-update-plugged-in s online))])))
 
-(: start-printer (-> Void))
-(define (start-printer)
+(: start-printer (-> String Void))
+(define (start-printer prefix)
   ; TODO User-defined alerts
   (define init-discharging-alerts (sort '(100 70 50 30 20 15 10 5 4 3 2 1 0) <))
   (log-info "Alerts defined: ~v" init-discharging-alerts)
@@ -215,7 +216,7 @@
          (kill-thread printer))
        ; TODO Fully-charged alert
        (let ([printer
-               (thread (λ () (sensor:print/retry (status->string s))))]
+               (thread (λ () (sensor:print/retry (status->string prefix s))))]
              [alerts
                (cond [(and percentage (equal? '< direction))
                       (match (dropf alerts (λ ([a : Real]) (<= a percentage)))
@@ -240,15 +241,15 @@
       ['parser-exit
        (void)])))
 
-(: run (-> Log-Level Void))
-(define (run log-level)
+(: run (-> Log-Level String Void))
+(define (run log-level prefix)
   (sensor:logger-start log-level)
   ; TODO Multiplex ports so we can execute as separate executables instead
   (define cmd "stdbuf -o L upower --dump; stdbuf -o L upower --monitor-detail")
   (log-info "Spawning command: ~v" cmd)
   (match-define (list in-port out-port pid in-err-port ctrl) (process cmd))
   (log-info "Child process PID: ~a" pid)
-  (let* ([printer    (thread (λ () (start-printer)))]
+  (let* ([printer    (thread (λ () (start-printer prefix)))]
          [parser     (thread (λ () (start-parser in-port printer)))]
          [cmd-logger (thread (λ () (let loop ()
                                      (let ([line (read-line in-err-port)])
@@ -268,8 +269,13 @@
 
 (module+ main
   (define opt-log-level : Log-Level 'info)
+  (define opt-prefix : String "⚡ ")
   (command-line #:once-each
                 [("-d" "--debug")
                  "Enable debug logging"
-                 (set! opt-log-level 'debug)])
-  (run opt-log-level))
+                 (set! opt-log-level 'debug)]
+                [("-p" "--prefix")
+                 p "Prefix"
+                 (assert p string?)
+                 (set! opt-prefix p)])
+  (run opt-log-level opt-prefix))
