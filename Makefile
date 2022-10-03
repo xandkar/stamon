@@ -6,6 +6,7 @@ CFLAGS   := -std=c99 -Wall -Wextra
 BINS := \
     pista-sensor-backlight-laptop \
     pista-sensor-battery \
+    pista-sensor-disk \
     pista-sensor-time \
     pista-sensor-upower \
     pista-sensor-memory \
@@ -33,6 +34,9 @@ pista-sensor-time: \
 	pista_time.o
 
 pista-sensor-backlight-laptop: | rust
+	mv target/release/$@ ./
+
+pista-sensor-disk: | rust
 	mv target/release/$@ ./
 
 pista-sensor-helium-account-balance: | rust

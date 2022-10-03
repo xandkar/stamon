@@ -9,6 +9,7 @@ binance = "0.18.4"
 chrono = "0.4.22"
 clap = {version = "3.0", features = ["derive"]}
 env_logger = "0.9.0"
+libc = "0.2.134"
 log = "0.4.17"
 mpd = "0.0.12"
 notify = "5.0.0"
@@ -25,6 +26,10 @@ path = "pista-sensor-backlight-laptop.rs"
 [[bin]]
 name = "pista-sensor-bluetooth"
 path = "pista-sensor-bluetooth.rs"
+
+[[bin]]
+name = "pista-sensor-disk"
+path = "pista-sensor-disk.rs"
 
 [[bin]]
 name = "pista-sensor-helium-account-balance"

@@ -2,6 +2,7 @@ compiled/
 *.o
 pista-sensor-battery
 pista-sensor-backlight-laptop
+pista-sensor-disk
 pista-sensor-helium-account-balance
 pista-sensor-memory
 pista-sensor-mpd
