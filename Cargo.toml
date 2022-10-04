@@ -1,5 +1,5 @@
 [package]
-name = "pista-sensors"
+name = "pista-feeds"
 version = "0.0.0"
 edition = "2021"
 
@@ -20,33 +20,33 @@ serde_json = "1.0.82"
 x11 = { version = "2.20.0", features = ["xlib"] }
 
 [[bin]]
-name = "pista-sensor-backlight-laptop"
-path = "pista-sensor-backlight-laptop.rs"
+name = "pista-feed-backlight-laptop"
+path = "pista-feed-backlight-laptop.rs"
 
 [[bin]]
-name = "pista-sensor-bluetooth"
-path = "pista-sensor-bluetooth.rs"
+name = "pista-feed-bluetooth"
+path = "pista-feed-bluetooth.rs"
 
 [[bin]]
-name = "pista-sensor-disk"
-path = "pista-sensor-disk.rs"
+name = "pista-feed-disk"
+path = "pista-feed-disk.rs"
 
 [[bin]]
-name = "pista-sensor-helium-account-balance"
-path = "pista-sensor-helium-account-balance.rs"
+name = "pista-feed-helium-account-balance"
+path = "pista-feed-helium-account-balance.rs"
 
 [[bin]]
-name = "pista-sensor-memory"
-path = "pista-sensor-memory.rs"
+name = "pista-feed-memory"
+path = "pista-feed-memory.rs"
 
 [[bin]]
-name = "pista-sensor-mpd"
-path = "pista-sensor-mpd.rs"
+name = "pista-feed-mpd"
+path = "pista-feed-mpd.rs"
 
 [[bin]]
-name = "pista-sensor-weather"
-path = "pista-sensor-weather.rs"
+name = "pista-feed-weather"
+path = "pista-feed-weather.rs"
 
 [[bin]]
-name = "pista-sensor-x11-keymap"
-path = "pista-sensor-x11-keymap.rs"
+name = "pista-feed-x11-keymap"
+path = "pista-feed-x11-keymap.rs"

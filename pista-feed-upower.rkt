@@ -87,7 +87,7 @@
                   (* 100 (/ cur max))))])
       (status direction percentage))))
 
-(require (prefix-in sensor: "sensor.rkt")
+(require (prefix-in feed: "feed.rkt")
          (prefix-in msg: 'msg)
          'status
          'state)
@@ -216,12 +216,12 @@
          (kill-thread printer))
        ; TODO Fully-charged alert
        (let ([printer
-               (thread (λ () (sensor:print/retry (status->string prefix s))))]
+               (thread (λ () (feed:print/retry (status->string prefix s))))]
              [alerts
                (cond [(and percentage (equal? '< direction))
                       (match (dropf alerts (λ ([a : Real]) (<= a percentage)))
                         [(cons a _)
-                         (sensor:notify
+                         (feed:notify
                            ; TODO User-defined summary
                            (format "Battery power bellow ~a%!" a)
                            ; TODO User-defined body
@@ -243,7 +243,7 @@
 
 (: run (-> Log-Level String Void))
 (define (run log-level prefix)
-  (sensor:logger-start log-level)
+  (feed:logger-start log-level)
   ; TODO Multiplex ports so we can execute as separate executables instead
   (define cmd "stdbuf -o L upower --dump; stdbuf -o L upower --monitor-detail")
   (log-info "Spawning command: ~v" cmd)

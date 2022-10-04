@@ -4,7 +4,7 @@
   - [ ] daily
   - [ ] hourly
 - [ ] configurable format strings https://github.com/vitiral/strfmt
-- [ ] configurable prefix in each sensor
+- [ ] configurable prefix in each feed
 - [ ] indicate cached data with diff parens, like [] or {} or <>
 
 - [x] New print-retry strategy:
@@ -20,7 +20,7 @@
 
 - [x] Handle notify exception:
 
-    $ pista-sensor-weather-gov -n -i 1800 KJFK > /home/siraaj/.pista-in/pista-sensor-weather-gov; notify-send -u critical 'pista-sensor exited!' "pista-sensor-weather-gov\n$?"
+    $ pista-feed-weather-gov -n -i 1800 KJFK > /home/siraaj/.pista-in/pista-feed-weather-gov; notify-send -u critical 'pista-feed exited!' "pista-feed-weather-gov\n$?"
     GError-message: contract violation
       expected: GError?
       given: #<cpointer>
@@ -28,9 +28,9 @@
        GError-message
        /home/siraaj/.racket/7.9/pkgs/libnotify/libnotify.rkt:72:4: show method in notification%
        /usr/share/racket/pkgs/typed-racket-lib/typed-racket/utils/simple-result-arrow.rkt:39:12
-       /home/siraaj/proj/pub/pista-sensors/pista-sensor-weather-gov.rkt:106:2: loop
+       /home/siraaj/proj/pub/pista-feeds/pista-feed-weather-gov.rkt:106:2: loop
        /usr/share/racket/collects/racket/contract/private/arrow-higher-order.rkt:375:33
-       '|#%mzc:pista-sensor-weather-gov(main)|: [running body]
+       '|#%mzc:pista-feed-weather-gov(main)|: [running body]
 
 - [ ] Handle crashed threads. Perhaps something OTP-inspired?
 
@@ -38,6 +38,6 @@
   See: https://docs.racket-lang.org/dbus/
 
 - [ ] Abstract weather and unify gov and openweather as backend options for
-  this abstract weather sensor.
+  this abstract weather feed.
 
-- [ ] Microfone in-use sensor. See: `notes/microphone-use.txt`
+- [ ] Microfone in-use feed. See: `notes/microphone-use.txt`

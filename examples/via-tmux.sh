@@ -17,7 +17,7 @@ tmux_new_win() {
     tmux send-keys  -t "$SESSION":"$win".0 "$cmd" ENTER
 }
 
-start_sensor() {
+start_feed() {
     local -r win="$1"
     local -r exe="$2"
     shift 2
@@ -26,7 +26,7 @@ start_sensor() {
 
     rm -f "$fifo"
     mkfifo "$fifo"
-    tmux_new_win "$win" "$exe $arg > $fifo; notify-send -u critical 'pista-sensor exited!' \"$exe\n\$?\""
+    tmux_new_win "$win" "$exe $arg > $fifo; notify-send -u critical 'pista-feed exited!' \"$exe\n\$?\""
     echo "$fifo"
 }
 
@@ -37,7 +37,7 @@ _start() {
 
     # Have to increment window ids manually, because an increment operation
     # would be executed local to each subprocess if I did something like:
-    #     $(start_sensor $((win++)) pista-sensor-foo)
+    #     $(start_feed $((win++)) pista-feed-foo)
     tmux_new_win \
         0 \
         "pista \
@@ -47,16 +47,16 @@ _start() {
         -s ')  (' \
         -r ') ' \
         -x \
-        $(start_sensor  1  pista-sensor-upower)            11 120  \
-        $(start_sensor  2  pista-sensor-wifi $wifi_if 5)    8  10  \
-        $(start_sensor  3  pista-sensor-bluetooth)          9  10  \
-        $(start_sensor  4  pista-sensor-backlight)         10  -1  \
-        $(start_sensor  5  pista-sensor-volume)             8  -1  \
-        $(start_sensor  6  pista-sensor-mpd)               17   5  \
-        $(start_sensor  7  pista-sensor-weather-gov \
+        $(start_feed  1  pista-feed-upower)            11 120  \
+        $(start_feed  2  pista-feed-wifi $wifi_if 5)    8  10  \
+        $(start_feed  3  pista-feed-bluetooth)          9  10  \
+        $(start_feed  4  pista-feed-backlight)         10  -1  \
+        $(start_feed  5  pista-feed-volume)             8  -1  \
+        $(start_feed  6  pista-feed-mpd)               17   5  \
+        $(start_feed  7  pista-feed-weather-gov \
                              -n \
                              -i $(( 30 * 60 )) KJFK)        8   $(( 30 * 60 )) \
-        $(start_sensor  8  pista-sensor-time)              21   2 \
+        $(start_feed  8  pista-feed-time)              21   2 \
         ; notify-send -u critical 'pista exited!' \"$exe\n\$?\""
 }
 

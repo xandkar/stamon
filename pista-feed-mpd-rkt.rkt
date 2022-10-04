@@ -5,7 +5,7 @@
 
 (require typed/racket/date)
 
-(require "sensor.rkt")
+(require "feed.rkt")
 
 (module+ test
   (require typed/rackunit))

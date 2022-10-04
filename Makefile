@@ -4,16 +4,16 @@ CPPFLAGS := -D_POSIX_C_SOURCE=200809L
 CFLAGS   := -std=c99 -Wall -Wextra
 
 BINS := \
-    pista-sensor-backlight-laptop \
-    pista-sensor-battery \
-    pista-sensor-disk \
-    pista-sensor-time \
-    pista-sensor-upower \
-    pista-sensor-memory \
-    pista-sensor-mpd \
-    pista-sensor-weather \
-    pista-sensor-helium-account-balance \
-    pista-sensor-x11-keymap \
+    pista-feed-backlight-laptop \
+    pista-feed-battery \
+    pista-feed-disk \
+    pista-feed-time \
+    pista-feed-upower \
+    pista-feed-memory \
+    pista-feed-mpd \
+    pista-feed-weather \
+    pista-feed-helium-account-balance \
+    pista-feed-x11-keymap \
 
 
 .PHONY: build clean_all clean_bins clean_deps rebuild install reinstall deps
@@ -25,40 +25,40 @@ test:
 	raco test ./*.rkt
 	cargo test
 
-pista-sensor-battery: \
+pista-feed-battery: \
 	pista_log.o \
 	pista_time.o
 
-pista-sensor-time: \
+pista-feed-time: \
 	pista_log.o \
 	pista_time.o
 
-pista-sensor-backlight-laptop: | rust
+pista-feed-backlight-laptop: | rust
 	mv target/release/$@ ./
 
-pista-sensor-disk: | rust
+pista-feed-disk: | rust
 	mv target/release/$@ ./
 
-pista-sensor-helium-account-balance: | rust
+pista-feed-helium-account-balance: | rust
 	mv target/release/$@ ./
 
-pista-sensor-memory: | rust
+pista-feed-memory: | rust
 	mv target/release/$@ ./
 
-pista-sensor-mpd: | rust
+pista-feed-mpd: | rust
 	mv target/release/$@ ./
 
-pista-sensor-weather: | rust
+pista-feed-weather: | rust
 	mv target/release/$@ ./
 
-pista-sensor-x11-keymap: | rust
+pista-feed-x11-keymap: | rust
 	mv target/release/$@ ./
 
 .PHONY: rust
 rust:
 	cargo build --release
 
-pista-sensor-upower: pista-sensor-upower.rkt
+pista-feed-upower: pista-feed-upower.rkt
 	raco exe --orig-exe -o $@ $<
 
 pista_time.o: pista_log.o
@@ -79,13 +79,13 @@ rebuild:
 
 install:
 	mkdir -p ~/bin
-	find . -type f -name 'pista-sensor-*' -executable -exec cp -f '{}' ~/bin/ \;
+	find . -type f -name 'pista-feed-*' -executable -exec cp -f '{}' ~/bin/ \;
 
 install_init:
 	cp ./example-via-tmux ~/.xinitrc-pista
 
 reinstall:
-	raco pkg remove pista-sensors || true
+	raco pkg remove pista-feeds || true
 
 deps:
 	raco pkg install --deps search-auto

@@ -8,7 +8,7 @@
          xml/path
          (prefix-in srfi/19: srfi/19))
 
-(require (prefix-in sensor: "sensor.rkt"))
+(require (prefix-in feed: "feed.rkt"))
 
 (struct interval (normal error-init error-curr))
 
@@ -133,7 +133,7 @@
            (kill-thread prev-printer))
          (let ([curr-printer
                  (thread
-                   (λ () (sensor:print/retry (format "~a°F" (~r (dict-ref data 'temp_f)
+                   (λ () (feed:print/retry (format "~a°F" (~r (dict-ref data 'temp_f)
                                                                 #:min-width 4
                                                                 #:precision 0)))))]
                [curr-observ
@@ -143,7 +143,7 @@
            (log-debug "Data summary: ~a" summary)
            (when (> curr-observ prev-observ)
              (when notify?
-               (sensor:notify "Weather updated" summary 'low))
+               (feed:notify "Weather updated" summary 'low))
              (when summary-file
                ; TODO Error handling
                (with-output-to-file
@@ -184,7 +184,7 @@
                  (set! opt-mem-log (string->path m))]
                 #:args
                 (station-id)
-                (sensor:logger-start opt-log-level)
+                (feed:logger-start opt-log-level)
                 (loop station-id
                       opt-summary-file
                       (interval opt-interval

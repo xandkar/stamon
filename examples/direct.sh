@@ -31,15 +31,15 @@ remake "$fifo_weather"
 
 wifi_if=$(iwconfig | grep -v '^lo' | awk '/^[^\ ]/ {print $1}')
 
-../pista-sensor-time             > "$fifo_time"   &
-../pista-sensor-mpd              > "$fifo_mpd"    &
-../pista-sensor-volume           > "$fifo_vol"    &
-../pista-sensor-backlight        > "$fifo_light"  &
-../pista-sensor-bluetooth        > "$fifo_blue"   &
-../pista-sensor-wifi "$wifi_if" 5 > "$fifo_wifi"   &
-../pista-sensor-battery          > "$fifo_batt"   &
-../pista-sensor-upower           > "$fifo_upow"   &
-../pista-sensor-weather-gov     -n -i $(( 15 * 60)) KJFK > "$fifo_weather" &
+../pista-feed-time             > "$fifo_time"   &
+../pista-feed-mpd              > "$fifo_mpd"    &
+../pista-feed-volume           > "$fifo_vol"    &
+../pista-feed-backlight        > "$fifo_light"  &
+../pista-feed-bluetooth        > "$fifo_blue"   &
+../pista-feed-wifi "$wifi_if" 5 > "$fifo_wifi"   &
+../pista-feed-battery          > "$fifo_batt"   &
+../pista-feed-upower           > "$fifo_upow"   &
+../pista-feed-weather-gov     -n -i $(( 15 * 60)) KJFK > "$fifo_weather" &
 
 pista \
     -l 0 \

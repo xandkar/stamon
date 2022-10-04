@@ -2,10 +2,10 @@
 #lang info
 
 (define collection
-  "pista-sensors")
+  "pista-feeds")
 
 (define pkg-desc
-  "pista sensors")
+  "pista feeds")
 
 (define version
   "0.0.0")
@@ -19,9 +19,9 @@
     "openweather"))
 
 (define racket-launcher-libraries
-  '("pista-sensor-openweather.rkt"
-    "pista-sensor-upower.rkt"
-    "pista-sensor-weather-gov.rkt"))
+  '("pista-feed-openweather.rkt"
+    "pista-feed-upower.rkt"
+    "pista-feed-weather-gov.rkt"))
 
 (define racket-launcher-names
   racket-launcher-libraries)

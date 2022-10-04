@@ -86,7 +86,7 @@ struct Cli {
     #[clap(long = "summary-file", short = 's')]
     summary_file: Option<std::path::PathBuf>,
 
-    #[clap(long = "app-name", default_value = "pista-sensor-weather")]
+    #[clap(long = "app-name", default_value = "pista-feed-weather")]
     app_name: String,
 
     #[clap(long = "app-version", default_value = "HEAD")]
@@ -94,7 +94,7 @@ struct Cli {
 
     #[clap(
         long = "app-url",
-        default_value = "https://github.com/xandkar/pista-sensors"
+        default_value = "https://github.com/xandkar/pista-feeds"
     )]
     app_url: String,
 

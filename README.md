@@ -1,4 +1,4 @@
-example sensors for use with [pista](https://github.com/xandkar/pista)
+example data feed processes for use with [pista](https://github.com/xandkar/pista)
 ===============================================================================
 [![Build Status](https://travis-ci.org/xandkar/pista-sensors.svg?branch=master)](https://travis-ci.org/xandkar/pista-sensors)
 ![Screenshot](screenshot.jpg)
@@ -12,12 +12,12 @@ Example configurations
 Dependencies
 ------------
 
-- [`fswatch`](https://github.com/emcrisostomo/fswatch) for `pista-sensor-backlight`
-- OpenBSD `netcat` for `pista-sensor-mpd.sh`
+- [`fswatch`](https://github.com/emcrisostomo/fswatch) for `pista-feed-backlight`
+- OpenBSD `netcat` for `pista-feed-mpd.sh`
 - `jq` for multiple things
 - `curl` for multiple things
-- `hxpipe` for `pista-sensor-weather`
-- `iwconfig` for `pista-sensor-wifi`
+- `hxpipe` for `pista-feed-weather`
+- `iwconfig` for `pista-feed-wifi`
 
 Notes
 -----
