@@ -48,7 +48,7 @@ fn main() {
     .init();
     let cli = Cli::parse();
     loop {
-        match statfs(&cli.path.as_str()) {
+        match statfs(cli.path.as_str()) {
             Err(err) =>
                 log::error!("{:?}", err),
             Ok(percentage) =>
