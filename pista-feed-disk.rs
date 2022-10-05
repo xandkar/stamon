@@ -23,7 +23,8 @@ fn statfs(path: &str) -> Result<u64> {
     let path = CString::new(path).unwrap();
     let mut buf: MaybeUninit<libc::statfs> = MaybeUninit::uninit();
     let (total, free) = unsafe {
-        match libc::statfs(path.as_ptr() as *const i8, buf.assume_init_mut()) {
+        match libc::statfs(path.as_ptr() as *const i8, buf.assume_init_mut())
+        {
             0 => {
                 let libc::statfs {
                     f_blocks: total,
@@ -49,10 +50,10 @@ fn main() {
     let cli = Cli::parse();
     loop {
         match statfs(cli.path.as_str()) {
-            Err(err) =>
-                log::error!("{:?}", err),
-            Ok(percentage) =>
-                println!("{}{}{}", &cli.prefix, percentage, &cli.postfix),
+            Err(err) => log::error!("{:?}", err),
+            Ok(percentage) => {
+                println!("{}{}{}", &cli.prefix, percentage, &cli.postfix)
+            }
         }
         std::thread::sleep(std::time::Duration::from_secs(cli.interval));
     }
