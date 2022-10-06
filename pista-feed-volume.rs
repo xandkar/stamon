@@ -37,7 +37,7 @@ fn main() {
                     log::error!("Failure to read output line from 'pactl, subscribe': {:?}", e)
                 }
                 Ok(line) => {
-                    if line.starts_with("Event 'new' on sink") {
+                    if line.starts_with("Event 'change' on sink") {
                         // TODO Should we bother distinguishing which sink to react to?
                         //      Maybe not, because sink indices could change.
                         Volume::fetch_and_print(pre, post)
