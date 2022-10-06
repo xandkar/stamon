@@ -70,7 +70,7 @@ prefix="${1-v}"
 # Initial reading
 current_state "$prefix"
 
-pactl subscribe | grep --line-buffered "^Event 'change' on sink .\+$" \
+pactl subscribe | grep --line-buffered "^Event 'new' on sink" \
 | while read -r _
 do
     current_state "$prefix"
