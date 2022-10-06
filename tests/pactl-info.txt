@@ -1,0 +1,15 @@
+Server String: /run/user/1000/pulse/native
+Library Protocol Version: 35
+Server Protocol Version: 35
+Is Local: yes
+Client Index: 4039
+Tile Size: 65472
+User Name: xand
+Host Name: horlamca
+Server Name: pulseaudio
+Server Version: 15.0
+Default Sample Specification: s16le 2ch 44100Hz
+Default Channel Map: front-left,front-right
+Default Sink: alsa_output.pci-0000_00_1f.3.analog-stereo
+Default Source: alsa_input.usb-046d_Logitech_Webcam_C925e_234B5BBF-02.analog-stereo
+Cookie: f2d3:8a04

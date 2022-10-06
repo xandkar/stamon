@@ -11,6 +11,7 @@ BINS := \
     pista-feed-upower \
     pista-feed-memory \
     pista-feed-mpd \
+    pista-feed-volume \
     pista-feed-weather \
     pista-feed-helium-account-balance \
     pista-feed-x11-keymap \
@@ -46,6 +47,9 @@ pista-feed-memory: | rust
 	mv target/release/$@ ./
 
 pista-feed-mpd: | rust
+	mv target/release/$@ ./
+
+pista-feed-volume: | rust
 	mv target/release/$@ ./
 
 pista-feed-weather: | rust

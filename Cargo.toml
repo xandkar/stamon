@@ -44,6 +44,10 @@ name = "pista-feed-mpd"
 path = "pista-feed-mpd.rs"
 
 [[bin]]
+name = "pista-feed-volume"
+path = "pista-feed-volume.rs"
+
+[[bin]]
 name = "pista-feed-weather"
 path = "pista-feed-weather.rs"
 
