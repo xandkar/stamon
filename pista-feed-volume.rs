@@ -68,7 +68,8 @@ impl Volume {
                 println!("{}{:3}%{}", prefix, avg, postfix)
             }
             Err(e) => {
-                log::error!("{:?}", e)
+                log::error!("{:?}", e);
+                println!("{}ERR{}", prefix, postfix)
             }
         }
     }
