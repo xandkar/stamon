@@ -124,31 +124,40 @@ fn pactl_list_sinks_to_volume(data: &str, sink: &str) -> Result<Volume> {
                 mute = line.split_whitespace().nth(1);
             }
             _ if line.starts_with("	Volume:") => {
-                if let ["Volume:", "front-left:", _, "/", l, "/", _, "dB,", "front-right:", _, "/", r, "/", _, "dB"] =
+                if let ["Volume:", "front-left:", _, "/", left, "/", _, "dB,", "front-right:", _, "/", right, "/", _, "dB"] =
                     line.split_whitespace().collect::<Vec<&str>>()[..]
                 {
-                    if let (Some(l), Some(r)) =
-                        (l.strip_suffix('%'), r.strip_suffix('%'))
-                    {
-                        if let (Ok(l), Ok(r)) =
-                            (l.parse::<u64>(), r.parse::<u64>())
-                        {
-                            match name {
-                                Some(name) if name == sink => match mute {
-                                    None => (),
-                                    Some("yes") => return Ok(Volume::Muted),
-                                    Some("no") => {
-                                        return Ok(Volume::Volume(l, r))
-                                    }
-                                    Some(invalid) => {
-                                        return Err(anyhow!(
-                                            "Invalid mute value: {:?}",
-                                            invalid
-                                        ))
-                                    }
-                                },
-                                _ => (),
+                    let left = left
+                        .strip_suffix('%')
+                        .ok_or_else(||
+                            anyhow!("Invalid format - Volume front-left  missing '%'."))?;
+                    let right = right
+                        .strip_suffix('%')
+                        .ok_or_else(||
+                            anyhow!("Invalid format - Volume front-right missing '%'."))?;
+                    let left = left.parse::<u64>()?;
+                    let right = right.parse::<u64>()?;
+                    match name {
+                        Some(name) if name == sink => match mute {
+                            Some("yes") => return Ok(Volume::Muted),
+                            Some("no") => {
+                                return Ok(Volume::Volume(left, right))
                             }
+                            Some(invalid) => {
+                                return Err(anyhow!(
+                                    "Invalid mute value: {:?}",
+                                    invalid
+                                ))
+                            }
+                            None => {
+                                return Err(anyhow!("Missing mute value"))
+                            }
+                        },
+                        Some(_) => (),
+                        None => {
+                            return Err(anyhow!(
+                            "Invalid format - no Name field before Volume."
+                        ))
                         }
                     }
                 }
