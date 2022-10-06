@@ -161,6 +161,8 @@ fn pactl_list_sinks_to_volume(data: &str, sink: &str) -> Result<Volume> {
                         ))
                         }
                     }
+                } else {
+                    return Err(anyhow!("Invalid format - Volume pattern unmatched: {:?}", line))
                 }
             }
             _ => (),
