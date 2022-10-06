@@ -1,4 +1,3 @@
-use std::collections::{HashMap, HashSet};
 use std::io::{BufRead, BufReader};
 
 use anyhow::{anyhow, Result};
@@ -82,10 +81,7 @@ impl Volume {
         .ok_or_else(|| anyhow!("Failure to get default sink."))?;
         let out = cmd("pactl", &["list", "sinks"])?;
         let data = std::str::from_utf8(&out.stdout)?;
-        let volume =
-            pactl_list_sinks_to_volume(data, sink).ok_or_else(|| {
-                anyhow!("Failed to get volume for some reason.")
-            })?;
+        let volume = pactl_list_sinks_to_volume(data, sink)?;
         Ok(volume)
     }
 }
@@ -111,32 +107,22 @@ fn pactl_info_to_default_sink(data: &str) -> Option<&str> {
     None
 }
 
-fn pactl_list_sinks_to_volume(data: &str, sink: &str) -> Option<Volume> {
-    let mut sink_id: Option<u64> = None;
-    let mut sink_ids: HashSet<u64> = HashSet::new();
-    let mut name: HashMap<u64, &str> = HashMap::new();
-    let mut mute: HashMap<u64, &str> = HashMap::new();
-    let mut vol_left: HashMap<u64, u64> = HashMap::new();
-    let mut vol_right: HashMap<u64, u64> = HashMap::new();
+fn pactl_list_sinks_to_volume(data: &str, sink: &str) -> Result<Volume> {
+    let mut name: Option<&str> = None;
+    let mut mute: Option<&str> = None;
     for line in data.lines() {
-        match sink_id {
+        match () {
             _ if line.starts_with("Sink #") => {
-                if let Some(id) = line.split('#').nth(1) {
-                    if let Ok(id) = id.parse::<u64>() {
-                        sink_id = Some(id)
-                    }
-                }
+                name = None;
+                mute = None;
             }
-            Some(id) if line.starts_with("	State:") => {
-                sink_ids.insert(id);
+            _ if line.starts_with("	Name:") => {
+                name = line.split_whitespace().nth(1);
             }
-            Some(id) if line.starts_with("	Name:") => {
-                line.split_whitespace().nth(1).map(|n| name.insert(id, n));
+            _ if line.starts_with("	Mute:") => {
+                mute = line.split_whitespace().nth(1);
             }
-            Some(id) if line.starts_with("	Mute:") => {
-                line.split_whitespace().nth(1).map(|m| mute.insert(id, m));
-            }
-            Some(id) if line.starts_with("	Volume:") => {
+            _ if line.starts_with("	Volume:") => {
                 if let ["Volume:", "front-left:", _, "/", l, "/", _, "dB,", "front-right:", _, "/", r, "/", _, "dB"] =
                     line.split_whitespace().collect::<Vec<&str>>()[..]
                 {
@@ -146,8 +132,22 @@ fn pactl_list_sinks_to_volume(data: &str, sink: &str) -> Option<Volume> {
                         if let (Ok(l), Ok(r)) =
                             (l.parse::<u64>(), r.parse::<u64>())
                         {
-                            vol_left.insert(id, l);
-                            vol_right.insert(id, r);
+                            match name {
+                                Some(name) if name == sink => match mute {
+                                    None => (),
+                                    Some("yes") => return Ok(Volume::Muted),
+                                    Some("no") => {
+                                        return Ok(Volume::Volume(l, r))
+                                    }
+                                    Some(invalid) => {
+                                        return Err(anyhow!(
+                                            "Invalid mute value: {:?}",
+                                            invalid
+                                        ))
+                                    }
+                                },
+                                _ => (),
+                            }
                         }
                     }
                 }
@@ -155,25 +155,7 @@ fn pactl_list_sinks_to_volume(data: &str, sink: &str) -> Option<Volume> {
             _ => (),
         }
     }
-    for id in sink_ids.iter() {
-        match (
-            name.get(id),
-            mute.get(id).copied(),
-            vol_left.get(id),
-            vol_right.get(id),
-        ) {
-            (Some(name), Some("yes"), Some(_), Some(_)) if *name == sink => {
-                return Some(Volume::Muted)
-            }
-            (Some(name), Some("no"), Some(left), Some(right))
-                if *name == sink =>
-            {
-                return Some(Volume::Volume(*left, *right))
-            }
-            _ => (),
-        }
-    }
-    None
+    Err(anyhow!("Target sink not found"))
 }
 
 #[test]
@@ -210,5 +192,6 @@ fn test_pactl_list_sinks_to_volume() {
             &std::fs::read_to_string("tests/pactl-list-sinks.txt").unwrap(),
             "alsa_output.pci-0000_00_1f.3.analog-stereo"
         )
+        .ok()
     )
 }
