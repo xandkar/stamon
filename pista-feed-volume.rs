@@ -76,22 +76,20 @@ impl Volume {
 
     fn fetch() -> Result<Self> {
         // Default sink could change, so need to look it up every time.
-        let pactl_info = cmd("pactl", &["info"])?;
-        let sink = pactl_info_to_default_sink(std::str::from_utf8(
-            &pactl_info.stdout,
-        )?)
-        .ok_or_else(|| anyhow!("Failure to get default sink."))?;
-        let out = cmd("pactl", &["list", "sinks"])?;
-        let data = std::str::from_utf8(&out.stdout)?;
-        let volume = pactl_list_sinks_to_volume(data, sink)?;
+        let pactl_info = &cmd("pactl", &["info"])?;
+        let pactl_info = std::str::from_utf8(pactl_info)?;
+        let sink = pactl_info_to_default_sink(pactl_info)?;
+        let pactl_list_sinks = cmd("pactl", &["list", "sinks"])?;
+        let pactl_list_sinks = std::str::from_utf8(&pactl_list_sinks)?;
+        let volume = pactl_list_sinks_to_volume(pactl_list_sinks, sink)?;
         Ok(volume)
     }
 }
 
-fn cmd(cmd: &str, args: &[&str]) -> Result<std::process::Output> {
+fn cmd(cmd: &str, args: &[&str]) -> Result<Vec<u8>> {
     let out = std::process::Command::new(cmd).args(args).output()?;
     if out.status.success() {
-        Ok(out)
+        Ok(out.stdout)
     } else {
         let err_msg =
             format!("Failure in '{} {:?}'. out: {:?}", cmd, args, out);
@@ -100,13 +98,20 @@ fn cmd(cmd: &str, args: &[&str]) -> Result<std::process::Output> {
     }
 }
 
-fn pactl_info_to_default_sink(data: &str) -> Option<&str> {
+fn pactl_info_to_default_sink(data: &str) -> Result<&str> {
+    let prefix = "Default Sink:";
     for line in data.lines() {
-        if line.starts_with("Default Sink:") {
-            return line.split_whitespace().nth(2);
+        if line.starts_with(prefix) {
+            return line.split_whitespace().nth(2).ok_or_else(|| {
+                anyhow!(
+                    "{:?} missing right-hand-side value: {:?}",
+                    prefix,
+                    data
+                )
+            });
         }
     }
-    None
+    Err(anyhow!("{:?} not found", prefix))
 }
 
 fn vol_str_parse(s: &str) -> Result<u64> {
@@ -187,27 +192,28 @@ fn pactl_list_sinks_to_volume(data: &str, sink: &str) -> Result<Volume> {
 
 #[test]
 fn test_parse_default_sink() {
-    assert_eq!(None, pactl_info_to_default_sink(&""));
-    assert_eq!(None, pactl_info_to_default_sink(&"Mumbo Jumbo: stuff"));
-    assert_eq!(None, pactl_info_to_default_sink(&"Default Sink:"));
-    assert_eq!(None, pactl_info_to_default_sink(&"Default Sink: "));
+    assert!(pactl_info_to_default_sink(&"").is_err());
+    assert!(pactl_info_to_default_sink(&"Mumbo Jumbo: stuff").is_err());
+    assert!(pactl_info_to_default_sink(&"Default Sink:").is_err());
+    assert!(pactl_info_to_default_sink(&"Default Sink: ").is_err());
     assert_eq!(
         Some("foo"),
-        pactl_info_to_default_sink(&"Default Sink: foo")
+        pactl_info_to_default_sink(&"Default Sink: foo").ok()
     );
     assert_eq!(
         Some("foo"),
-        pactl_info_to_default_sink(&"Default Sink: foo bar")
+        pactl_info_to_default_sink(&"Default Sink: foo bar").ok()
     );
     assert_eq!(
         Some("foo.bar_baz-qux"),
-        pactl_info_to_default_sink(&"Default Sink: foo.bar_baz-qux")
+        pactl_info_to_default_sink(&"Default Sink: foo.bar_baz-qux").ok()
     );
     assert_eq!(
         Some("alsa_output.pci-0000_00_1f.3.analog-stereo"),
         pactl_info_to_default_sink(
             &std::fs::read_to_string("tests/pactl-info.txt").unwrap()
         )
+        .ok()
     );
 }
 
