@@ -18,6 +18,7 @@
 //   - c: iwgetid
 
 use std::io::BufRead; // .lines() method
+use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Result};
 use clap::Parser;
@@ -25,7 +26,7 @@ use clap::Parser;
 #[derive(Debug, clap::Subcommand)]
 enum IFKind {
     Wifi,
-    // TODO: Eth
+    Eth,
 }
 
 #[derive(Debug, clap::Parser)]
@@ -38,8 +39,14 @@ struct Cli {
     #[clap(long = "interval", short = 'i', default_value = "5")]
     interval: u64,
 
-    #[clap(long = "prefix", default_value = "w ")]
+    #[clap(long = "prefix", default_value = "n ")]
     prefix: String,
+}
+
+#[derive(Debug)]
+enum EthStatus {
+    Up,
+    Down,
 }
 
 fn main() {
@@ -49,6 +56,11 @@ fn main() {
     .init();
     let cli = Cli::parse();
     log::info!("Parameters: {:?}", &cli);
+    let operstate_path: PathBuf =
+        ["/sys/class/net", &cli.interface, "operstate"]
+            .iter()
+            .collect();
+    log::info!("operstate_path: {:?}", &operstate_path);
     loop {
         match &cli.interface_kind {
             IFKind::Wifi => match wifi_link_quality_pct(&cli.interface) {
@@ -60,8 +72,32 @@ fn main() {
                     e
                 ),
             },
+            IFKind::Eth => match eth_status(operstate_path.as_path()) {
+                Ok(Some(EthStatus::Up)) => println!("{}<>", &cli.prefix),
+                Ok(Some(EthStatus::Down)) | Ok(None) => {
+                    println!("{}--", &cli.prefix)
+                }
+                Err(e) => log::error!(
+                    "Failure to read operstate file for {:?}: {:?}",
+                    &cli.interface,
+                    e
+                ),
+            },
         }
         std::thread::sleep(std::time::Duration::from_secs(cli.interval));
+    }
+}
+
+fn eth_status(operstate_path: &Path) -> Result<Option<EthStatus>> {
+    if operstate_path.exists() {
+        let status = match std::fs::read_to_string(operstate_path)?.trim() {
+            "up" => Some(EthStatus::Up),
+            "down" => Some(EthStatus::Down),
+            _ => None,
+        };
+        Ok(status)
+    } else {
+        Ok(None)
     }
 }
 
