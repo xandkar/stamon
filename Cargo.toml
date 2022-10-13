@@ -32,6 +32,10 @@ name = "pista-feed-disk"
 path = "pista-feed-disk.rs"
 
 [[bin]]
+name = "pista-feed-net"
+path = "pista-feed-net.rs"
+
+[[bin]]
 name = "pista-feed-helium-account-balance"
 path = "pista-feed-helium-account-balance.rs"
 
