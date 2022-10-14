@@ -65,7 +65,7 @@ fn main() {
         match &cli.interface_kind {
             IFKind::Wifi => match wifi_link_quality_pct(&cli.interface) {
                 Ok(Some(pct)) => println!("{}{:3}%", &cli.prefix, pct),
-                Ok(None) => println!("{}---%", &cli.prefix),
+                Ok(None) => println!("{}---", &cli.prefix),
                 Err(e) => log::error!(
                     "Failure to parse link quality for {:?}: {:?}",
                     &cli.interface,
