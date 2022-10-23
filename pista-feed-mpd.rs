@@ -28,6 +28,12 @@ struct Cli {
 
     #[clap(long = "symbol-stop", default_value = "-")]
     symbol_stop: String,
+
+    #[clap(long = "pct-when-stop", default_value = "---")]
+    pct_when_stop: String,
+
+    #[clap(long = "pct-when-stream", default_value = "~~~")]
+    pct_when_stream: String,
 }
 
 fn status_to_string(s: mpd::status::Status, c: &Cli) -> String {
@@ -37,12 +43,13 @@ fn status_to_string(s: mpd::status::Status, c: &Cli) -> String {
         mpd::status::State::Stop => &c.symbol_stop,
     };
     let percentage = match (s.state, s.duration, s.elapsed) {
-        (mpd::status::State::Stop, _, _) => "---".to_string(),
-        (_, None, Some(_)) => "~~~".to_string(), // streaming
+        // TODO Remove cloning?
+        (mpd::status::State::Stop, _, _) => c.pct_when_stop.clone(),
+        (_, None, Some(_)) => c.pct_when_stream.clone(),
         (_, Some(tot), Some(cur)) => {
             let tot = tot.num_seconds() as f64;
             let cur = cur.num_seconds() as f64;
-            format!("{:3.0}", cur / tot * 100.0)
+            format!("{:3.0}%", cur / tot * 100.0)
         }
         (s, d, e) => {
             log::warn!(
@@ -70,7 +77,7 @@ fn status_to_string(s: mpd::status::Status, c: &Cli) -> String {
             }
         }
     };
-    format!("{} {:>8} {}%", state, time, percentage)
+    format!("{state} {time:>8} {percentage:^4}")
 }
 
 fn main() -> Result<()> {
