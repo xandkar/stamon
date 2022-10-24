@@ -60,7 +60,7 @@ impl Volume {
     pub fn fetch_and_print(prefix: &str, postfix: &str) {
         match Self::fetch() {
             Ok(Self::Muted) => {
-                println!("{}X{}", prefix, postfix)
+                println!("{} X {}", prefix, postfix)
             }
             Ok(Self::Volume(left, right)) => {
                 // TODO CLI option to aggregate or pick one.
