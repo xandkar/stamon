@@ -125,7 +125,7 @@ fn vol_str_parse(s: &str) -> Result<u64> {
 
 fn pactl_list_sinks_to_volume(data: &str, sink: &str) -> Result<Volume> {
     let mut name: Option<&str> = None;
-    let mut mute: Option<&str> = None;
+    let mut mute: Option<bool> = None;
     for line in data.lines() {
         match () {
             _ if line.starts_with("Sink #") => {
@@ -133,42 +133,49 @@ fn pactl_list_sinks_to_volume(data: &str, sink: &str) -> Result<Volume> {
                 mute = None;
             }
             _ if line.starts_with("	Name:") => {
-                name = line.split_whitespace().nth(1);
+                name = match line.split_whitespace().nth(1) {
+                    Some(name) => Some(name),
+                    None => {
+                        return Err(anyhow!(
+                            "Missing value for Name field in line: {line:?}"
+                        ))
+                    }
+                }
             }
             _ if line.starts_with("	Mute:") => {
-                mute = line.split_whitespace().nth(1);
+                mute = match line.split_whitespace().nth(1) {
+                    Some("yes") => Some(true),
+                    Some("no") => Some(false),
+                    Some(m) => {
+                        return Err(anyhow!("Invalid Mute value: {m:?}"))
+                    }
+                    None => {
+                        return Err(anyhow!(
+                            "Missing value for Mute field line: {line:?}"
+                        ))
+                    }
+                }
             }
             _ if line.starts_with("	Volume:") => {
                 match (name, mute) {
-                    (Some(name), Some(mute)) if name == sink => match mute {
-                        "yes" => return Ok(Volume::Muted),
-                        "no" => {
-                            if let ["Volume:", "front-left:", _, "/", left, "/", _, "dB,", "front-right:", _, "/", right, "/", _, "dB"] =
-                                line.split_whitespace().collect::<Vec<&str>>()
-                                    [..]
-                            {
+                    (Some(name), Some(is_muted)) if name == sink => {
+                        if is_muted {
+                            return Ok(Volume::Muted);
+                        }
+                        match line.split_whitespace().collect::<Vec<&str>>()[..]
+                        {
+                            ["Volume:", "front-left:", _, "/", left, "/", _, "dB,", "front-right:", _, "/", right, "/", _, "dB"] => {
                                 return Ok(Volume::Volume(
                                     vol_str_parse(left)?,
                                     vol_str_parse(right)?,
-                                ));
-                            } else {
+                                ))
+                            }
+                            _ => {
                                 return Err(anyhow!(
-                                    "Invalid format - Volume pattern unmatched: {:?}",
-                                    line
-                                ));
+                                    "Invalid Volume value: {line:?}"
+                                ))
                             }
                         }
-                        invalid => {
-                            return Err(anyhow!(
-                                "Invalid mute value: {:?}",
-                                invalid
-                            ))
-                        }
-                    },
-                    (Some(name), None) if name == sink => {
-                        return Err(anyhow!(
-                            "Invalid format - no Mute before Volume."
-                        ))
                     }
                     (Some(_), Some(_)) => (), // A sink we don't care about.
                     (Some(_), None) => {
@@ -177,11 +184,9 @@ fn pactl_list_sinks_to_volume(data: &str, sink: &str) -> Result<Volume> {
                     (None, Some(_)) => {
                         log::error!("Invalid format - no Name before Volume.")
                     }
-                    (None, None) => {
-                        log::error!(
-                            "Invalid format - no Name or Mute before Volume."
-                        )
-                    }
+                    (None, None) => log::error!(
+                        "Invalid format - no Name or Mute before Volume."
+                    ),
                 }
             }
             _ => (), // A line we don't care about.
