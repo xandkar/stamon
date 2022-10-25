@@ -16,7 +16,10 @@ fn helium_fetch_balance_hnt(account: &str) -> Result<f64> {
     let parsed: serde_json::Value = serde_json::from_str(&payload)?;
     match &parsed["data"]["balance"] {
         serde_json::Value::Number(balance) => {
-            let balance = balance.as_f64().unwrap() / 100_000_000.0;
+            let balance = balance.as_f64().ok_or_else(|| {
+                anyhow!("Failed to convert to f64: {balance:?}")
+            })?;
+            let balance = balance / 100_000_000.0;
             log::debug!("HNT account balance: {:?}", balance);
             Ok(balance)
         }

@@ -20,7 +20,7 @@ struct Cli {
 }
 
 fn statfs(path: &str) -> Result<u64> {
-    let path = CString::new(path).unwrap();
+    let path = CString::new(path)?;
     let mut buf: MaybeUninit<libc::statfs> = MaybeUninit::uninit();
     let (total, free) = unsafe {
         match libc::statfs(path.as_ptr() as *const i8, buf.assume_init_mut())
@@ -35,8 +35,7 @@ fn statfs(path: &str) -> Result<u64> {
             }
             n => Err(anyhow!("libc::statfs failed with {}", n)),
         }
-    }
-    .unwrap();
+    }?;
     let used = total - free;
     let used_percentage = (used as f64 / total as f64) * 100.0;
     Ok(used_percentage.ceil() as u64)

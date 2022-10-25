@@ -13,7 +13,7 @@ struct Cli {
     postfix: String,
 }
 
-fn main() {
+fn main() -> Result<()> {
     env_logger::Builder::from_env(
         env_logger::Env::default().default_filter_or("info"),
     )
@@ -27,11 +27,13 @@ fn main() {
     let mut cmd = std::process::Command::new("pactl")
         .arg("subscribe")
         .stdout(std::process::Stdio::piped())
-        .spawn()
-        .unwrap();
+        .spawn()?;
 
     {
-        let stdout = cmd.stdout.as_mut().unwrap();
+        let stdout = cmd
+            .stdout
+            .as_mut()
+            .ok_or_else(|| anyhow!("Failure to get command's stdout."))?;
         for line_result in BufReader::new(stdout).lines() {
             match line_result {
                 Err(e) => {
@@ -47,7 +49,8 @@ fn main() {
             }
         }
     }
-    cmd.wait().unwrap();
+    cmd.wait()?;
+    Ok(())
 }
 
 #[derive(PartialEq, Eq, Debug)]
