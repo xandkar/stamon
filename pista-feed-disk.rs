@@ -52,7 +52,7 @@ fn main() {
         match statfs(cli.path.as_str()) {
             Err(err) => log::error!("{:?}", err),
             Ok(percentage) => {
-                println!("{}{}{}", &cli.prefix, percentage, &cli.postfix)
+                println!("{}{}{}", &cli.prefix, percentage, &cli.postfix);
             }
         }
         std::thread::sleep(std::time::Duration::from_secs(cli.interval));

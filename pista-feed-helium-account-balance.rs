@@ -70,17 +70,17 @@ fn main_loop(account: &str, interval: u64) {
                 println!("H __.__ $__.__ $__.__");
             }
             (None, Some(balance_hnt)) => {
-                println!("H {:.2} $__:__ $__:__", balance_hnt)
+                println!("H {:.2} $__:__ $__:__", balance_hnt);
             }
             (Some(price_hnt_in_usdt), None) => {
-                println!("H __:__ ${:.2} $__:__", price_hnt_in_usdt)
+                println!("H __:__ ${:.2} $__:__", price_hnt_in_usdt);
             }
             (Some(price_hnt_in_usdt), Some(balance_hnt)) => {
                 let balance_usdt = price_hnt_in_usdt * balance_hnt;
                 println!(
                     "H {:.2} ${:.2} ${:.2}",
                     balance_hnt, price_hnt_in_usdt, balance_usdt
-                )
+                );
             }
         };
         std::thread::sleep(std::time::Duration::from_secs(interval));

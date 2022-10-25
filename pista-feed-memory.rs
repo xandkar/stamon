@@ -78,7 +78,7 @@ fn main() {
     loop {
         match mem::Info::read() {
             Ok(m) => {
-                println!("{}{:3.0}%", &cli.prefix, m.used_pct())
+                println!("{}{:3.0}%", &cli.prefix, m.used_pct());
             }
             Err(e) => log::error!("Failure to read /proc/meminfo: {:?}", e),
         }

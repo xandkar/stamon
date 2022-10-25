@@ -35,13 +35,13 @@ fn main() {
         for line_result in BufReader::new(stdout).lines() {
             match line_result {
                 Err(e) => {
-                    log::error!("Failure to read output line from 'pactl, subscribe': {:?}", e)
+                    log::error!("Failure to read output line from 'pactl, subscribe': {:?}", e);
                 }
                 Ok(line) => {
                     if line.starts_with("Event 'change' on sink") {
                         // TODO Should we bother distinguishing which sink to react to?
                         //      Maybe not, because sink indices could change.
-                        Volume::fetch_and_print(pre, post)
+                        Volume::fetch_and_print(pre, post);
                     }
                 }
             }
@@ -60,16 +60,16 @@ impl Volume {
     pub fn fetch_and_print(prefix: &str, postfix: &str) {
         match Self::fetch() {
             Ok(Self::Muted) => {
-                println!("{} X {}", prefix, postfix)
+                println!("{} X {}", prefix, postfix);
             }
             Ok(Self::Volume(left, right)) => {
                 // TODO CLI option to aggregate or pick one.
                 let avg = (left + right) / 2;
-                println!("{}{:3}%{}", prefix, avg, postfix)
+                println!("{}{:3}%{}", prefix, avg, postfix);
             }
             Err(e) => {
                 log::error!("{:?}", e);
-                println!("{}ERR{}", prefix, postfix)
+                println!("{}ERR{}", prefix, postfix);
             }
         }
     }
@@ -179,10 +179,14 @@ fn pactl_list_sinks_to_volume(data: &str, sink: &str) -> Result<Volume> {
                     }
                     (Some(_), Some(_)) => (), // A sink we don't care about.
                     (Some(_), None) => {
-                        log::error!("Invalid format - no Mute before Volume.")
+                        log::error!(
+                            "Invalid format - no Mute before Volume."
+                        );
                     }
                     (None, Some(_)) => {
-                        log::error!("Invalid format - no Name before Volume.")
+                        log::error!(
+                            "Invalid format - no Name before Volume."
+                        );
                     }
                     (None, None) => log::error!(
                         "Invalid format - no Name or Mute before Volume."

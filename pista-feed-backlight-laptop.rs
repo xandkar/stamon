@@ -43,7 +43,7 @@ fn file_to_u64(path: &Path) -> Result<u64> {
 fn print(prefix: &String, max: u64, cur: u64) {
     let max = max as f64;
     let cur = cur as f64;
-    println!("{}{:3.0}%", prefix, cur / max * 100.0)
+    println!("{}{:3.0}%", prefix, cur / max * 100.0);
 }
 
 fn main() -> Result<()> {
@@ -74,7 +74,7 @@ fn main() -> Result<()> {
                             log::error!(
                                 "Failure to read current value: {:?}",
                                 e
-                            )
+                            );
                         }
                         Ok(cur) => {
                             if cur != pre {

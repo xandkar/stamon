@@ -102,7 +102,7 @@ fn main() -> Result<()> {
                         &cli.prefix,
                         status_to_string(s, &cli),
                         &cli.postfix
-                    )
+                    );
                 }
                 Err(e) => {
                     log::error!("Failure to get status: {:?}", e);

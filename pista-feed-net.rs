@@ -75,7 +75,7 @@ fn main() {
             IFKind::Eth => match eth_status(operstate_path.as_path()) {
                 Ok(Some(EthStatus::Up)) => println!("{}<>", &cli.prefix),
                 Ok(Some(EthStatus::Down)) | Ok(None) => {
-                    println!("{}--", &cli.prefix)
+                    println!("{}--", &cli.prefix);
                 }
                 Err(e) => log::error!(
                     "Failure to read operstate file for {:?}: {:?}",
