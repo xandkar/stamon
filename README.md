@@ -7,7 +7,7 @@ TODO
 ----
 
 ### main
-- [ ] time
+- [x] time
 - [x] keyboard layout
 - [x] weather
 - [x] mpd status
