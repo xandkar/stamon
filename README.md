@@ -1,40 +1,37 @@
-example data feed processes for use with [pista](https://github.com/xandkar/pista)
+data-feeds
 ===============================================================================
-[![Build Status](https://travis-ci.org/xandkar/pista-sensors.svg?branch=master)](https://travis-ci.org/xandkar/pista-sensors)
 ![Screenshot](screenshot.jpg)
+Data feed processes for use with [pista](https://github.com/xandkar/pista).
 
-Example configurations
-----------------------
-- [direct.sh](examples/direct.sh): basic setup, can be forked from `.xinitrc`
-- [via-tmux.sh](examples/via-tmux.sh): init-like setup with tmux, can be
-  conveniently (re)started at any time, independently of `.xinitrc`
+TODO
+----
 
-Dependencies
-------------
+### main
+- [ ] time
+- [x] keyboard layout
+- [x] weather
+- [x] mpd status
+- [x] volume
+- [x] backlight brightness
+- [x] disk usage
+- [x] memory usage
+- [ ] bluetooth status
+- [x] wifi status
+- [x] ethernet status
+- [ ] battery charge
+- [ ] microphone (see `notes/microphone-use.txt`)
 
-- [`fswatch`](https://github.com/emcrisostomo/fswatch) for `pista-feed-backlight`
-- OpenBSD `netcat` for `pista-feed-mpd.sh`
-- `jq` for multiple things
-- `curl` for multiple things
-- `hxpipe` for `pista-feed-weather`
-- `iwconfig` for `pista-feed-wifi`
+### improvements
 
-Notes
------
+#### all
+- [x] configurable prefix in each feed
+- [ ] configurable format strings https://github.com/vitiral/strfmt
 
-### Volume
+#### weather
+- [ ] fallback/alternative weather data sources
+- [ ] forecast: https://weather-gov.github.io/api/general-faqs
+  - [ ] daily
+  - [ ] hourly
 
-#### How to switch from intervaled polling to reactive updates?
-
-    $ pactl subscribe | awk '/^Event .+ on sink .+$/'
-    Event 'change' on sink #0
-    Event 'change' on sink #0
-    Event 'change' on sink #0
-    ^CGot SIGINT, exiting.
-
-seems to do the main trick, but still requires to trigger another call to check
-the volume value. Is there any event on the system that carries this value?
-
-#### TODO study how they do it:
-- https://git.alsa-project.org/?p=alsa-utils.git;a=blob;f=alsactl/monitor.c;hb=HEAD
-- https://github.com/illegalprime/alsa-monitor-node
+#### power/battery
+- [ ] updates from D-Bus, rather than `upower --monitor-detail`
