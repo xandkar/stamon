@@ -11,7 +11,7 @@ mod mem {
     impl Info {
         pub fn read() -> Result<Self> {
             let path = "/proc/meminfo";
-            let file = std::fs::File::open(&path)?;
+            let file = std::fs::File::open(path)?;
             let reader = std::io::BufReader::new(file);
             let mut total = None;
             let mut avail = None;

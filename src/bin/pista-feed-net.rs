@@ -103,7 +103,7 @@ fn eth_status(operstate_path: &Path) -> Result<Option<EthStatus>> {
 
 fn wifi_link_quality_pct(interface: &str) -> Result<Option<u64>> {
     let path = "/proc/net/wireless";
-    let file = std::fs::File::open(&path)?;
+    let file = std::fs::File::open(path)?;
     let reader = std::io::BufReader::new(file);
     let mut line_num = 0;
     for line_result in reader.lines() {
