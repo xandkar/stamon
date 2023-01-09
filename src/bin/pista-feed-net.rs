@@ -16,6 +16,11 @@
 // - SSID:
 //   - c: iwconfig
 //   - c: iwgetid
+// - TCP buffers
+//  - f: /proc/net/tcp
+//      > The "tx_queue" and "rx_queue" are the
+//      > outgoing and incoming data queue
+//      > in terms of kernel memory usage.
 
 use std::io::BufRead; // .lines() method
 use std::path::{Path, PathBuf};
