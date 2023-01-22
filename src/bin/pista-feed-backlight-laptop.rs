@@ -47,16 +47,26 @@ fn print(prefix: &String, max: u64, cur: u64) {
 }
 
 fn main() -> Result<()> {
-    env_logger::Builder::from_env(
-        env_logger::Env::default().default_filter_or("info"),
-    )
-    .init();
+    let subscriber = tracing_subscriber::FmtSubscriber::builder()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::builder()
+                .with_default_directive(
+                    tracing_subscriber::filter::LevelFilter::INFO.into(),
+                )
+                .from_env()?,
+        )
+        .with_writer(std::io::stderr)
+        .with_file(true)
+        .with_line_number(true)
+        .with_timer(tracing_subscriber::fmt::time::LocalTime::rfc_3339())
+        .finish();
+    tracing::subscriber::set_global_default(subscriber)?;
     let cli = Cli::parse();
     let paths = Paths::new(&cli.device);
     let max = file_to_u64(&paths.max)?;
     let cur = file_to_u64(&paths.max)?;
     let mut pre = cur;
-    log::info!("max: {}, cur: {}", max, cur);
+    tracing::info!("max: {}, cur: {}", max, cur);
     let (sender, receiver) = std::sync::mpsc::channel();
     let mut watcher = notify::recommended_watcher(sender)?;
     watcher.watch(Path::new(&paths.cur), RecursiveMode::Recursive)?;
@@ -71,7 +81,7 @@ fn main() -> Result<()> {
                 {
                     match file_to_u64(&paths.cur) {
                         Err(e) => {
-                            log::error!(
+                            tracing::error!(
                                 "Failure to read current value: {:?}",
                                 e
                             );
@@ -85,7 +95,7 @@ fn main() -> Result<()> {
                     }
                 }
             }
-            Err(err) => log::error!("watch error: {:?}", err),
+            Err(err) => tracing::error!("watch error: {:?}", err),
         }
     }
     Ok(())

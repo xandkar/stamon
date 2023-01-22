@@ -54,24 +54,34 @@ enum EthStatus {
     Down,
 }
 
-fn main() {
-    env_logger::Builder::from_env(
-        env_logger::Env::default().default_filter_or("info"),
-    )
-    .init();
+fn main() -> Result<()> {
+    let subscriber = tracing_subscriber::FmtSubscriber::builder()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::builder()
+                .with_default_directive(
+                    tracing_subscriber::filter::LevelFilter::INFO.into(),
+                )
+                .from_env()?,
+        )
+        .with_writer(std::io::stderr)
+        .with_file(true)
+        .with_line_number(true)
+        .with_timer(tracing_subscriber::fmt::time::LocalTime::rfc_3339())
+        .finish();
+    tracing::subscriber::set_global_default(subscriber)?;
     let cli = Cli::parse();
-    log::info!("Parameters: {:?}", &cli);
+    tracing::info!("Parameters: {:?}", &cli);
     let operstate_path: PathBuf =
         ["/sys/class/net", &cli.interface, "operstate"]
             .iter()
             .collect();
-    log::info!("operstate_path: {:?}", &operstate_path);
+    tracing::info!("operstate_path: {:?}", &operstate_path);
     loop {
         match &cli.interface_kind {
             IFKind::Wifi => match wifi_link_quality_pct(&cli.interface) {
                 Ok(Some(pct)) => println!("{}{:3}%", &cli.prefix, pct),
                 Ok(None) => println!("{}---", &cli.prefix),
-                Err(e) => log::error!(
+                Err(e) => tracing::error!(
                     "Failure to parse link quality for {:?}: {:?}",
                     &cli.interface,
                     e
@@ -82,7 +92,7 @@ fn main() {
                 Ok(Some(EthStatus::Down)) | Ok(None) => {
                     println!("{}--", &cli.prefix);
                 }
-                Err(e) => log::error!(
+                Err(e) => tracing::error!(
                     "Failure to read operstate file for {:?}: {:?}",
                     &cli.interface,
                     e

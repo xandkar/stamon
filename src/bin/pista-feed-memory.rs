@@ -57,6 +57,7 @@ mod mem {
     }
 }
 
+use anyhow::Result;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
@@ -68,19 +69,31 @@ struct Cli {
     prefix: String,
 }
 
-fn main() {
-    env_logger::Builder::from_env(
-        env_logger::Env::default().default_filter_or("info"),
-    )
-    .init();
+fn main() -> Result<()> {
+    let subscriber = tracing_subscriber::FmtSubscriber::builder()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::builder()
+                .with_default_directive(
+                    tracing_subscriber::filter::LevelFilter::INFO.into(),
+                )
+                .from_env()?,
+        )
+        .with_writer(std::io::stderr)
+        .with_file(true)
+        .with_line_number(true)
+        .with_timer(tracing_subscriber::fmt::time::LocalTime::rfc_3339())
+        .finish();
+    tracing::subscriber::set_global_default(subscriber)?;
     let cli = Cli::parse();
-    log::info!("Parameters: {:?}", &cli);
+    tracing::info!("Parameters: {:?}", &cli);
     loop {
         match mem::Info::read() {
             Ok(m) => {
                 println!("{}{:3.0}%", &cli.prefix, m.used_pct());
             }
-            Err(e) => log::error!("Failure to read /proc/meminfo: {:?}", e),
+            Err(e) => {
+                tracing::error!("Failure to read /proc/meminfo: {:?}", e)
+            }
         }
         std::thread::sleep(std::time::Duration::from_secs(cli.interval));
     }

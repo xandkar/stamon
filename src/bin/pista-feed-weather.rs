@@ -166,30 +166,40 @@ fn download(
     }
 }
 
-pub fn main() {
-    env_logger::Builder::from_env(
-        env_logger::Env::default().default_filter_or("info"),
-    )
-    .init();
+pub fn main() -> Result<()> {
+    let subscriber = tracing_subscriber::FmtSubscriber::builder()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::builder()
+                .with_default_directive(
+                    tracing_subscriber::filter::LevelFilter::INFO.into(),
+                )
+                .from_env()?,
+        )
+        .with_writer(std::io::stderr)
+        .with_file(true)
+        .with_line_number(true)
+        .with_timer(tracing_subscriber::fmt::time::LocalTime::rfc_3339())
+        .finish();
+    tracing::subscriber::set_global_default(subscriber)?;
     let cli = Cli::parse();
     let user_agent = UserAgent::from_cli(&cli).to_string();
-    log::info!("cli: {:?}", &cli);
-    log::info!("user_agent: {:?}", &user_agent);
+    tracing::info!("cli: {:?}", &cli);
+    tracing::info!("user_agent: {:?}", &user_agent);
     let url = format!(
         "https://api.weather.gov/stations/{}/observations/latest?require_qc=false",
         &cli.station_id
     );
-    log::info!("url: {:?}", &url);
+    tracing::info!("url: {:?}", &url);
     let interval_error_init = 15;
     let mut interval_error_curr = interval_error_init;
     let mut interval;
     loop {
         match download(&url, &user_agent, &cli.summary_file) {
             Err(e) => {
-                log::error!("Failure in data download: {:?}", e);
+                tracing::error!("Failure in data download: {:?}", e);
                 interval = interval_error_curr;
                 interval_error_curr *= 2;
-                log::warn!("Next retry in {} seconds.", interval);
+                tracing::warn!("Next retry in {} seconds.", interval);
             }
             Ok(temp_f) => {
                 println!("{:3.0}°F", temp_f);

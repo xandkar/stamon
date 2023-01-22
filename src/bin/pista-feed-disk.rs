@@ -41,15 +41,25 @@ fn statfs(path: &str) -> Result<u64> {
     Ok(used_percentage.ceil() as u64)
 }
 
-fn main() {
-    env_logger::Builder::from_env(
-        env_logger::Env::default().default_filter_or("info"),
-    )
-    .init();
+fn main() -> Result<()> {
+    let subscriber = tracing_subscriber::FmtSubscriber::builder()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::builder()
+                .with_default_directive(
+                    tracing_subscriber::filter::LevelFilter::INFO.into(),
+                )
+                .from_env()?,
+        )
+        .with_writer(std::io::stderr)
+        .with_file(true)
+        .with_line_number(true)
+        .with_timer(tracing_subscriber::fmt::time::LocalTime::rfc_3339())
+        .finish();
+    tracing::subscriber::set_global_default(subscriber)?;
     let cli = Cli::parse();
     loop {
         match statfs(cli.path.as_str()) {
-            Err(err) => log::error!("{:?}", err),
+            Err(err) => tracing::error!("{:?}", err),
             Ok(percentage) => {
                 println!("{}{}{}", &cli.prefix, percentage, &cli.postfix);
             }

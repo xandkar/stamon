@@ -20,7 +20,7 @@ fn helium_fetch_balance_hnt(account: &str) -> Result<f64> {
                 anyhow!("Failed to convert to f64: {balance:?}")
             })?;
             let balance = balance / 100_000_000.0;
-            log::debug!("HNT account balance: {:?}", balance);
+            tracing::debug!("HNT account balance: {:?}", balance);
             Ok(balance)
         }
         balance => Err(anyhow!("unexpected balance format: {:?}", balance)),
@@ -48,9 +48,9 @@ fn main_loop(account: &str, interval: u64) {
 
     loop {
         match helium_fetch_balance_hnt(account) {
-            Err(e) => log::error!("helium data fetch failure: {:?}", e),
+            Err(e) => tracing::error!("helium data fetch failure: {:?}", e),
             Ok(balance) => {
-                log::info!(
+                tracing::info!(
                     "helium data fetch success. balance_hnt:{}.",
                     balance
                 );
@@ -58,9 +58,9 @@ fn main_loop(account: &str, interval: u64) {
             }
         };
         match binance_fetch_average_price("HNTUSDT") {
-            Err(e) => log::error!("binance data fetch failure: {:?}", e),
+            Err(e) => tracing::error!("binance data fetch failure: {:?}", e),
             Ok(price) => {
-                log::info!(
+                tracing::info!(
                     "binance data fetch success. price_hnt_in_usdt:{}.",
                     price
                 );
@@ -69,7 +69,7 @@ fn main_loop(account: &str, interval: u64) {
         };
         match (price_hnt_in_usdt, balance_hnt) {
             (None, None) => {
-                log::debug!("neither data is yet available.");
+                tracing::debug!("neither data is yet available.");
                 println!("H __.__ $__.__ $__.__");
             }
             (None, Some(balance_hnt)) => {
@@ -90,12 +90,23 @@ fn main_loop(account: &str, interval: u64) {
     }
 }
 
-fn main() {
-    env_logger::Builder::from_env(
-        env_logger::Env::default().default_filter_or("debug"),
-    )
-    .init();
+fn main() -> Result<()> {
+    let subscriber = tracing_subscriber::FmtSubscriber::builder()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::builder()
+                .with_default_directive(
+                    tracing_subscriber::filter::LevelFilter::INFO.into(),
+                )
+                .from_env()?,
+        )
+        .with_writer(std::io::stderr)
+        .with_file(true)
+        .with_line_number(true)
+        .with_timer(tracing_subscriber::fmt::time::LocalTime::rfc_3339())
+        .finish();
+    tracing::subscriber::set_global_default(subscriber)?;
     let args = Cli::parse();
-    log::info!("starting with args: {:?}", &args);
+    tracing::info!("starting with args: {:?}", &args);
     main_loop(&args.account, args.interval);
+    Ok(())
 }

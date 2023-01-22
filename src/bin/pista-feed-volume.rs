@@ -14,10 +14,20 @@ struct Cli {
 }
 
 fn main() -> Result<()> {
-    env_logger::Builder::from_env(
-        env_logger::Env::default().default_filter_or("info"),
-    )
-    .init();
+    let subscriber = tracing_subscriber::FmtSubscriber::builder()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::builder()
+                .with_default_directive(
+                    tracing_subscriber::filter::LevelFilter::INFO.into(),
+                )
+                .from_env()?,
+        )
+        .with_writer(std::io::stderr)
+        .with_file(true)
+        .with_line_number(true)
+        .with_timer(tracing_subscriber::fmt::time::LocalTime::rfc_3339())
+        .finish();
+    tracing::subscriber::set_global_default(subscriber)?;
     let cli = Cli::parse();
     let pre = cli.prefix.as_str();
     let post = cli.postfix.as_str();
@@ -37,7 +47,7 @@ fn main() -> Result<()> {
         for line_result in BufReader::new(stdout).lines() {
             match line_result {
                 Err(e) => {
-                    log::error!("Failure to read output line from 'pactl, subscribe': {:?}", e);
+                    tracing::error!("Failure to read output line from 'pactl, subscribe': {:?}", e);
                 }
                 Ok(line) => {
                     if line.starts_with("Event 'change' on sink") {
@@ -71,7 +81,7 @@ impl Volume {
                 println!("{}{:3}%{}", prefix, avg, postfix);
             }
             Err(e) => {
-                log::error!("{:?}", e);
+                tracing::error!("{:?}", e);
                 println!("{}ERR{}", prefix, postfix);
             }
         }
@@ -96,7 +106,7 @@ fn cmd(cmd: &str, args: &[&str]) -> Result<Vec<u8>> {
     } else {
         let err_msg =
             format!("Failure in '{} {:?}'. out: {:?}", cmd, args, out);
-        log::error!("{}", err_msg);
+        tracing::error!("{}", err_msg);
         Err(anyhow!(err_msg))
     }
 }
@@ -182,16 +192,16 @@ fn pactl_list_sinks_to_volume(data: &str, sink: &str) -> Result<Volume> {
                     }
                     (Some(_), Some(_)) => (), // A sink we don't care about.
                     (Some(_), None) => {
-                        log::error!(
+                        tracing::error!(
                             "Invalid format - no Mute before Volume."
                         );
                     }
                     (None, Some(_)) => {
-                        log::error!(
+                        tracing::error!(
                             "Invalid format - no Name before Volume."
                         );
                     }
-                    (None, None) => log::error!(
+                    (None, None) => tracing::error!(
                         "Invalid format - no Name or Mute before Volume."
                     ),
                 }

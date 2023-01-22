@@ -52,7 +52,7 @@ fn status_to_string(s: mpd::status::Status, c: &Cli) -> String {
             format!("{:3.0}%", cur / tot * 100.0)
         }
         (s, d, e) => {
-            log::warn!(
+            tracing::warn!(
                 "Unexpected combination in status: state:{:?}, \
                 duration:{:?}, \
                 elapsed:{:?}",
@@ -81,12 +81,22 @@ fn status_to_string(s: mpd::status::Status, c: &Cli) -> String {
 }
 
 fn main() -> Result<()> {
-    env_logger::Builder::from_env(
-        env_logger::Env::default().default_filter_or("info"),
-    )
-    .init();
+    let subscriber = tracing_subscriber::FmtSubscriber::builder()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::builder()
+                .with_default_directive(
+                    tracing_subscriber::filter::LevelFilter::INFO.into(),
+                )
+                .from_env()?,
+        )
+        .with_writer(std::io::stderr)
+        .with_file(true)
+        .with_line_number(true)
+        .with_timer(tracing_subscriber::fmt::time::LocalTime::rfc_3339())
+        .finish();
+    tracing::subscriber::set_global_default(subscriber)?;
     let cli = Cli::parse();
-    log::info!("params: {:?}", &cli);
+    tracing::info!("params: {:?}", &cli);
     let ip_addr = std::net::IpAddr::from_str(&cli.addr)?;
     let addr = std::net::SocketAddr::new(ip_addr, cli.port);
     let mut conn_opt = None;
@@ -105,8 +115,8 @@ fn main() -> Result<()> {
                     );
                 }
                 Err(e) => {
-                    log::error!("Failure to get status: {:?}", e);
-                    log::debug!(
+                    tracing::error!("Failure to get status: {:?}", e);
+                    tracing::debug!(
                         "Connection close result: {:?}",
                         conn.close()
                     );

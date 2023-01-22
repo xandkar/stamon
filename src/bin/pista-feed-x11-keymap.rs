@@ -100,17 +100,29 @@ struct Cli {
 }
 
 fn main() -> Result<()> {
-    env_logger::Builder::from_env(
-        env_logger::Env::default().default_filter_or("info"),
-    )
-    .init();
+    let subscriber = tracing_subscriber::FmtSubscriber::builder()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::builder()
+                .with_default_directive(
+                    tracing_subscriber::filter::LevelFilter::INFO.into(),
+                )
+                .from_env()?,
+        )
+        .with_writer(std::io::stderr)
+        .with_file(true)
+        .with_line_number(true)
+        .with_timer(tracing_subscriber::fmt::time::LocalTime::rfc_3339())
+        .finish();
+    tracing::subscriber::set_global_default(subscriber)?;
     let cli = Cli::parse();
-    log::info!("cli: {:?}", &cli);
+    tracing::info!("cli: {:?}", &cli);
     let x11 = x11::X11::init()?;
     loop {
         match x11.keymap() {
             Ok(symbol) => println!("{}{}", &cli.prefix, symbol),
-            Err(err) => log::error!("Failure to lookup keymap: {:?}", err),
+            Err(err) => {
+                tracing::error!("Failure to lookup keymap: {:?}", err)
+            }
         }
         std::thread::sleep(std::time::Duration::from_secs_f32(cli.interval));
     }
