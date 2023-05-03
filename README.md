@@ -27,6 +27,7 @@ TODO
 - [x] configurable prefix in each feed
 - [ ] configurable format strings https://github.com/vitiral/strfmt
 - [x] switch from `env_logger` to `tracing`
+- [ ] switch from `chrono` to `time` crate
 
 #### weather
 - [ ] fallback/alternative weather data sources
