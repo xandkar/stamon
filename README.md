@@ -18,7 +18,7 @@ TODO
 - [ ] bluetooth status
 - [x] wifi status
 - [x] ethernet status
-- [ ] battery charge
+- [x] battery charge
 - [ ] microphone (see `notes/microphone-use.txt`)
 
 ### improvements
