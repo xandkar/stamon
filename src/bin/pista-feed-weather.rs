@@ -180,6 +180,7 @@ pub fn main() -> Result<()> {
     let interval_error_init = 15;
     let mut interval_error_curr = interval_error_init;
     let mut interval;
+    let mut stdout = std::io::stdout().lock();
     loop {
         match download(&url, &user_agent, &cli.summary_file) {
             Err(e) => {
@@ -189,7 +190,12 @@ pub fn main() -> Result<()> {
                 tracing::warn!("Next retry in {} seconds.", interval);
             }
             Ok(temp_f) => {
-                println!("{:3.0}°F", temp_f);
+                if let Err(e) = {
+                    use std::io::Write;
+                    writeln!(stdout, "{:3.0}°F", temp_f)
+                } {
+                    tracing::error!("Failed to write to stdout: {:?}", e)
+                }
                 interval = cli.interval;
                 interval_error_curr = interval_error_init;
             }

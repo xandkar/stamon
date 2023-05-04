@@ -44,11 +44,21 @@ fn statfs(path: &str) -> Result<u64> {
 fn main() -> Result<()> {
     pista_feeds::tracing_init()?;
     let cli = Cli::parse();
+    let mut stdout = std::io::stdout().lock();
     loop {
         match statfs(cli.path.as_str()) {
             Err(err) => tracing::error!("{:?}", err),
             Ok(percentage) => {
-                println!("{}{}{}", &cli.prefix, percentage, &cli.postfix);
+                if let Err(e) = {
+                    use std::io::Write;
+                    writeln!(
+                        stdout,
+                        "{}{}{}",
+                        &cli.prefix, percentage, &cli.postfix
+                    )
+                } {
+                    tracing::error!("Failed to write to stdout: {:?}", e)
+                }
             }
         }
         std::thread::sleep(std::time::Duration::from_secs(cli.interval));

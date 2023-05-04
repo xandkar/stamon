@@ -20,8 +20,14 @@ fn main() -> Result<()> {
     tracing::info!("Cli: {:?}", &cli);
     let format = cli.format.as_str();
     let interval = std::time::Duration::from_secs_f64(cli.interval);
+    let mut stdout = std::io::stdout().lock();
     loop {
-        println!("{}", chrono::Local::now().format(format));
+        if let Err(e) = {
+            use std::io::Write;
+            writeln!(stdout, "{}", chrono::Local::now().format(format))
+        } {
+            tracing::error!("Failed to write to stdout: {:?}", e)
+        }
         std::thread::sleep(interval);
     }
 }

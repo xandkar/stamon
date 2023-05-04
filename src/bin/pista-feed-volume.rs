@@ -1,5 +1,5 @@
 // TODO Rewrite with pulseaudio bindings.
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, Write};
 
 use anyhow::{anyhow, Result};
 use clap::Parser;
@@ -18,8 +18,9 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
     let pre = cli.prefix.as_str();
     let post = cli.postfix.as_str();
+    let mut stdout = std::io::stdout().lock();
 
-    Volume::fetch_and_print(pre, post);
+    Volume::fetch_and_print(&mut stdout, pre, post);
 
     let mut cmd = std::process::Command::new("pactl")
         .arg("subscribe")
@@ -27,11 +28,11 @@ fn main() -> Result<()> {
         .spawn()?;
 
     {
-        let stdout = cmd
+        let pactl_subscribe_output = cmd
             .stdout
             .as_mut()
             .ok_or_else(|| anyhow!("Failure to get command's stdout."))?;
-        for line_result in BufReader::new(stdout).lines() {
+        for line_result in BufReader::new(pactl_subscribe_output).lines() {
             match line_result {
                 Err(e) => {
                     tracing::error!("Failure to read output line from 'pactl, subscribe': {:?}", e);
@@ -40,7 +41,7 @@ fn main() -> Result<()> {
                     if line.starts_with("Event 'change' on sink") {
                         // TODO Should we bother distinguishing which sink to react to?
                         //      Maybe not, because sink indices could change.
-                        Volume::fetch_and_print(pre, post);
+                        Volume::fetch_and_print(&mut stdout, pre, post);
                     }
                 }
             }
@@ -57,21 +58,27 @@ enum Volume {
 }
 
 impl Volume {
-    pub fn fetch_and_print(prefix: &str, postfix: &str) {
-        match Self::fetch() {
+    pub fn fetch_and_print<W: Write>(
+        mut buf: W,
+        prefix: &str,
+        postfix: &str,
+    ) {
+        if let Err(e) = match Self::fetch() {
             Ok(Self::Muted) => {
-                println!("{} X {}", prefix, postfix);
+                writeln!(buf, "{} X {}", prefix, postfix)
             }
             Ok(Self::Volume(left, right)) => {
                 // TODO CLI option to aggregate or pick one.
                 let avg = (left + right) / 2;
-                println!("{}{:3}%{}", prefix, avg, postfix);
+                writeln!(buf, "{}{:3}%{}", prefix, avg, postfix)
             }
             Err(e) => {
                 tracing::error!("{:?}", e);
-                println!("{}ERR{}", prefix, postfix);
+                writeln!(buf, "{}ERR{}", prefix, postfix)
             }
-        }
+        } {
+            tracing::error!("Failed to write to stdout: {:?}", e)
+        };
     }
 
     fn fetch() -> Result<Self> {

@@ -87,6 +87,7 @@ fn main() -> Result<()> {
     let ip_addr = std::net::IpAddr::from_str(&cli.addr)?;
     let addr = std::net::SocketAddr::new(ip_addr, cli.port);
     let mut conn_opt = None;
+    let mut stdout = std::io::stdout().lock();
     loop {
         if conn_opt.is_none() {
             conn_opt = mpd::Client::connect(addr).ok();
@@ -94,12 +95,18 @@ fn main() -> Result<()> {
         if let Some(ref mut conn) = conn_opt {
             match conn.status() {
                 Ok(s) => {
-                    println!(
-                        "{}{}{}",
-                        &cli.prefix,
-                        status_to_string(s, &cli),
-                        &cli.postfix
-                    );
+                    if let Err(e) = {
+                        use std::io::Write;
+                        writeln!(
+                            stdout,
+                            "{}{}{}",
+                            &cli.prefix,
+                            status_to_string(s, &cli),
+                            &cli.postfix
+                        )
+                    } {
+                        tracing::error!("Failed to write to stdout: {:?}", e)
+                    }
                 }
                 Err(e) => {
                     tracing::error!("Failure to get status: {:?}", e);

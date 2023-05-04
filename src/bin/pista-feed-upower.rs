@@ -487,14 +487,16 @@ fn main() -> Result<()> {
             percentage,
         );
         // TODO Notify on negative state changes.
-        use std::io::Write;
-        if let Err(e) = writeln!(
-            stdout,
-            "{}{}{:3.0}%",
-            &cli.prefix,
-            direction.to_char(),
-            percentage.floor() // Show the worst case.
-        ) {
+        if let Err(e) = {
+            use std::io::Write;
+            writeln!(
+                stdout,
+                "{}{}{:3.0}%",
+                &cli.prefix,
+                direction.to_char(),
+                percentage.floor() // Show the worst case.
+            )
+        } {
             tracing::error!("Failed to write to stdout: {:?}", e)
         }
     }

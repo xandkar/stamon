@@ -72,11 +72,17 @@ struct Cli {
 fn main() -> Result<()> {
     pista_feeds::tracing_init()?;
     let cli = Cli::parse();
-    tracing::info!("Parameters: {:?}", &cli);
+    tracing::info!("Cli: {:?}", &cli);
+    let mut stdout = std::io::stdout().lock();
     loop {
         match mem::Info::read() {
             Ok(m) => {
-                println!("{}{:3.0}%", &cli.prefix, m.used_pct());
+                if let Err(e) = {
+                    use std::io::Write;
+                    writeln!(stdout, "{}{:3.0}%", &cli.prefix, m.used_pct())
+                } {
+                    tracing::error!("Failed to write to stdout: {:?}", e)
+                }
             }
             Err(e) => {
                 tracing::error!("Failure to read /proc/meminfo: {:?}", e)

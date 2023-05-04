@@ -63,11 +63,17 @@ fn main() -> Result<()> {
             .iter()
             .collect();
     tracing::info!("operstate_path: {:?}", &operstate_path);
+    let mut stdout = std::io::stdout().lock();
     loop {
         match &cli.interface_kind {
             IFKind::Wifi => match wifi_link_quality_pct(&cli.interface) {
-                Ok(Some(pct)) => println!("{}{:3}%", &cli.prefix, pct),
-                Ok(None) => println!("{}---", &cli.prefix),
+                Ok(Some(pct)) => print(
+                    &mut stdout,
+                    format_args!("{}{:3}%", &cli.prefix, pct),
+                ),
+                Ok(None) => {
+                    print(&mut stdout, format_args!("{}---", &cli.prefix))
+                }
                 Err(e) => tracing::error!(
                     "Failure to parse link quality for {:?}: {:?}",
                     &cli.interface,
@@ -75,9 +81,11 @@ fn main() -> Result<()> {
                 ),
             },
             IFKind::Eth => match eth_status(operstate_path.as_path()) {
-                Ok(Some(EthStatus::Up)) => println!("{}<>", &cli.prefix),
+                Ok(Some(EthStatus::Up)) => {
+                    print(&mut stdout, format_args!("{}<>", &cli.prefix))
+                }
                 Ok(Some(EthStatus::Down)) | Ok(None) => {
-                    println!("{}--", &cli.prefix);
+                    print(&mut stdout, format_args!("{}--", &cli.prefix));
                 }
                 Err(e) => tracing::error!(
                     "Failure to read operstate file for {:?}: {:?}",
@@ -87,6 +95,12 @@ fn main() -> Result<()> {
             },
         }
         std::thread::sleep(std::time::Duration::from_secs(cli.interval));
+    }
+}
+
+fn print<W: std::io::Write>(mut buf: W, args: std::fmt::Arguments) {
+    if let Err(e) = { writeln!(buf, "{}", args) } {
+        tracing::error!("Failed to write to stdout: {:?}", e)
     }
 }
 
