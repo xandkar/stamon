@@ -1,3 +1,7 @@
+// Testability refactor plan:
+// - Upower::messages : line iter -> message iter
+// - State::updates : message iter -> (dir, pct) iter
+
 use std::collections::{HashMap, HashSet};
 
 use anyhow::{anyhow, Context, Result};
@@ -8,7 +12,7 @@ struct Cli {
     prefix: String,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 enum Direction {
     Increasing,
     Decreasing,
@@ -54,7 +58,7 @@ impl std::str::FromStr for BatteryState {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 struct Battery {
     path: String, // TODO Try &str
     state: Option<BatteryState>,
@@ -62,7 +66,7 @@ struct Battery {
     energy_full: Option<f32>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 struct LinePower {
     path: String, // TODO Try &str
     online: bool,
@@ -79,38 +83,24 @@ enum MsgIntermediate {
     Unhandled,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 enum Msg {
     LinePower(LinePower),
     Battery(Battery),
 }
 
-struct Upower {
-    lines: Box<dyn Iterator<Item = String>>, // TODO Try &str
-    state: State,
+struct Messages<'a> {
+    lines: Box<dyn Iterator<Item = String> + 'a>, // TODO Try &str
 }
 
-impl Upower {
-    fn states() -> Result<Self> {
-        // TODO dump doesn't have to be spawned, but can be ran to completion
-        //      before launching monitor.
-        let dump = spawn("upower", &["--dump"])?;
-        let monitor = spawn("upower", &["--monitor-detail"])?;
-        let lines = dump.chain(monitor).map_while(|line_result| {
-            line_result
-                .map_err(|e| {
-                    tracing::error!("Failed to read upower output: {:?}", e);
-                    e
-                })
-                .ok()
-        });
-        Ok(Self {
-            lines: Box::new(lines),
-            state: State::new(),
-        })
+impl<'a> Messages<'a> {
+    fn from_output_lines(
+        lines: Box<dyn Iterator<Item = String> + 'a>,
+    ) -> Self {
+        Self { lines }
     }
 
-    fn parse_next_msg(&mut self) -> Result<Option<Msg>> {
+    fn parse_next(&mut self) -> Result<Option<Msg>> {
         let mut msg: Option<MsgIntermediate> = None;
         loop {
             match self.lines.next() {
@@ -329,17 +319,14 @@ impl Upower {
     }
 }
 
-impl Iterator for Upower {
-    type Item = (Direction, f32);
+impl Iterator for Messages<'_> {
+    type Item = Msg;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
-            match self.parse_next_msg() {
+            match self.parse_next() {
                 Ok(None) => return None,
-                Ok(Some(msg)) => {
-                    self.state.update(msg);
-                    return Some(self.state.aggregate());
-                }
+                Ok(Some(msg)) => return Some(msg),
                 Err(e) => {
                     tracing::error!("Failure to parse a message: {:?}", e);
                 }
@@ -347,6 +334,8 @@ impl Iterator for Upower {
         }
     }
 }
+
+type StateAggregate = (Direction, f32);
 
 #[derive(Debug)]
 struct State {
@@ -447,9 +436,53 @@ impl State {
         (cur / tot) * 100.0
     }
 
-    fn aggregate(&self) -> (Direction, f32) {
+    fn aggregate(&self) -> StateAggregate {
         (self.direction(), self.percentage())
     }
+}
+
+struct StateAggregates<'a> {
+    state: State,
+    messages: Box<dyn Iterator<Item = Msg> + 'a>,
+}
+
+impl<'a> StateAggregates<'a> {
+    fn from_messages(messages: Box<dyn Iterator<Item = Msg> + 'a>) -> Self {
+        Self {
+            state: State::new(),
+            messages,
+        }
+    }
+}
+
+impl<'a> Iterator for StateAggregates<'a> {
+    type Item = StateAggregate;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.messages.next() {
+            None => None,
+            Some(m) => {
+                self.state.update(m);
+                Some(self.state.aggregate())
+            }
+        }
+    }
+}
+
+pub fn output() -> Result<impl Iterator<Item = String>> {
+    // TODO dump doesn't have to be spawned, but can be ran to completion
+    //      before launching monitor.
+    let dump = spawn("upower", &["--dump"])?;
+    let monitor = spawn("upower", &["--monitor-detail"])?;
+    let lines = dump.chain(monitor).map_while(|line_result| {
+        line_result
+            .map_err(|e| {
+                tracing::error!("Failed to read upower output: {:?}", e);
+                e
+            })
+            .ok()
+    });
+    Ok(lines)
 }
 
 fn spawn(
@@ -472,6 +505,13 @@ fn spawn(
     Ok(lines)
 }
 
+fn state_aggregates() -> Result<impl Iterator<Item = StateAggregate>> {
+    let output = output()?;
+    let messages = Messages::from_output_lines(Box::new(output));
+    let states = StateAggregates::from_messages(Box::new(messages));
+    Ok(states)
+}
+
 fn main() -> Result<()> {
     pista_feeds::tracing_init()?;
     let cli = {
@@ -480,7 +520,7 @@ fn main() -> Result<()> {
     };
     tracing::info!("cli: {:?}", &cli);
     let mut stdout = std::io::stdout().lock();
-    for (direction, percentage) in Upower::states()? {
+    for (direction, percentage) in state_aggregates()? {
         tracing::debug!(
             "Current: direction={:?}, percentage={:?}",
             direction,
@@ -501,4 +541,62 @@ fn main() -> Result<()> {
         }
     }
     Err(anyhow!("upower exited"))
+}
+
+#[cfg(test)]
+mod tests {
+    use std::iter::zip;
+
+    use super::*;
+
+    #[test]
+    fn dump() {
+        let output: String =
+            std::fs::read_to_string("tests/upower-dump.txt").unwrap();
+        let lines = output.lines().map(|l| l.to_string());
+        let messages_produced: Vec<Msg> =
+            Messages::from_output_lines(Box::new(lines)).collect();
+        let messages_expected: Vec<Msg> = vec![
+            Msg::LinePower(LinePower {
+                path: "AC".to_string(),
+                online: false,
+            }),
+            Msg::Battery(Battery {
+                path: "BAT0".to_string(),
+                state: Some(BatteryState::Discharging),
+                energy: Some(87.2898),
+                energy_full: Some(89.148),
+            }),
+            Msg::Battery(Battery {
+                path: "/org/freedesktop/UPower/devices/DisplayDevice"
+                    .to_string(),
+                state: Some(BatteryState::Discharging),
+                energy: Some(87.2898),
+                energy_full: Some(89.148),
+            }),
+        ];
+        assert_eq!(&messages_expected, &messages_produced);
+        let states_produced: Vec<StateAggregate> =
+            StateAggregates::from_messages(Box::new(
+                messages_produced.into_iter(),
+            ))
+            .collect();
+        let states_expected = vec![
+            (Direction::Decreasing, std::f32::NAN),
+            (Direction::Decreasing, 97.9156),
+            (Direction::Decreasing, 97.9156),
+        ];
+
+        // State aggregates cannot be compared directly, because they contain
+        // floats and we do expect them to at least initially be NaN.
+        for ((dir_expected, pct_expected), (dir_produced, pct_produced)) in
+            zip(states_expected, states_produced)
+        {
+            assert_eq!(dir_expected, dir_produced);
+            assert!(matches!(
+                pct_expected.partial_cmp(&pct_produced),
+                None | Some(std::cmp::Ordering::Equal),
+            ));
+        }
+    }
 }
