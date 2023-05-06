@@ -599,4 +599,50 @@ mod tests {
             ));
         }
     }
+
+    #[test]
+    fn monitor() {
+        let output: String =
+            std::fs::read_to_string("tests/upower-monitor-detail.txt")
+                .unwrap();
+        let lines = output.lines().map(|l| l.to_string());
+        let messages_produced: Vec<Msg> =
+            Messages::from_output_lines(Box::new(lines)).collect();
+        dbg!(&messages_produced);
+        let messages_expected: Vec<Msg> = vec![
+            Msg::Battery(Battery {
+                path: "BAT0".to_string(),
+                state: Some(BatteryState::Discharging),
+                energy: Some(42.8868),
+                energy_full: Some(89.148),
+            }),
+            Msg::Battery(Battery {
+                path: "BAT0".to_string(),
+                state: Some(BatteryState::Discharging),
+                energy: Some(42.8868),
+                energy_full: Some(89.148),
+            }),
+            Msg::Battery(Battery {
+                path: "BAT0".to_string(),
+                state: Some(BatteryState::Discharging),
+                energy: Some(42.8868),
+                energy_full: Some(89.148),
+            }),
+            Msg::Battery(Battery {
+                path: "BAT0".to_string(),
+                state: Some(BatteryState::Discharging),
+                energy: Some(42.8868),
+                energy_full: Some(89.148),
+            }),
+            Msg::LinePower(LinePower {
+                path: "AC".to_string(),
+                online: false,
+            }),
+            Msg::LinePower(LinePower {
+                path: "AC".to_string(),
+                online: false,
+            }),
+        ];
+        assert_eq!(&messages_expected, &messages_produced);
+    }
 }

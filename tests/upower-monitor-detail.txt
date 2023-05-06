@@ -1,11 +1,11 @@
 Monitoring activity from the power daemon. Press Ctrl+C to cancel.
-[00:11:35.203]	device changed:     /org/freedesktop/UPower/devices/battery_BAT0
+[17:01:15.391]	device changed:     /org/freedesktop/UPower/devices/battery_BAT0
   native-path:          BAT0
   vendor:               BYD
   model:                DELL CR72X25
   serial:               2005
   power supply:         yes
-  updated:              Thu 06 Oct 2022 12:11:35 AM EDT (0 seconds ago)
+  updated:              Thu 26 Jan 2023 05:01:15 PM EST (0 seconds ago)
   has history:          yes
   has statistics:       yes
   battery
@@ -13,25 +13,34 @@ Monitoring activity from the power daemon. Press Ctrl+C to cancel.
     rechargeable:        yes
     state:               discharging
     warning-level:       none
-    energy:              89.148 Wh
+    energy:              42.8868 Wh
     energy-empty:        0 Wh
     energy-full:         89.148 Wh
     energy-full-design:  95.0076 Wh
-    energy-rate:         0.0114 W
-    voltage:             13.025 V
+    energy-rate:         0 W
+    voltage:             11.571 V
     charge-cycles:       N/A
-    percentage:          100%
+    percentage:          48%
     capacity:            93.8325%
     technology:          lithium-polymer
-    icon-name:          'battery-full-symbolic'
+    icon-name:          'battery-good-symbolic'
+  History (charge):
+    1674770421	48.000	discharging
+  History (rate):
+    1674770475	0.000	discharging
+    1674770470	45.885	charging
+    1674770460	0.000	pending-charge
+    1674770451	50.570	discharging
+    1674770421	61.742	discharging
+    1674770391	56.031	discharging
 
-[00:11:35.204]	device changed:     /org/freedesktop/UPower/devices/battery_BAT0
+[17:01:15.392]	device changed:     /org/freedesktop/UPower/devices/battery_BAT0
   native-path:          BAT0
   vendor:               BYD
   model:                DELL CR72X25
   serial:               2005
   power supply:         yes
-  updated:              Thu 06 Oct 2022 12:11:35 AM EDT (0 seconds ago)
+  updated:              Thu 26 Jan 2023 05:01:15 PM EST (0 seconds ago)
   has history:          yes
   has statistics:       yes
   battery
@@ -39,25 +48,34 @@ Monitoring activity from the power daemon. Press Ctrl+C to cancel.
     rechargeable:        yes
     state:               discharging
     warning-level:       none
-    energy:              89.148 Wh
+    energy:              42.8868 Wh
     energy-empty:        0 Wh
     energy-full:         89.148 Wh
     energy-full-design:  95.0076 Wh
-    energy-rate:         0.0114 W
-    voltage:             13.025 V
+    energy-rate:         0 W
+    voltage:             11.571 V
     charge-cycles:       N/A
-    percentage:          100%
+    percentage:          48%
     capacity:            93.8325%
     technology:          lithium-polymer
-    icon-name:          'battery-full-symbolic'
+    icon-name:          'battery-good-symbolic'
+  History (charge):
+    1674770421	48.000	discharging
+  History (rate):
+    1674770475	0.000	discharging
+    1674770470	45.885	charging
+    1674770460	0.000	pending-charge
+    1674770451	50.570	discharging
+    1674770421	61.742	discharging
+    1674770391	56.031	discharging
 
-[00:11:35.205]	device changed:     /org/freedesktop/UPower/devices/battery_BAT0
+[17:01:15.392]	device changed:     /org/freedesktop/UPower/devices/battery_BAT0
   native-path:          BAT0
   vendor:               BYD
   model:                DELL CR72X25
   serial:               2005
   power supply:         yes
-  updated:              Thu 06 Oct 2022 12:11:35 AM EDT (0 seconds ago)
+  updated:              Thu 26 Jan 2023 05:01:15 PM EST (0 seconds ago)
   has history:          yes
   has statistics:       yes
   battery
@@ -65,25 +83,34 @@ Monitoring activity from the power daemon. Press Ctrl+C to cancel.
     rechargeable:        yes
     state:               discharging
     warning-level:       none
-    energy:              89.148 Wh
+    energy:              42.8868 Wh
     energy-empty:        0 Wh
     energy-full:         89.148 Wh
     energy-full-design:  95.0076 Wh
-    energy-rate:         0.0114 W
-    voltage:             13.025 V
+    energy-rate:         0 W
+    voltage:             11.571 V
     charge-cycles:       N/A
-    percentage:          100%
+    percentage:          48%
     capacity:            93.8325%
     technology:          lithium-polymer
-    icon-name:          'battery-full-symbolic'
+    icon-name:          'battery-good-symbolic'
+  History (charge):
+    1674770421	48.000	discharging
+  History (rate):
+    1674770475	0.000	discharging
+    1674770470	45.885	charging
+    1674770460	0.000	pending-charge
+    1674770451	50.570	discharging
+    1674770421	61.742	discharging
+    1674770391	56.031	discharging
 
-[00:11:35.205]	device changed:     /org/freedesktop/UPower/devices/battery_BAT0
+[17:01:15.393]	device changed:     /org/freedesktop/UPower/devices/battery_BAT0
   native-path:          BAT0
   vendor:               BYD
   model:                DELL CR72X25
   serial:               2005
   power supply:         yes
-  updated:              Thu 06 Oct 2022 12:11:35 AM EDT (0 seconds ago)
+  updated:              Thu 26 Jan 2023 05:01:15 PM EST (0 seconds ago)
   has history:          yes
   has statistics:       yes
   battery
@@ -91,22 +118,31 @@ Monitoring activity from the power daemon. Press Ctrl+C to cancel.
     rechargeable:        yes
     state:               discharging
     warning-level:       none
-    energy:              89.148 Wh
+    energy:              42.8868 Wh
     energy-empty:        0 Wh
     energy-full:         89.148 Wh
     energy-full-design:  95.0076 Wh
-    energy-rate:         0.0114 W
-    voltage:             13.025 V
+    energy-rate:         0 W
+    voltage:             11.571 V
     charge-cycles:       N/A
-    percentage:          100%
+    percentage:          48%
     capacity:            93.8325%
     technology:          lithium-polymer
-    icon-name:          'battery-full-symbolic'
+    icon-name:          'battery-good-symbolic'
+  History (charge):
+    1674770421	48.000	discharging
+  History (rate):
+    1674770475	0.000	discharging
+    1674770470	45.885	charging
+    1674770460	0.000	pending-charge
+    1674770451	50.570	discharging
+    1674770421	61.742	discharging
+    1674770391	56.031	discharging
 
-[00:11:35.237]	device changed:     /org/freedesktop/UPower/devices/line_power_AC
+[17:01:15.432]	device changed:     /org/freedesktop/UPower/devices/line_power_AC
   native-path:          AC
   power supply:         yes
-  updated:              Thu 06 Oct 2022 12:11:35 AM EDT (0 seconds ago)
+  updated:              Thu 26 Jan 2023 05:01:15 PM EST (0 seconds ago)
   has history:          no
   has statistics:       no
   line-power
@@ -114,10 +150,10 @@ Monitoring activity from the power daemon. Press Ctrl+C to cancel.
     online:              no
     icon-name:          'ac-adapter-symbolic'
 
-[00:11:35.237]	device changed:     /org/freedesktop/UPower/devices/line_power_AC
+[17:01:15.432]	device changed:     /org/freedesktop/UPower/devices/line_power_AC
   native-path:          AC
   power supply:         yes
-  updated:              Thu 06 Oct 2022 12:11:35 AM EDT (0 seconds ago)
+  updated:              Thu 26 Jan 2023 05:01:15 PM EST (0 seconds ago)
   has history:          no
   has statistics:       no
   line-power
@@ -125,20 +161,20 @@ Monitoring activity from the power daemon. Press Ctrl+C to cancel.
     online:              no
     icon-name:          'ac-adapter-symbolic'
 
-[00:11:35.238]	daemon changed:
-  daemon-version:  0.99.17
+[17:01:15.433]	daemon changed:
+  daemon-version:  1.90.0
   on-battery:      yes
   lid-is-closed:   no
   lid-is-present:  yes
   critical-action: HybridSleep
 
-[00:13:35.445]	device changed:     /org/freedesktop/UPower/devices/battery_BAT0
+[17:01:16.446]	device changed:     /org/freedesktop/UPower/devices/battery_BAT0
   native-path:          BAT0
   vendor:               BYD
   model:                DELL CR72X25
   serial:               2005
   power supply:         yes
-  updated:              Thu 06 Oct 2022 12:13:35 AM EDT (0 seconds ago)
+  updated:              Thu 26 Jan 2023 05:01:16 PM EST (0 seconds ago)
   has history:          yes
   has statistics:       yes
   battery
@@ -146,175 +182,23 @@ Monitoring activity from the power daemon. Press Ctrl+C to cancel.
     rechargeable:        yes
     state:               discharging
     warning-level:       none
-    energy:              87.2898 Wh
+    energy:              42.8982 Wh
     energy-empty:        0 Wh
     energy-full:         89.148 Wh
     energy-full-design:  95.0076 Wh
-    energy-rate:         41.2794 W
-    voltage:             12.295 V
+    energy-rate:         0 W
+    voltage:             11.571 V
     charge-cycles:       N/A
-    time to empty:       2.1 hours
-    percentage:          97%
+    percentage:          48%
     capacity:            93.8325%
     technology:          lithium-polymer
-    icon-name:          'battery-full-symbolic'
+    icon-name:          'battery-good-symbolic'
   History (charge):
-    1665029615	97.000	discharging
+    1674770421	48.000	discharging
   History (rate):
-    1665029615	41.279	discharging
-
-[00:13:35.445]	device changed:     /org/freedesktop/UPower/devices/battery_BAT0
-  native-path:          BAT0
-  vendor:               BYD
-  model:                DELL CR72X25
-  serial:               2005
-  power supply:         yes
-  updated:              Thu 06 Oct 2022 12:13:35 AM EDT (0 seconds ago)
-  has history:          yes
-  has statistics:       yes
-  battery
-    present:             yes
-    rechargeable:        yes
-    state:               discharging
-    warning-level:       none
-    energy:              87.2898 Wh
-    energy-empty:        0 Wh
-    energy-full:         89.148 Wh
-    energy-full-design:  95.0076 Wh
-    energy-rate:         41.2794 W
-    voltage:             12.295 V
-    charge-cycles:       N/A
-    time to empty:       2.1 hours
-    percentage:          97%
-    capacity:            93.8325%
-    technology:          lithium-polymer
-    icon-name:          'battery-full-symbolic'
-  History (charge):
-    1665029615	97.000	discharging
-  History (rate):
-    1665029615	41.279	discharging
-
-[00:13:35.446]	device changed:     /org/freedesktop/UPower/devices/battery_BAT0
-  native-path:          BAT0
-  vendor:               BYD
-  model:                DELL CR72X25
-  serial:               2005
-  power supply:         yes
-  updated:              Thu 06 Oct 2022 12:13:35 AM EDT (0 seconds ago)
-  has history:          yes
-  has statistics:       yes
-  battery
-    present:             yes
-    rechargeable:        yes
-    state:               discharging
-    warning-level:       none
-    energy:              87.2898 Wh
-    energy-empty:        0 Wh
-    energy-full:         89.148 Wh
-    energy-full-design:  95.0076 Wh
-    energy-rate:         41.2794 W
-    voltage:             12.295 V
-    charge-cycles:       N/A
-    time to empty:       2.1 hours
-    percentage:          97%
-    capacity:            93.8325%
-    technology:          lithium-polymer
-    icon-name:          'battery-full-symbolic'
-  History (charge):
-    1665029615	97.000	discharging
-  History (rate):
-    1665029615	41.279	discharging
-
-[00:13:35.446]	device changed:     /org/freedesktop/UPower/devices/battery_BAT0
-  native-path:          BAT0
-  vendor:               BYD
-  model:                DELL CR72X25
-  serial:               2005
-  power supply:         yes
-  updated:              Thu 06 Oct 2022 12:13:35 AM EDT (0 seconds ago)
-  has history:          yes
-  has statistics:       yes
-  battery
-    present:             yes
-    rechargeable:        yes
-    state:               discharging
-    warning-level:       none
-    energy:              87.2898 Wh
-    energy-empty:        0 Wh
-    energy-full:         89.148 Wh
-    energy-full-design:  95.0076 Wh
-    energy-rate:         41.2794 W
-    voltage:             12.295 V
-    charge-cycles:       N/A
-    time to empty:       2.1 hours
-    percentage:          97%
-    capacity:            93.8325%
-    technology:          lithium-polymer
-    icon-name:          'battery-full-symbolic'
-  History (charge):
-    1665029615	97.000	discharging
-  History (rate):
-    1665029615	41.279	discharging
-
-[00:13:35.447]	device changed:     /org/freedesktop/UPower/devices/battery_BAT0
-  native-path:          BAT0
-  vendor:               BYD
-  model:                DELL CR72X25
-  serial:               2005
-  power supply:         yes
-  updated:              Thu 06 Oct 2022 12:13:35 AM EDT (0 seconds ago)
-  has history:          yes
-  has statistics:       yes
-  battery
-    present:             yes
-    rechargeable:        yes
-    state:               discharging
-    warning-level:       none
-    energy:              87.2898 Wh
-    energy-empty:        0 Wh
-    energy-full:         89.148 Wh
-    energy-full-design:  95.0076 Wh
-    energy-rate:         41.2794 W
-    voltage:             12.295 V
-    charge-cycles:       N/A
-    time to empty:       2.1 hours
-    percentage:          97%
-    capacity:            93.8325%
-    technology:          lithium-polymer
-    icon-name:          'battery-full-symbolic'
-  History (charge):
-    1665029615	97.000	discharging
-  History (rate):
-    1665029615	41.279	discharging
-
-[00:13:35.447]	device changed:     /org/freedesktop/UPower/devices/battery_BAT0
-  native-path:          BAT0
-  vendor:               BYD
-  model:                DELL CR72X25
-  serial:               2005
-  power supply:         yes
-  updated:              Thu 06 Oct 2022 12:13:35 AM EDT (0 seconds ago)
-  has history:          yes
-  has statistics:       yes
-  battery
-    present:             yes
-    rechargeable:        yes
-    state:               discharging
-    warning-level:       none
-    energy:              87.2898 Wh
-    energy-empty:        0 Wh
-    energy-full:         89.148 Wh
-    energy-full-design:  95.0076 Wh
-    energy-rate:         41.2794 W
-    voltage:             12.295 V
-    charge-cycles:       N/A
-    time to empty:       2.1 hours
-    percentage:          97%
-    capacity:            93.8325%
-    technology:          lithium-polymer
-    icon-name:          'battery-full-symbolic'
-  History (charge):
-    1665029615	97.000	discharging
-  History (rate):
-    1665029615	41.279	discharging
-
+    1674770475	0.000	discharging
+    1674770470	45.885	charging
+    1674770460	0.000	pending-charge
+    1674770451	50.570	discharging
+    1674770421	61.742	discharging
+    1674770391	56.031	discharging
