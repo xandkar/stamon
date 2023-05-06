@@ -90,13 +90,11 @@ enum Msg {
 }
 
 struct Messages<'a> {
-    lines: Box<dyn Iterator<Item = String> + 'a>, // TODO Try &str
+    lines: &'a mut dyn Iterator<Item = String>, // TODO Try &str
 }
 
 impl<'a> Messages<'a> {
-    fn from_output_lines(
-        lines: Box<dyn Iterator<Item = String> + 'a>,
-    ) -> Self {
+    fn from_output_lines(lines: &'a mut dyn Iterator<Item = String>) -> Self {
         Self { lines }
     }
 
@@ -443,11 +441,11 @@ impl State {
 
 struct StateAggregates<'a> {
     state: State,
-    messages: Box<dyn Iterator<Item = Msg> + 'a>,
+    messages: &'a mut dyn Iterator<Item = Msg>,
 }
 
 impl<'a> StateAggregates<'a> {
-    fn from_messages(messages: Box<dyn Iterator<Item = Msg> + 'a>) -> Self {
+    fn from_messages(messages: &'a mut dyn Iterator<Item = Msg>) -> Self {
         Self {
             state: State::new(),
             messages,
@@ -469,7 +467,7 @@ impl<'a> Iterator for StateAggregates<'a> {
     }
 }
 
-pub fn output() -> Result<impl Iterator<Item = String>> {
+pub fn upower_run() -> Result<impl Iterator<Item = String>> {
     // TODO dump doesn't have to be spawned, but can be ran to completion
     //      before launching monitor.
     let dump = spawn("upower", &["--dump"])?;
@@ -505,13 +503,6 @@ fn spawn(
     Ok(lines)
 }
 
-fn state_aggregates() -> Result<impl Iterator<Item = StateAggregate>> {
-    let output = output()?;
-    let messages = Messages::from_output_lines(Box::new(output));
-    let states = StateAggregates::from_messages(Box::new(messages));
-    Ok(states)
-}
-
 fn main() -> Result<()> {
     pista_feeds::tracing_init()?;
     let cli = {
@@ -520,7 +511,10 @@ fn main() -> Result<()> {
     };
     tracing::info!("cli: {:?}", &cli);
     let mut stdout = std::io::stdout().lock();
-    for (direction, percentage) in state_aggregates()? {
+    let mut lines = upower_run()?;
+    let mut messages = Messages::from_output_lines(&mut lines);
+    let state_aggregates = StateAggregates::from_messages(&mut messages);
+    for (direction, percentage) in state_aggregates {
         tracing::debug!(
             "Current: direction={:?}, percentage={:?}",
             direction,
@@ -553,9 +547,9 @@ mod tests {
     fn dump() {
         let output: String =
             std::fs::read_to_string("tests/upower-dump.txt").unwrap();
-        let lines = output.lines().map(|l| l.to_string());
+        let mut lines = output.lines().map(|l| l.to_string());
         let messages_produced: Vec<Msg> =
-            Messages::from_output_lines(Box::new(lines)).collect();
+            Messages::from_output_lines(&mut lines).collect();
         let messages_expected: Vec<Msg> = vec![
             Msg::LinePower(LinePower {
                 path: "AC".to_string(),
@@ -577,9 +571,9 @@ mod tests {
         ];
         assert_eq!(&messages_expected, &messages_produced);
         let states_produced: Vec<StateAggregate> =
-            StateAggregates::from_messages(Box::new(
-                messages_produced.into_iter(),
-            ))
+            StateAggregates::from_messages(
+                &mut messages_produced.into_iter(),
+            )
             .collect();
         let states_expected = vec![
             (Direction::Decreasing, std::f32::NAN),
@@ -605,9 +599,9 @@ mod tests {
         let output: String =
             std::fs::read_to_string("tests/upower-monitor-detail.txt")
                 .unwrap();
-        let lines = output.lines().map(|l| l.to_string());
+        let mut lines = output.lines().map(|l| l.to_string());
         let messages_produced: Vec<Msg> =
-            Messages::from_output_lines(Box::new(lines)).collect();
+            Messages::from_output_lines(&mut lines).collect();
         dbg!(&messages_produced);
         let messages_expected: Vec<Msg> = vec![
             Msg::Battery(Battery {
