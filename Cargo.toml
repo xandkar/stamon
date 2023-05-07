@@ -3,6 +3,9 @@ name = "pista-feeds"
 version = "0.2.1"
 edition = "2021"
 
+[lib]
+path = "src/lib/mod.rs"
+
 [dependencies]
 anyhow = "1.0"
 chrono = "0.4.22"
