@@ -1,3 +1,6 @@
+pub mod process;
+pub mod upower;
+
 pub fn tracing_init() -> anyhow::Result<()> {
     let subscriber = tracing_subscriber::FmtSubscriber::builder()
         .with_env_filter(
