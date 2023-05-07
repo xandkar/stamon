@@ -54,9 +54,9 @@ impl std::str::FromStr for BatteryState {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Battery {
     path: String, // TODO Try &str
-    state: Option<BatteryState>,
-    energy: Option<f32>,
-    energy_full: Option<f32>,
+    state: BatteryState,
+    energy: f32,
+    energy_full: f32,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -72,7 +72,12 @@ enum MsgIntermediate {
         native_path: Option<String>, // TODO Try &str
     },
     LinePower(LinePower),
-    Battery(Battery),
+    Battery {
+        path: String, // TODO Try &str
+        state: Option<BatteryState>,
+        energy: Option<f32>,
+        energy_full: Option<f32>,
+    },
     Unhandled,
 }
 
@@ -111,10 +116,12 @@ impl<'a> Messages<'a> {
                                         lp.clone(),
                                     )))
                                 }
-                                Some(MsgIntermediate::Battery(bat)) => {
-                                    return Ok(Some(Msg::Battery(
-                                        bat.clone(),
-                                    )))
+                                Some(imsg @ MsgIntermediate::Battery{path, state, energy, energy_full}) => {
+                                    let state =state.ok_or_else(|| anyhow!("missing state: {:?}", imsg))?;
+                                    let energy = energy.ok_or_else(|| anyhow!("missing energy: {:?}", imsg))?;
+                                    let energy_full = energy_full.ok_or_else(|| anyhow!("missing energy_full: {:?}", imsg))?;
+                                    let msg = Msg::Battery(Battery { path: path.clone(), state, energy, energy_full });
+                                    return Ok(Some(msg))
                                 }
                                 Some(_) => msg = None,
                                 None => (),
@@ -169,7 +176,7 @@ impl<'a> Messages<'a> {
                             }),
                             ["battery"],
                         ) => {
-                            msg = Some(MsgIntermediate::Battery(Battery {
+                            msg = Some(MsgIntermediate::Battery {
                                 path: match native_path {
                                     None => path.to_string(),
                                     Some(path) => path.to_string(),
@@ -177,19 +184,19 @@ impl<'a> Messages<'a> {
                                 state: None,
                                 energy: None,
                                 energy_full: None,
-                            }))
+                            })
                         }
                         (
                             true,
-                            Some(MsgIntermediate::Battery(Battery {
+                            Some(MsgIntermediate::Battery {
                                 path: p,
                                 state: _,
                                 energy: e,
                                 energy_full: ef,
-                            })),
+                            }),
                             ["state:", state],
                         ) => {
-                            msg = Some(MsgIntermediate::Battery(Battery {
+                            msg = Some(MsgIntermediate::Battery {
                                 path: p.clone(),
                                 state: Some(
                                     state.parse::<BatteryState>().context(
@@ -198,19 +205,19 @@ impl<'a> Messages<'a> {
                                 ),
                                 energy: *e,
                                 energy_full: *ef,
-                            }))
+                            })
                         }
                         (
                             true,
-                            Some(MsgIntermediate::Battery(Battery {
+                            Some(MsgIntermediate::Battery {
                                 path: p,
                                 state: s,
                                 energy: _,
                                 energy_full: ef,
-                            })),
+                            }),
                             ["energy:", qty, _units],
                         ) => {
-                            msg = Some(MsgIntermediate::Battery(Battery {
+                            msg = Some(MsgIntermediate::Battery {
                                 path: p.clone(),
                                 state: *s,
                                 energy: Some(
@@ -220,19 +227,19 @@ impl<'a> Messages<'a> {
                                     ))?,
                                 ),
                                 energy_full: *ef,
-                            }))
+                            })
                         }
                         (
                             true,
-                            Some(MsgIntermediate::Battery(Battery {
+                            Some(MsgIntermediate::Battery {
                                 path: p,
                                 state: s,
                                 energy: e,
                                 energy_full: _,
-                            })),
+                            }),
                             ["energy-full:", qty, _units],
                         ) => {
-                            msg = Some(MsgIntermediate::Battery(Battery {
+                            msg = Some(MsgIntermediate::Battery {
                                 path: p.clone(),
                                 state: *s,
                                 energy: *e,
@@ -242,7 +249,7 @@ impl<'a> Messages<'a> {
                                         &line
                                     ))?,
                                 ),
-                            }))
+                            })
                         }
                         // -- END battery
 
@@ -367,9 +374,8 @@ impl State {
             Direction::Decreasing
         } else {
             tracing::debug!("Batteries: {:?}", self.batteries);
-            let states: HashSet<BatteryState> = HashSet::from_iter(
-                self.batteries.values().filter_map(|b| b.state),
-            );
+            let states: HashSet<BatteryState> =
+                HashSet::from_iter(self.batteries.values().map(|b| b.state));
             if states.is_empty() {
                 tracing::warn!(
                     "Direction::Unknown because plugged-in, but battery states are empty: {:?}",
@@ -416,16 +422,8 @@ impl State {
     }
 
     fn percentage(&self) -> f32 {
-        let cur: f32 = self
-            .batteries
-            .values()
-            .map(|b| b.energy.unwrap_or(0.0))
-            .sum();
-        let tot: f32 = self
-            .batteries
-            .values()
-            .map(|b| b.energy_full.unwrap_or(0.0))
-            .sum();
+        let cur: f32 = self.batteries.values().map(|b| b.energy).sum();
+        let tot: f32 = self.batteries.values().map(|b| b.energy_full).sum();
         (cur / tot) * 100.0
     }
 

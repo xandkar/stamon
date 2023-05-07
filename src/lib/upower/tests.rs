@@ -16,15 +16,15 @@ fn dump() {
         }),
         Msg::Battery(Battery {
             path: "BAT0".to_string(),
-            state: Some(BatteryState::Discharging),
-            energy: Some(87.2898),
-            energy_full: Some(89.148),
+            state: BatteryState::Discharging,
+            energy: 87.2898,
+            energy_full: 89.148,
         }),
         Msg::Battery(Battery {
             path: "/org/freedesktop/UPower/devices/DisplayDevice".to_string(),
-            state: Some(BatteryState::Discharging),
-            energy: Some(87.2898),
-            energy_full: Some(89.148),
+            state: BatteryState::Discharging,
+            energy: 87.2898,
+            energy_full: 89.148,
         }),
     ];
     assert_eq!(&messages_expected, &messages_produced);
@@ -61,27 +61,27 @@ fn monitor() {
     let messages_expected: Vec<Msg> = vec![
         Msg::Battery(Battery {
             path: "BAT0".to_string(),
-            state: Some(BatteryState::Discharging),
-            energy: Some(42.8868),
-            energy_full: Some(89.148),
+            state: BatteryState::Discharging,
+            energy: 42.8868,
+            energy_full: 89.148,
         }),
         Msg::Battery(Battery {
             path: "BAT0".to_string(),
-            state: Some(BatteryState::Discharging),
-            energy: Some(42.8868),
-            energy_full: Some(89.148),
+            state: BatteryState::Discharging,
+            energy: 42.8868,
+            energy_full: 89.148,
         }),
         Msg::Battery(Battery {
             path: "BAT0".to_string(),
-            state: Some(BatteryState::Discharging),
-            energy: Some(42.8868),
-            energy_full: Some(89.148),
+            state: BatteryState::Discharging,
+            energy: 42.8868,
+            energy_full: 89.148,
         }),
         Msg::Battery(Battery {
             path: "BAT0".to_string(),
-            state: Some(BatteryState::Discharging),
-            energy: Some(42.8868),
-            energy_full: Some(89.148),
+            state: BatteryState::Discharging,
+            energy: 42.8868,
+            energy_full: 89.148,
         }),
         Msg::LinePower(LinePower {
             path: "AC".to_string(),
