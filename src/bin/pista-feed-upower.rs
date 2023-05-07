@@ -499,6 +499,14 @@ fn spawn(
     Ok(lines)
 }
 
+macro_rules! state_aggregates {
+    () => {
+        StateAggregates::from_messages(&mut Messages::from_output_lines(
+            &mut upower_run()?,
+        ))
+    };
+}
+
 fn main() -> Result<()> {
     pista_feeds::tracing_init()?;
     let cli = {
@@ -507,10 +515,7 @@ fn main() -> Result<()> {
     };
     tracing::info!("cli: {:?}", &cli);
     let mut stdout = std::io::stdout().lock();
-    let mut lines = upower_run()?;
-    let mut messages = Messages::from_output_lines(&mut lines);
-    let state_aggregates = StateAggregates::from_messages(&mut messages);
-    for (direction, percentage) in state_aggregates {
+    for (direction, percentage) in state_aggregates!() {
         tracing::debug!(
             "Current: direction={:?}, percentage={:?}",
             direction,
