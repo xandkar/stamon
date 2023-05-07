@@ -1,7 +1,3 @@
-// Testability refactor plan:
-// - Upower::messages : line iter -> message iter
-// - State::updates : message iter -> (dir, pct) iter
-
 use std::collections::{HashMap, HashSet};
 
 use anyhow::{anyhow, Context, Result};
