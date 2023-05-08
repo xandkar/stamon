@@ -15,7 +15,7 @@ TODO
 - [x] backlight brightness
 - [x] disk usage
 - [x] memory usage
-- [ ] bluetooth status
+- [x] bluetooth status
 - [x] wifi status
 - [x] ethernet status
 - [x] battery charge
