@@ -2,6 +2,9 @@ use std::iter::zip;
 
 use super::*;
 
+// TODO Multi-battery tests.
+// TODO Examine state in tests.
+
 #[test]
 fn dump() {
     let output: String =
