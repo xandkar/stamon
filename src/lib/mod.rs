@@ -1,4 +1,5 @@
 pub mod backlight;
+pub mod bluetooth;
 pub mod process;
 pub mod upower;
 
