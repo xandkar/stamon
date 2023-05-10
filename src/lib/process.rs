@@ -19,3 +19,12 @@ pub fn spawn(
     };
     Ok(lines)
 }
+
+pub fn exec(cmd: &str, args: &[&str]) -> Result<Vec<u8>> {
+    let out = std::process::Command::new(cmd).args(args).output()?;
+    if out.status.success() {
+        Ok(out.stdout)
+    } else {
+        Err(anyhow!("Failure in '{} {:?}'. out: {:?}", cmd, args, out))
+    }
+}
