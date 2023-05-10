@@ -1,6 +1,7 @@
 pub mod backlight;
 pub mod bluetooth;
 pub mod disk;
+pub mod mem;
 pub mod process;
 pub mod upower;
 
