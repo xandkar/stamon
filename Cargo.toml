@@ -1,6 +1,6 @@
 [package]
 name = "pista-feeds"
-version = "0.3.4"
+version = "0.3.5"
 edition = "2021"
 
 [lib]
@@ -11,7 +11,7 @@ anyhow = "1.0"
 chrono = "0.4.22"
 clap = {version = "3.0", features = ["derive"]}
 libc = "0.2.134"
-mpd = "0.0.12"
+mpd = { git = "https://github.com/kstep/rust-mpd.git", version = "0.1.0" }
 notify = "5.0.0"
 notify-rust = "4.8.0"
 reqwest = {version = "0.11.11", features = ["blocking"]}

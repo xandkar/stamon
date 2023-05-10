@@ -47,8 +47,8 @@ fn status_to_string(s: mpd::status::Status, c: &Cli) -> String {
         (mpd::status::State::Stop, _, _) => c.pct_when_stop.clone(),
         (_, None, Some(_)) => c.pct_when_stream.clone(),
         (_, Some(tot), Some(cur)) => {
-            let tot = tot.num_seconds() as f64;
-            let cur = cur.num_seconds() as f64;
+            let tot = tot.as_secs_f64();
+            let cur = cur.as_secs_f64();
             format!("{:3.0}%", cur / tot * 100.0)
         }
         (s, d, e) => {
@@ -66,8 +66,8 @@ fn status_to_string(s: mpd::status::Status, c: &Cli) -> String {
     let time = match (s.state, s.elapsed) {
         (mpd::status::State::Stop, _) | (_, None) => "--:--".to_string(),
         (_, Some(e)) => {
-            let h = e.num_hours();
-            let s = e.num_seconds();
+            let s = e.as_secs(); // total seconds
+            let h = s / 3600; // whole hours
             let s = s - (h * 60 * 60); // seconds (beyond hours)
             let m = s / 60; // minutes (beyond hours)
             let s = s - (m * 60); // seconds (beyond minutes)
