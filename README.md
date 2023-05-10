@@ -19,7 +19,7 @@ TODO
 - [x] wifi status
 - [x] ethernet status
 - [x] battery charge
-- [ ] microphone (see `notes/microphone-use.txt`)
+- [x] microphone (see `notes/microphone-use.txt`)
 
 ### improvements
 

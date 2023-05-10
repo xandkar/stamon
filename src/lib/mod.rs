@@ -3,6 +3,7 @@ pub mod bluetooth;
 pub mod disk;
 pub mod mem;
 pub mod process;
+pub mod pulseaudio;
 pub mod upower;
 
 pub fn tracing_init() -> anyhow::Result<()> {

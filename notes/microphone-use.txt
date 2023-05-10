@@ -73,3 +73,42 @@ When mic in-use:
 
 5 Ask pulseaudio who is using the microphone
 --------------------------------------------
+
+
+using pulseaudio updates stream
+===============================================================================
+
+current:
+
+    $ pactl list source-outputs | grep '^Source Output'
+    Source Output #14
+
+updates:
+
+    $ pactl subscribe | grep --line-buffered source-output
+    Event 'new' on source-output #15
+    Event 'remove' on source-output #15
+    Event 'new' on source-output #16
+    Event 'remove' on source-output #16
+    Event 'new' on source-output #17
+    Event 'remove' on source-output #17
+    Event 'new' on source-output #18
+    Event 'remove' on source-output #18
+    Event 'new' on source-output #19
+    Event 'remove' on source-output #19
+    Event 'new' on source-output #20
+    Event 'remove' on source-output #20
+    Event 'new' on source-output #21
+    Event 'remove' on source-output #21
+    Event 'new' on source-output #22
+    Event 'remove' on source-output #22
+    Event 'new' on source-output #23
+    Event 'remove' on source-output #23
+    Event 'new' on source-output #24
+    Event 'remove' on source-output #24
+    Event 'new' on source-output #25
+    Event 'remove' on source-output #25
+    Event 'new' on source-output #26
+    Event 'remove' on source-output #26
+    Event 'new' on source-output #27
+    Event 'remove' on source-output #27
