@@ -63,7 +63,7 @@ fn main() -> Result<()> {
                     .iter()
                     .partition(|threshold| threshold > &&(percentage as u64));
                 triggered.sort();
-                triggered.first().map(|threshold| {
+                if let Some(threshold) = triggered.first() {
                     // TODO User-specifyable urgency levels:
                     //      - per alert?
                     //      - thresholds?
@@ -89,7 +89,7 @@ fn main() -> Result<()> {
                                 percentage, threshold, e
                             )
                         });
-                });
+                }
                 alerts = remaining;
             }
             _ => alerts = alerts_init.clone(),

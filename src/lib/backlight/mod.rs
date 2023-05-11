@@ -10,11 +10,9 @@ struct Device {
 
 impl Device {
     pub fn new(name: &str) -> Self {
-        let dev: PathBuf = ["/sys/class/backlight/", name].iter().collect();
-        let mut max = dev.clone();
-        let mut cur = dev.clone();
-        max.push("max_brightness");
-        cur.push("brightness");
+        let base = "/sys/class/backlight/";
+        let max = [base, name, "max_brightness"].iter().collect();
+        let cur = [base, name, "brightness"].iter().collect();
         Self { max, cur }
     }
 
@@ -54,7 +52,7 @@ impl Watcher {
         })
     }
 
-    pub fn iter<'a>(&'a self) -> impl Iterator<Item = Result<f32>> + 'a {
+    pub fn iter(&self) -> impl Iterator<Item = Result<f32>> + '_ {
         std::iter::once(self.dev.read_cur_brightness_pct()).chain(
             self.receiver.iter().filter_map(|event_result| {
                 use notify::event::{

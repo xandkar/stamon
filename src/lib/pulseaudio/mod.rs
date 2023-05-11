@@ -157,10 +157,10 @@ impl State {
         symbol_mic_off: &str,
     ) -> Result<()> {
         let sym_mute = "  X  ";
-        let sym_mic = if self.source_outputs.len() > 0 {
-            symbol_mic_on
-        } else {
+        let sym_mic = if self.source_outputs.is_empty() {
             symbol_mic_off
+        } else {
+            symbol_mic_on
         };
         let sym_eq = "=";
         let sym_ap = "~";
