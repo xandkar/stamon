@@ -6,27 +6,9 @@ Data feed processes for use with [pista](https://github.com/xandkar/pista).
 TODO
 ----
 
-### main
-- [x] time
-- [x] keyboard layout
-- [x] weather
-- [x] mpd status
-- [x] volume
-- [x] backlight brightness
-- [x] disk usage
-- [x] memory usage
-- [x] bluetooth status
-- [x] wifi status
-- [x] ethernet status
-- [x] battery charge
-- [x] microphone (see `notes/microphone-use.txt`)
-
 ### improvements
-
 #### all
-- [x] configurable prefix in each feed
 - [ ] configurable format strings https://github.com/vitiral/strfmt
-- [x] switch from `env_logger` to `tracing`
 - [ ] switch from `chrono` to `time` crate
 
 #### weather
