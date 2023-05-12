@@ -1,10 +1,11 @@
 pista-feeds
 ===============================================================================
-![Build status](https://github.com/xandkar/pista-feeds-rs/actions/workflows/rust.yml/badge.svg)
 ![Screenshot](screenshot.jpg)
 
 Data feed processes that I use with [pista](https://github.com/xandkar/pista)
 in my [dwm](https://dwm.suckless.org/) status area.
+
+![Build status](https://github.com/xandkar/pista-feeds-rs/actions/workflows/rust.yml/badge.svg)
 
 TODO
 ----
