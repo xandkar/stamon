@@ -64,6 +64,8 @@ pub fn main() -> Result<()> {
     //   B.
     //     - all spawned in parallel and each handles its own retries and intervals
     //     - aggregate state is asynchronously updated and displayed
+    //     - each observation will need a TTL, since async execution could
+    //       result in some observations getting much older than others.
     //
 
     pista_feeds::tracing_init()?;
