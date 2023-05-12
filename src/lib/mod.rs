@@ -5,6 +5,7 @@ pub mod mem;
 pub mod process;
 pub mod pulseaudio;
 pub mod upower;
+pub mod weather;
 
 pub fn tracing_init() -> anyhow::Result<()> {
     let subscriber = tracing_subscriber::FmtSubscriber::builder()
