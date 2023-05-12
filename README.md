@@ -1,5 +1,6 @@
 data-feeds
 ===============================================================================
+![Build status](https://github.com/xandkar/pista-feeds-rs/actions/workflows/rust.yml/badge.svg)
 ![Screenshot](screenshot.jpg)
 Data feed processes for use with [pista](https://github.com/xandkar/pista).
 
