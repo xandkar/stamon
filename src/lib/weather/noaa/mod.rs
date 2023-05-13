@@ -154,11 +154,11 @@ impl CurrentObservation {
 mod serde_rfc2822 {
     use serde::Deserialize; // String::deserialize method
 
-    pub fn deserialize<'de, D>(
+    pub fn deserialize<'a, D>(
         deserializer: D,
     ) -> Result<chrono::DateTime<chrono::FixedOffset>, D::Error>
     where
-        D: serde::Deserializer<'de>,
+        D: serde::Deserializer<'a>,
     {
         let s = String::deserialize(deserializer)?;
         chrono::DateTime::parse_from_rfc2822(s.as_str())
