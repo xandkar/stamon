@@ -75,7 +75,7 @@ pub fn main() -> Result<()> {
     tracing::info!("noaa_settings: {:?}", &noaa_settings);
     let mut stdout = std::io::stdout().lock();
     let observations = weather::Observations::new(
-        weather::noaa::NOAA::new(&noaa_settings)?,
+        weather::noaa::Observatory::new(&noaa_settings)?,
         Duration::from_secs(cli.interval),
         Duration::from_secs(15), // TODO Cli?
     );

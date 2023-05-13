@@ -33,13 +33,13 @@ impl std::fmt::Display for UserAgent {
     }
 }
 
-pub struct NOAA {
+pub struct Observatory {
     url: String,
     user_agent: String,
     summary_file: Option<PathBuf>,
 }
 
-impl NOAA {
+impl Observatory {
     pub fn new(
         Settings {
             user_agent,
@@ -63,7 +63,7 @@ impl NOAA {
     }
 }
 
-impl super::Observatory for NOAA {
+impl super::Observatory for Observatory {
     fn fetch(&self) -> Result<super::Observation> {
         let client = reqwest::blocking::Client::new();
         let req = client
