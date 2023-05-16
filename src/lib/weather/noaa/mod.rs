@@ -25,15 +25,18 @@ pub struct UserAgent {
 
 impl std::fmt::Display for UserAgent {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(
-            f,
-            "{}/{} ({}; {})",
-            self.app_name, self.app_version, self.app_url, self.admin_email
-        )
+        let Self {
+            app_name: name,
+            app_version: vsn,
+            app_url: url,
+            admin_email: email,
+        } = self;
+        write!(f, "{}/{} ({}; {})", name, vsn, url, email)
     }
 }
 
 pub struct Observatory {
+    module_path: String,
     url: String,
     user_agent: String,
     summary_file: Option<PathBuf>,
@@ -52,10 +55,11 @@ impl Observatory {
         station_id
     );
         let user_agent = user_agent.to_string();
-        tracing::info!("NOAA url: {:?}", &url);
-        tracing::info!("NOAA user_agent: {:?}", &user_agent);
+        tracing::info!("url: {:?}", &url);
+        tracing::info!("user_agent: {:?}", &user_agent);
         let summary_file = summary_file.clone();
         Ok(Self {
+            module_path: module_path!().to_string(),
             url,
             user_agent,
             summary_file,
@@ -64,6 +68,10 @@ impl Observatory {
 }
 
 impl super::Observatory for Observatory {
+    fn module_path(&self) -> &str {
+        &self.module_path
+    }
+
     fn fetch(&self) -> Result<super::Observation> {
         let client = reqwest::blocking::Client::new();
         let req = client
