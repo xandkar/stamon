@@ -9,6 +9,7 @@ use anyhow::{anyhow, Result};
 
 pub type Seq = u64;
 
+#[derive(Debug, PartialEq)]
 pub struct Sink<'a> {
     _seq: Seq,
     pub name: &'a str,
@@ -17,6 +18,7 @@ pub struct Sink<'a> {
     pub vol_right: u64,
 }
 
+#[derive(Debug, PartialEq)]
 pub enum Event {
     New,
     Change,
@@ -34,6 +36,7 @@ impl Event {
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub enum Stream {
     Sink,
     SourceOutput,
@@ -185,28 +188,32 @@ impl State {
 pub fn subscribe() -> Result<impl Iterator<Item = Result<Update>>> {
     let updates = crate::process::spawn("pactl", &["subscribe"])?.filter_map(
         |line_result| match line_result {
-            Ok(line) => {
-                // TODO Log invalidly-formatted event lines?
-                match line.split_whitespace().collect::<Vec<&str>>()[..] {
-                    ["Event", event, "on", stream, seq] => {
-                        match (
-                            Event::from_str(event),
-                            Stream::from_str(stream),
-                            seq_parse(seq),
-                        ) {
-                            (Some(event), Some(stream), Some(seq)) => {
-                                Some(Ok((event, stream, seq)))
-                            }
-                            _ => None,
-                        }
-                    }
-                    _ => None,
-                }
-            }
+            Ok(line) => update_parse(&line),
             Err(e) => Some(Err(anyhow::Error::from(e))),
         },
     );
     Ok(updates)
+}
+
+fn update_parse(line: &str) -> Option<Result<Update>> {
+    match line.split_whitespace().collect::<Vec<&str>>()[..] {
+        ["Event", event, "on", stream, seq] => {
+            match (
+                Event::from_str(event),
+                Stream::from_str(stream),
+                seq_parse(seq),
+            ) {
+                (Some(event), Some(stream), Some(seq)) => {
+                    Some(Ok((event, stream, seq)))
+                }
+                _ => None,
+            }
+        }
+        _ => {
+            tracing::warn!("Unexpected event line: {:?}", line);
+            None
+        }
+    }
 }
 
 fn seq_parse(name: &str) -> Option<Seq> {
@@ -272,8 +279,13 @@ fn vol_str_parse(s: &str) -> Option<u64> {
 fn source_outputs_list() -> Result<Vec<Seq>> {
     let pactl_list =
         crate::process::exec("pactl", &["list", "source-outputs"])?;
+    let pactl_list = std::str::from_utf8(&pactl_list)?;
+    pactl_list_source_outputs_parse(&pactl_list)
+}
+
+fn pactl_list_source_outputs_parse(data: &str) -> Result<Vec<Seq>> {
     let mut sources: HashSet<Seq> = HashSet::new();
-    for line in std::str::from_utf8(&pactl_list)?.lines() {
+    for line in data.lines() {
         if let ["Source", "Output", seq] =
             line.split_whitespace().collect::<Vec<&str>>()[..]
         {

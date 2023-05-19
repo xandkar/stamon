@@ -1,0 +1,29 @@
+Source Output #65
+	Driver: protocol-native.c
+	Owner Module: 12
+	Client: 7019
+	Source: 2
+	Sample Specification: s16le 2ch 44100Hz
+	Channel Map: front-left,front-right
+	Format: pcm, format.sample_format = "\"s16le\""  format.rate = "44100"  format.channels = "2"  format.channel_map = "\"front-left,front-right\""
+	Corked: no
+	Mute: no
+	Volume: front-left: 42598 /  65% / -11.23 dB,   front-right: 42598 /  65% / -11.23 dB
+	        balance 0.00
+	Buffer Latency: 0 usec
+	Source Latency: 4493 usec
+	Resample method: speex-float-1
+	Properties:
+		media.name = "recStream"
+		application.name = "WEBRTC VoiceEngine"
+		native-protocol.peer = "UNIX socket client"
+		native-protocol.version = "35"
+		application.process.id = "19426"
+		application.process.user = "xand"
+		application.process.host = "horlamca"
+		application.process.binary = "Discord"
+		application.language = "en_US.UTF-8"
+		window.x11.display = ":0"
+		application.process.machine_id = "bd8e6769f465e55af22a7e1b62d473eb"
+		application.process.session_id = "1"
+		module-stream-restore.id = "source-output-by-application-name:WEBRTC VoiceEngine"
