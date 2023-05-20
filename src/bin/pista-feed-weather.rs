@@ -47,8 +47,8 @@ struct Cli {
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
 enum ObservatoryName {
-    NOAA,
-    OWM,
+    Noaa,
+    Owm,
 }
 
 impl std::str::FromStr for ObservatoryName {
@@ -56,8 +56,8 @@ impl std::str::FromStr for ObservatoryName {
 
     fn from_str(s: &str) -> Result<Self> {
         match s {
-            "noaa" => Ok(Self::NOAA),
-            "owm" => Ok(Self::OWM),
+            "noaa" => Ok(Self::Noaa),
+            "owm" => Ok(Self::Owm),
             _ => Err(anyhow!("unknown observatory name: {:?}", s)),
         }
     }
@@ -69,7 +69,7 @@ impl Cli {
             Vec::new();
         for o in self.observatories.iter() {
             match o {
-                ObservatoryName::NOAA => {
+                ObservatoryName::Noaa => {
                     let station_id = self
                         .noaa_station_id
                         .as_ref()
@@ -90,7 +90,7 @@ impl Cli {
                         weather::noaa::Observatory::new(&settings)?;
                     observatories.push(Box::new(observatory));
                 }
-                ObservatoryName::OWM => {
+                ObservatoryName::Owm => {
                     let coord = self.owm_coord.ok_or_else(|| {
                         anyhow!(
                             "missing lat,lon coordinates for OWM observatory"
