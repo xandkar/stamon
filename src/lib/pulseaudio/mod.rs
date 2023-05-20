@@ -279,8 +279,8 @@ fn vol_str_parse(s: &str) -> Option<u64> {
 fn source_outputs_list() -> Result<Vec<Seq>> {
     let pactl_list =
         crate::process::exec("pactl", &["list", "source-outputs"])?;
-    let pactl_list = std::str::from_utf8(&pactl_list)?;
-    pactl_list_source_outputs_parse(&pactl_list)
+    let pactl_list: &str = std::str::from_utf8(&pactl_list)?;
+    pactl_list_source_outputs_parse(pactl_list)
 }
 
 fn pactl_list_source_outputs_parse(data: &str) -> Result<Vec<Seq>> {
