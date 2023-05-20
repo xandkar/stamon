@@ -117,6 +117,9 @@ mod concrete {
         assert!(pa::update_parse("Events 'new' on sink #3").is_none());
         assert!(pa::update_parse("Event 'new' on sink 3").is_none());
         assert!(pa::update_parse("Event 'new' on toilet #3").is_none());
+
+        // XXX Perfectly valid msg, but we don't currently care about "client".
+        assert!(pa::update_parse("Event 'change' on client #7284").is_none());
     }
 }
 
