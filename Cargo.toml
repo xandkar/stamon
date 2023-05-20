@@ -21,3 +21,6 @@ serde_json = "1.0.96"
 tracing = "0.1.37"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter", "local-time"] }
 x11 = { version = "2.20.0", features = ["xlib"] }
+
+[dev-dependencies]
+proptest = "1.1.0"

@@ -119,3 +119,49 @@ mod concrete {
         assert!(pa::update_parse("Event 'new' on toilet #3").is_none());
     }
 }
+
+mod prop {
+    use proptest::prelude as prop;
+
+    mod pa {
+        pub use super::super::super::*;
+    }
+
+    prop::proptest! {
+        #[test]
+        fn t_update_parse(
+            event in event(),
+            stream in stream(),
+            seq in seq(),
+        ) {
+            // line := "Event " event " on " stream " " seq
+            // event := "'new'" | "'change'" | "'remove'"
+            // stream := "sink" | "source-output"
+            // seq := "#"[0-9]+
+            let line = format!("Event {} on {} #{}", event, stream, seq);
+            let expect_event = pa::Event::from_str(&event).unwrap();
+            let expect_stream = pa::Stream::from_str(&stream).unwrap();
+            let update = pa::update_parse(&line).unwrap().unwrap();
+            assert_eq!((expect_event, expect_stream, seq), update);
+        }
+    }
+
+    fn event() -> impl prop::Strategy<Value = String> {
+        prop::prop_oneof![
+            prop::Just("'new'".to_string()),
+            prop::Just("'change'".to_string()),
+            prop::Just("'remove'".to_string()),
+        ]
+    }
+
+    fn stream() -> impl prop::Strategy<Value = String> {
+        prop::prop_oneof![
+            prop::Just("sink".to_string()),
+            prop::Just("source-output".to_string()),
+        ]
+    }
+
+    fn seq() -> impl prop::Strategy<Value = u64> {
+        0u64..
+    }
+}
