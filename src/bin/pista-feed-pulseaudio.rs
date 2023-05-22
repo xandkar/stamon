@@ -29,15 +29,15 @@ fn main() -> Result<()> {
                         &cli.symbol_mic_on,
                         &cli.symbol_mic_off,
                     ) {
-                        tracing::error!("Failed to write to stdout: {:?}", e)
+                        tracing::error!("Failed to write to stdout: {:?}", e);
                     }
                 }
                 Err(e) => {
-                    tracing::error!("Failed to update state: {:?}", e)
+                    tracing::error!("Failed to update state: {:?}", e);
                 }
             },
             Err(e) => {
-                tracing::error!("Failed to read event: {:?}", e)
+                tracing::error!("Failed to read event: {:?}", e);
             }
         }
     }

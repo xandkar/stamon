@@ -23,7 +23,7 @@ fn main() -> Result<()> {
                     use std::io::Write;
                     writeln!(stdout, "{}{:3.0}%", &cli.prefix, percentage)
                 } {
-                    tracing::error!("Failed to write to stdout: {:?}", e)
+                    tracing::error!("Failed to write to stdout: {:?}", e);
                 }
             }
             Err(e) => tracing::error!("Failed update: {:?}", e),

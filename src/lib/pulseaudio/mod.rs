@@ -172,13 +172,13 @@ impl State {
         let sym_ap = "~";
         match self.volume {
             Volume::Muted => {
-                writeln!(buf, "{}{} {}", prefix, sym_mute, sym_mic)?
+                writeln!(buf, "{}{} {}", prefix, sym_mute, sym_mic)?;
             }
             Volume::Exactly(n) => {
-                writeln!(buf, "{}{}{:3}% {}", prefix, sym_eq, n, sym_mic)?
+                writeln!(buf, "{}{}{:3}% {}", prefix, sym_eq, n, sym_mic)?;
             }
             Volume::Approx(n) => {
-                writeln!(buf, "{}{}{:3}% {}", prefix, sym_ap, n, sym_mic)?
+                writeln!(buf, "{}{}{:3}% {}", prefix, sym_ap, n, sym_mic)?;
             }
         }
         Ok(())

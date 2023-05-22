@@ -31,7 +31,7 @@ fn main() -> Result<()> {
                         percentage.ceil() // Show the worst case - ceiling.
                     )
                 } {
-                    tracing::error!("Failed to write to stdout: {:?}", e)
+                    tracing::error!("Failed to write to stdout: {:?}", e);
                 }
             }
         }

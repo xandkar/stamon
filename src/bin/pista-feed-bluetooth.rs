@@ -31,7 +31,7 @@ fn main() -> Result<()> {
             }
             Ok(Some(state)) => {
                 if let Err(e) = { state.write(&mut stdout, &cli.prefix) } {
-                    tracing::error!("Failed to write to stdout: {:?}", e)
+                    tracing::error!("Failed to write to stdout: {:?}", e);
                 }
             }
         }

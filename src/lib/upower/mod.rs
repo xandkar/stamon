@@ -116,12 +116,34 @@ impl<'a> Messages<'a> {
                                         lp.clone(),
                                     )))
                                 }
-                                Some(imsg @ MsgIntermediate::Battery{path, state, energy, energy_full}) => {
-                                    let state =state.ok_or_else(|| anyhow!("missing state: {:?}", imsg))?;
-                                    let energy = energy.ok_or_else(|| anyhow!("missing energy: {:?}", imsg))?;
-                                    let energy_full = energy_full.ok_or_else(|| anyhow!("missing energy_full: {:?}", imsg))?;
-                                    let msg = Msg::Battery(Battery { path: path.clone(), state, energy, energy_full });
-                                    return Ok(Some(msg))
+                                Some(
+                                    imsg @ MsgIntermediate::Battery {
+                                        path,
+                                        state,
+                                        energy,
+                                        energy_full,
+                                    },
+                                ) => {
+                                    let state = state.ok_or_else(|| {
+                                        anyhow!("missing state: {:?}", imsg)
+                                    })?;
+                                    let energy = energy.ok_or_else(|| {
+                                        anyhow!("missing energy: {:?}", imsg)
+                                    })?;
+                                    let energy_full = energy_full
+                                        .ok_or_else(|| {
+                                            anyhow!(
+                                                "missing energy_full: {:?}",
+                                                imsg
+                                            )
+                                        })?;
+                                    let msg = Msg::Battery(Battery {
+                                        path: path.clone(),
+                                        state,
+                                        energy,
+                                        energy_full,
+                                    });
+                                    return Ok(Some(msg));
                                 }
                                 Some(_) => msg = None,
                                 None => (),
@@ -164,7 +186,7 @@ impl<'a> Messages<'a> {
                             msg = Some(MsgIntermediate::Device {
                                 path: path.clone(),
                                 native_path: Some(native_path.to_string()),
-                            })
+                            });
                         }
 
                         // -- BEGIN battery
@@ -184,7 +206,7 @@ impl<'a> Messages<'a> {
                                 state: None,
                                 energy: None,
                                 energy_full: None,
-                            })
+                            });
                         }
                         (
                             true,
@@ -205,7 +227,7 @@ impl<'a> Messages<'a> {
                                 ),
                                 energy: *e,
                                 energy_full: *ef,
-                            })
+                            });
                         }
                         (
                             true,
@@ -227,7 +249,7 @@ impl<'a> Messages<'a> {
                                     ))?,
                                 ),
                                 energy_full: *ef,
-                            })
+                            });
                         }
                         (
                             true,
@@ -249,7 +271,7 @@ impl<'a> Messages<'a> {
                                         &line
                                     ))?,
                                 ),
-                            })
+                            });
                         }
                         // -- END battery
 
@@ -269,7 +291,7 @@ impl<'a> Messages<'a> {
                                         Some(path) => path.to_string(),
                                     },
                                     online: false,
-                                }))
+                                }));
                         }
                         (
                             true,
@@ -296,7 +318,7 @@ impl<'a> Messages<'a> {
                                             )))
                                         }
                                     },
-                                }))
+                                }));
                         }
                         // -- END line-power
 
@@ -357,7 +379,7 @@ impl State {
                 tracing::warn!(
                     "Ignoring the aggregate from 'upower --dump': {:?}",
                     b
-                )
+                );
             }
             Msg::Battery(b) => {
                 self.batteries.insert(b.path.clone(), b);

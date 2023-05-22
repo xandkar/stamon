@@ -55,7 +55,7 @@ fn main() -> Result<()> {
                 percentage.floor() // Show the worst case.
             )
         } {
-            tracing::error!("Failed to write to stdout: {:?}", e)
+            tracing::error!("Failed to write to stdout: {:?}", e);
         }
         match direction {
             Direction::Decreasing if !percentage.is_nan() => {
@@ -87,7 +87,7 @@ fn main() -> Result<()> {
                             tracing::error!(
                                 "Failed to send alert notification for {} < {}: {:?}",
                                 percentage, threshold, e
-                            )
+                            );
                         });
                 }
                 alerts = remaining;

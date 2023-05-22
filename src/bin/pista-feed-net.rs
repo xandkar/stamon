@@ -72,7 +72,7 @@ fn main() -> Result<()> {
                     format_args!("{}{:3}%", &cli.prefix, pct),
                 ),
                 Ok(None) => {
-                    print(&mut stdout, format_args!("{}---", &cli.prefix))
+                    print(&mut stdout, format_args!("{}---", &cli.prefix));
                 }
                 Err(e) => tracing::error!(
                     "Failure to parse link quality for {:?}: {:?}",
@@ -82,7 +82,7 @@ fn main() -> Result<()> {
             },
             IFKind::Eth => match eth_status(operstate_path.as_path()) {
                 Ok(Some(EthStatus::Up)) => {
-                    print(&mut stdout, format_args!("{}<>", &cli.prefix))
+                    print(&mut stdout, format_args!("{}<>", &cli.prefix));
                 }
                 Ok(Some(EthStatus::Down)) | Ok(None) => {
                     print(&mut stdout, format_args!("{}--", &cli.prefix));
@@ -100,7 +100,7 @@ fn main() -> Result<()> {
 
 fn print<W: std::io::Write>(mut buf: W, args: std::fmt::Arguments) {
     if let Err(e) = { writeln!(buf, "{}", args) } {
-        tracing::error!("Failed to write to stdout: {:?}", e)
+        tracing::error!("Failed to write to stdout: {:?}", e);
     }
 }
 

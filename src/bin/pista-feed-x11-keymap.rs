@@ -112,11 +112,11 @@ fn main() -> Result<()> {
                     use std::io::Write;
                     writeln!(stdout, "{}{}", &cli.prefix, symbol)
                 } {
-                    tracing::error!("Failed to write to stdout: {:?}", e)
+                    tracing::error!("Failed to write to stdout: {:?}", e);
                 }
             }
             Err(err) => {
-                tracing::error!("Failure to lookup keymap: {:?}", err)
+                tracing::error!("Failure to lookup keymap: {:?}", err);
             }
         }
         std::thread::sleep(std::time::Duration::from_secs_f32(cli.interval));

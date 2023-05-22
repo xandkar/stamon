@@ -26,7 +26,7 @@ fn main() -> Result<()> {
             use std::io::Write;
             writeln!(stdout, "{}", chrono::Local::now().format(format))
         } {
-            tracing::error!("Failed to write to stdout: {:?}", e)
+            tracing::error!("Failed to write to stdout: {:?}", e);
         }
         std::thread::sleep(interval);
     }

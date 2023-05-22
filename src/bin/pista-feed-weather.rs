@@ -107,7 +107,7 @@ impl Cli {
                         weather::openweathermap::Settings { coord, api_key };
                     let observatory =
                         weather::openweathermap::Observatory::new(&settings)?;
-                    observatories.push(Box::new(observatory))
+                    observatories.push(Box::new(observatory));
                 }
             }
         }
@@ -163,7 +163,7 @@ pub fn main() -> Result<()> {
             use std::io::Write;
             writeln!(stdout, "{:3.0}°F", temp_f)
         } {
-            tracing::error!("Failed to write to stdout: {:?}", e)
+            tracing::error!("Failed to write to stdout: {:?}", e);
         }
     }
     Err(anyhow!("Unexpected exit of observations iterator!"))

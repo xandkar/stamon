@@ -105,7 +105,7 @@ fn main() -> Result<()> {
                             &cli.postfix
                         )
                     } {
-                        tracing::error!("Failed to write to stdout: {:?}", e)
+                        tracing::error!("Failed to write to stdout: {:?}", e);
                     }
                 }
                 Err(e) => {

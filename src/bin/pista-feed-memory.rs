@@ -27,11 +27,11 @@ fn main() -> Result<()> {
                         percentage_in_use.ceil() // Show the worst case - ceiling.
                     )
                 } {
-                    tracing::error!("Failed to write to stdout: {:?}", e)
+                    tracing::error!("Failed to write to stdout: {:?}", e);
                 }
             }
             Err(e) => {
-                tracing::error!("Failed to read /proc/meminfo: {:?}", e)
+                tracing::error!("Failed to read /proc/meminfo: {:?}", e);
             }
         }
         std::thread::sleep(std::time::Duration::from_secs(cli.interval));

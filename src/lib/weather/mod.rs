@@ -53,7 +53,7 @@ impl Iterator for Observations {
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             if !self.first_iteration {
-                sleep(self.interval_curr)
+                sleep(self.interval_curr);
             }
             self.first_iteration = false;
             for observatory in self.observatories.iter() {

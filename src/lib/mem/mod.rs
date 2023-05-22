@@ -24,11 +24,11 @@ impl Info {
                     match line.split_whitespace().collect::<Vec<&str>>()[..] {
                         ["MemTotal:", qty, units] => {
                             total_quant = qty.parse().ok();
-                            total_units = Some(units.to_string())
+                            total_units = Some(units.to_string());
                         }
                         ["MemAvailable:", qty, units] => {
                             avail_quant = qty.parse().ok();
-                            avail_units = Some(units.to_string())
+                            avail_units = Some(units.to_string());
                         }
                         _ => (),
                     }
