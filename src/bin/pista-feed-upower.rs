@@ -24,10 +24,10 @@ fn main() -> Result<()> {
         Cli::parse()
     };
     tracing::info!("cli: {:?}", &cli);
-    let alerts_init: Vec<u64> = if !cli.alerts.is_empty() {
-        cli.alerts.clone()
-    } else {
+    let alerts_init: Vec<u64> = if cli.alerts.is_empty() {
         DEFAULT_ALERTS.to_vec()
+    } else {
+        cli.alerts.clone()
     };
     tracing::info!("alerts init: {:?}", &alerts_init);
     let mut alerts = alerts_init.clone();
