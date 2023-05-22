@@ -81,7 +81,7 @@ mod concrete {
         let given = fs::read_to_string("tests/pactl-list-source-outputs.txt")
             .unwrap();
         let expected = vec![65];
-        let actual = pa::pactl_list_source_outputs_parse(&given).unwrap();
+        let actual = pa::pactl_list_source_outputs_parse(&given);
         assert_eq!(expected, actual);
     }
 
