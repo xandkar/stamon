@@ -16,7 +16,7 @@ impl DeviceState {
     pub fn read() -> Result<Option<Self>> {
         // This method of device state lookup is taken from TLP bluetooth command.
         // TODO Checkout https://crates.io/crates/bluer
-        let mut bt_state: Option<DeviceState> = None;
+        let mut bt_state: Option<Self> = None;
         for entry in fs::read_dir("/sys/class/rfkill/")? {
             let entry = entry?;
             let mut path_type = entry.path();
