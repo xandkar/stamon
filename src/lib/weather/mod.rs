@@ -56,7 +56,7 @@ impl Iterator for Observations {
                 sleep(self.interval_curr);
             }
             self.first_iteration = false;
-            for observatory in self.observatories.iter() {
+            for observatory in &self.observatories {
                 match observatory.fetch() {
                     Err(e) => {
                         tracing::error!(

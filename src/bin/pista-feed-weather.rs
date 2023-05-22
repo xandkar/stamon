@@ -67,7 +67,7 @@ impl Cli {
     fn to_observatories(&self) -> Result<Vec<Box<dyn weather::Observatory>>> {
         let mut observatories: Vec<Box<dyn weather::Observatory>> =
             Vec::new();
-        for o in self.observatories.iter() {
+        for o in &self.observatories {
             match o {
                 ObservatoryName::Noaa => {
                     let station_id = self
