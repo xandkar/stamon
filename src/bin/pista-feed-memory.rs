@@ -17,18 +17,22 @@ fn main() -> Result<()> {
     let mut stdout = std::io::stdout().lock();
     loop {
         match pista_feeds::mem::usage() {
-            Ok(percentage_in_use) => {
+            Ok(Some(percentage_in_use)) => {
                 if let Err(e) = {
                     use std::io::Write;
                     writeln!(
                         stdout,
                         "{}{:3.0}%",
-                        &cli.prefix,
-                        percentage_in_use.ceil() // Show the worst case - ceiling.
+                        &cli.prefix, percentage_in_use
                     )
                 } {
                     tracing::error!("Failed to write to stdout: {:?}", e);
                 }
+            }
+            Ok(None) => {
+                tracing::error!(
+                    "Failed to calculate memory usage percentage"
+                );
             }
             Err(e) => {
                 tracing::error!("Failed to read /proc/meminfo: {:?}", e);

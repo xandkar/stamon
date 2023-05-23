@@ -132,16 +132,18 @@ fn wifi_link_quality_pct(interface: &str) -> Result<Option<u64>> {
                 .ok_or_else(|| {
                     anyhow!("Missing link quality in line: {line:?}")
                 })
-                .and_then(|lq| {
-                    lq.parse::<f64>().map_err(|_| {
-                        anyhow!("Link quality value invalid: {lq:?}")
+                .and_then(|link_quality| {
+                    link_quality.parse::<f32>().map_err(|_| {
+                        anyhow!(
+                            "Link quality value invalid: {:?}",
+                            link_quality
+                        )
                     })
                 })?;
             // "The cfg80211 wext compat layer assumes a maximum quality of 70"
             // https://git.openwrt.org/?p=project/iwinfo.git;a=blob;f=iwinfo_nl80211.c
             let max = 70.0;
-            let pct = (cur / max) * 100.0;
-            return Ok(Some(pct as u64));
+            return Ok(pista_feeds::math::percentage_floor(cur, max));
         }
     }
     Ok(None)

@@ -56,11 +56,13 @@ impl Info {
         self.total - self.available
     }
 
-    pub fn used_pct(&self) -> f32 {
-        (self.used() as f32 / self.total as f32) * 100.0
+    pub fn used_pct(&self) -> Option<u64> {
+        let cur = self.used() as f32;
+        let tot = self.total as f32;
+        crate::math::percentage_ceiling(cur, tot)
     }
 }
 
-pub fn usage() -> Result<f32> {
+pub fn usage() -> Result<Option<u64>> {
     Ok(Info::read()?.used_pct())
 }

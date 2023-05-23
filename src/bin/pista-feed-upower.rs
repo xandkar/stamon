@@ -17,6 +17,42 @@ struct Cli {
     alerts: Vec<u64>,
 }
 
+fn alert(alerts: &[u64], percentage: u64) -> Vec<u64> {
+    // TODO Look into VecDeque for alerts.
+    // TODO Common abstraction for alerts.
+    let (mut triggered, remaining): (Vec<u64>, Vec<u64>) = alerts
+        .iter()
+        .partition(|threshold| threshold > &&percentage);
+    triggered.sort();
+    if let Some(threshold) = triggered.first() {
+        // TODO User-specifyable urgency levels:
+        //      - per alert?
+        //      - thresholds?
+        let urgency = Urgency::Normal;
+        let _ = Notification::new()
+            .summary(&format!("Battery power bellow {}%!", threshold))
+            .body(&format!("{}%", percentage))
+            .urgency(urgency)
+            .show()
+            .map(|_| {
+                tracing::info!(
+                    "Alert notification sent for {} < {}",
+                    percentage,
+                    threshold
+                );
+            })
+            .map_err(|e| {
+                tracing::error!(
+                    "Failed to send alert notification for {} < {}: {:?}",
+                    percentage,
+                    threshold,
+                    e
+                );
+            });
+    }
+    remaining
+}
+
 fn main() -> Result<()> {
     pista_feeds::tracing_init()?;
     let cli = {
@@ -44,53 +80,19 @@ fn main() -> Result<()> {
             percentage,
             &alerts
         );
-        // TODO Notify on negative state changes.
         if let Err(e) = {
             use std::io::Write;
-            writeln!(
-                stdout,
-                "{}{}{:3.0}%",
-                &cli.prefix,
-                direction.to_char(),
-                percentage.floor() // Show the worst case.
-            )
+            write!(stdout, "{}{}", &cli.prefix, direction.to_char(),)
+                .and_then(|()| match percentage {
+                    None => writeln!(stdout, "---%"),
+                    Some(p) => writeln!(stdout, "{:3.0}%", p),
+                })
         } {
             tracing::error!("Failed to write to stdout: {:?}", e);
         }
-        match direction {
-            Direction::Decreasing if !percentage.is_nan() => {
-                let (mut triggered, remaining): (Vec<u64>, Vec<u64>) = alerts
-                    .iter()
-                    .partition(|threshold| threshold > &&(percentage as u64));
-                triggered.sort();
-                if let Some(threshold) = triggered.first() {
-                    // TODO User-specifyable urgency levels:
-                    //      - per alert?
-                    //      - thresholds?
-                    let urgency = Urgency::Normal;
-                    let _ = Notification::new()
-                        .summary(&format!(
-                            "Battery power bellow {}%!",
-                            threshold
-                        ))
-                        .body(&format!("{}%", percentage))
-                        .urgency(urgency)
-                        .show()
-                        .map(|_| {
-                            tracing::info!(
-                                "Alert notification sent for {} < {}",
-                                percentage,
-                                threshold
-                            );
-                        })
-                        .map_err(|e| {
-                            tracing::error!(
-                                "Failed to send alert notification for {} < {}: {:?}",
-                                percentage, threshold, e
-                            );
-                        });
-                }
-                alerts = remaining;
+        match (percentage, direction) {
+            (Some(percentage), Direction::Decreasing) => {
+                alerts = alert(&alerts[..], percentage);
             }
             _ => alerts = alerts_init.clone(),
         }

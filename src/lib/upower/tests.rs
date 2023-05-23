@@ -34,10 +34,11 @@ fn dump() {
     let states_produced: Vec<StateAggregate> =
         StateAggregates::from_messages(&mut messages_produced.into_iter())
             .collect();
+    dbg!(&states_produced);
     let states_expected = vec![
-        (Direction::Decreasing, std::f32::NAN),
-        (Direction::Decreasing, 97.9156),
-        (Direction::Decreasing, 97.9156),
+        (Direction::Decreasing, None),
+        (Direction::Decreasing, Some(97)),
+        (Direction::Decreasing, Some(97)),
     ];
 
     // State aggregates cannot be compared directly, because they contain

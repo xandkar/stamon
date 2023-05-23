@@ -137,6 +137,24 @@ impl<'a> Messages<'a> {
                                                 imsg
                                             )
                                         })?;
+                                    if energy > energy_full {
+                                        return Err(anyhow!(
+                                            "energy exceeds energy_full ({} > {}) for battery path: {:?}",
+                                            energy, energy_full, &path
+                                        ));
+                                    }
+                                    if energy < 0.0 {
+                                        return Err(anyhow!(
+                                            "negative energy ({}) for battery path: {:?}",
+                                            energy, &path
+                                        ));
+                                    };
+                                    if energy_full < 0.0 {
+                                        return Err(anyhow!(
+                                            "negative energy_full ({}) for battery path: {:?}",
+                                            energy_full, &path
+                                        ));
+                                    };
                                     let msg = Msg::Battery(Battery {
                                         path: path.clone(),
                                         state,
@@ -357,7 +375,7 @@ impl Iterator for Messages<'_> {
     }
 }
 
-type StateAggregate = (Direction, f32);
+type StateAggregate = (Direction, Option<u64>);
 
 #[derive(Debug)]
 struct State {
@@ -443,10 +461,12 @@ impl State {
         }
     }
 
-    fn percentage(&self) -> f32 {
-        let cur: f32 = self.batteries.values().map(|b| b.energy).sum();
-        let tot: f32 = self.batteries.values().map(|b| b.energy_full).sum();
-        (cur / tot) * 100.0
+    fn percentage(&self) -> Option<u64> {
+        (!self.batteries.is_empty()).then_some(()).and_then(|()| {
+            let cur = self.batteries.values().map(|b| b.energy).sum();
+            let tot = self.batteries.values().map(|b| b.energy_full).sum();
+            crate::math::percentage_floor(cur, tot)
+        })
     }
 
     fn aggregate(&self) -> StateAggregate {

@@ -20,16 +20,16 @@ fn main() -> Result<()> {
     let mut stdout = std::io::stdout().lock();
     loop {
         match pista_feeds::disk::usage(path) {
-            Err(err) => tracing::error!("{:?}", err),
-            Ok(percentage) => {
+            Err(err) => {
+                tracing::error!("Failed to read disk usage info: {:?}", err)
+            }
+            Ok(None) => {
+                tracing::error!("Failed to calculate disk usage percentage")
+            }
+            Ok(Some(percentage)) => {
                 if let Err(e) = {
                     use std::io::Write;
-                    writeln!(
-                        stdout,
-                        "{}{:3.0}%",
-                        &cli.prefix,
-                        percentage.ceil() // Show the worst case - ceiling.
-                    )
+                    writeln!(stdout, "{}{:3.0}%", &cli.prefix, percentage)
                 } {
                     tracing::error!("Failed to write to stdout: {:?}", e);
                 }

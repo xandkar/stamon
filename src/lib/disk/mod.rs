@@ -3,7 +3,7 @@ use std::mem::MaybeUninit;
 
 use anyhow::{anyhow, Result};
 
-pub fn usage(path: &str) -> Result<f32> {
+pub fn usage(path: &str) -> Result<Option<u64>> {
     let path = CString::new(path)?;
     let mut buf: MaybeUninit<libc::statfs> = MaybeUninit::uninit();
     let (total, free) = unsafe {
@@ -21,6 +21,5 @@ pub fn usage(path: &str) -> Result<f32> {
         }
     }?;
     let used = total - free;
-    let used_percentage = (used as f32) / (total as f32) * 100.0;
-    Ok(used_percentage)
+    Ok(crate::math::percentage_ceiling(used as f32, total as f32))
 }

@@ -43,13 +43,17 @@ fn status_to_string(s: mpd::status::Status, c: &Cli) -> String {
         mpd::status::State::Stop => &c.symbol_stop,
     };
     let percentage = match (s.state, s.duration, s.elapsed) {
-        // TODO Remove cloning?
+        // TODO Reduce allocations
+        // TODO Tests
         (mpd::status::State::Stop, _, _) => c.pct_when_stop.clone(),
         (_, None, Some(_)) => c.pct_when_stream.clone(),
         (_, Some(tot), Some(cur)) => {
-            let tot = tot.as_secs_f64();
-            let cur = cur.as_secs_f64();
-            format!("{:3.0}%", cur / tot * 100.0)
+            let tot = tot.as_secs_f32();
+            let cur = cur.as_secs_f32();
+            match pista_feeds::math::percentage_round(cur, tot) {
+                Some(pct) => format!("{:3.0}%", pct),
+                None => "---%".to_owned(),
+            }
         }
         (s, d, e) => {
             tracing::warn!(

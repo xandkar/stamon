@@ -16,10 +16,10 @@ impl Device {
         Self { max, cur }
     }
 
-    pub fn read_cur_brightness_pct(&self) -> Result<f32> {
+    pub fn read_cur_brightness_pct(&self) -> Result<Option<u64>> {
         let max: f32 = std::fs::read_to_string(&self.max)?.trim().parse()?;
         let cur: f32 = std::fs::read_to_string(&self.cur)?.trim().parse()?;
-        Ok(cur / max * 100.0)
+        Ok(crate::math::percentage_round(cur, max))
     }
 }
 
@@ -52,24 +52,31 @@ impl Watcher {
         })
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = Result<f32>> + '_ {
-        std::iter::once(self.dev.read_cur_brightness_pct()).chain(
-            self.receiver.iter().filter_map(|event_result| {
-                use notify::event::{
-                    DataChange, Event, EventKind::Modify, ModifyKind,
-                };
-                match event_result {
-                    Ok(Event {
-                        kind: Modify(ModifyKind::Data(DataChange::Any)),
-                        ..
-                    }) => Some(self.dev.read_cur_brightness_pct()),
-                    Ok(_) => None,
-                    Err(e) => {
-                        Some(Err(anyhow::Error::from(e)
-                            .context("watch event error")))
-                    }
-                }
-            }),
-        )
+    pub fn iter(&self) -> impl Iterator<Item = Result<u64>> + '_ {
+        use notify::event::{
+            DataChange, Event, EventKind::Modify, ModifyKind,
+        };
+
+        // Dummy event to trigger initial reading:
+        std::iter::once(Ok(Event::new(Modify(ModifyKind::Data(
+            DataChange::Any,
+        )))))
+        .chain(self.receiver.iter())
+        .filter_map(|event_result| match event_result {
+            Ok(Event {
+                kind: Modify(ModifyKind::Data(DataChange::Any)),
+                ..
+            }) => match self.dev.read_cur_brightness_pct() {
+                Ok(None) => None,
+                Ok(Some(pct)) => Some(Ok(pct)),
+                Err(e) => Some(Err(
+                    e.context("failed to read backlight percentage")
+                )),
+            },
+            Ok(_) => None,
+            Err(e) => {
+                Some(Err(anyhow::Error::from(e).context("watch event error")))
+            }
+        })
     }
 }

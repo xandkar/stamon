@@ -3,10 +3,18 @@ check:
 	cargo check
 	$(MAKE) test
 	cargo clippy
+	$(MAKE) clippy_float_cast
+	cargo fmt --check
 
 .PHONY: test
 test:
 	cargo test --lib
+
+.PHONY: clippy_float_cast
+clippy_float_cast:
+	cargo clippy -- \
+		-W clippy::cast-possible-truncation \
+		-W clippy::cast-sign-loss
 
 .PHONY: clippy_nursery
 clippy_nursery:
