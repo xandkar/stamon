@@ -31,3 +31,12 @@ clippy_pedantic:
 		-A clippy::single_match_else \
 		-A clippy::uninlined-format-args \
 		-A clippy::missing_errors_doc
+
+# XXX Coverage recipes assume llvm-cov is installed:
+.PHONY: coverage
+coverage:
+	cargo llvm-cov --lib --ignore-filename-regex 'tests\.rs'
+
+.PHONY: coverage_html
+coverage_html:
+	cargo llvm-cov --lib --ignore-filename-regex 'tests\.rs' --open
