@@ -3,6 +3,7 @@ pub mod bluetooth;
 pub mod disk;
 pub mod math;
 pub mod mem;
+pub mod mpd;
 pub mod process;
 pub mod pulseaudio;
 pub mod upower;

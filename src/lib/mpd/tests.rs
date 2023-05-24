@@ -1,0 +1,136 @@
+mod display {
+    use super::super::*;
+
+    const SYM: Symbols<'static> = Symbols {
+        prefix: "",
+        postfix: "",
+        play: ">",
+        pause: "=",
+        stop: "-",
+        pct_when_stopped: "---",
+        pct_when_streaming: "~~~",
+    };
+
+    mod full {
+        use super::*;
+
+        #[test]
+        fn stop_time_none() {
+            let status = mpd_status_new();
+            let mut buf = Vec::new();
+            State { status }.display(&mut buf, &SYM).unwrap();
+            assert_eq!("-    --:--  ---\n", buf_to_string(buf, 16));
+        }
+
+        #[test]
+        fn play_streaming() {
+            let mut status = mpd_status_new();
+            assert!(status.duration.is_none());
+            status.elapsed = Some(Duration::from_secs(5));
+            status.state = mpd::status::State::Play;
+            let mut buf = Vec::new();
+            State { status }.display(&mut buf, &SYM).unwrap();
+            assert_eq!(">    00:05  ~~~\n", buf_to_string(buf, 16));
+        }
+
+        #[test]
+        fn play_time_none() {
+            let mut status = mpd_status_new();
+            status.state = mpd::status::State::Play;
+            let mut buf = Vec::new();
+            State { status }.display(&mut buf, &SYM).unwrap();
+            assert_eq!(">    --:--  ???\n", buf_to_string(buf, 16));
+        }
+
+        #[test]
+        fn pause_time_none() {
+            let mut status = mpd_status_new();
+            status.state = mpd::status::State::Pause;
+            let mut buf = Vec::new();
+            State { status }.display(&mut buf, &SYM).unwrap();
+            assert_eq!("=    --:--  ???\n", buf_to_string(buf, 16));
+        }
+
+        #[test]
+        fn pause_time_some_50pct() {
+            let mut status = mpd_status_new();
+            status.state = mpd::status::State::Pause;
+            status.duration = Some(Duration::from_secs(10));
+            status.elapsed = Some(Duration::from_secs(5));
+            let mut buf = Vec::new();
+            State { status }.display(&mut buf, &SYM).unwrap();
+            assert_eq!("=    00:05  50%\n", buf_to_string(buf, 16));
+        }
+
+        #[test]
+        fn play_time_some_100pct() {
+            let mut status = mpd_status_new();
+            status.state = mpd::status::State::Play;
+            status.duration = Some(Duration::from_secs(60 * 60));
+            status.elapsed = Some(Duration::from_secs(60 * 60));
+            let mut buf = Vec::new();
+            State { status }.display(&mut buf, &SYM).unwrap();
+            assert_eq!("> 01:00:00 100%\n", buf_to_string(buf, 16));
+        }
+    }
+
+    mod time {
+        use super::*;
+
+        #[test]
+        fn stop_time_none() {
+            let status = mpd_status_new();
+            let mut buf = Vec::new();
+            State { status }.display_time(&mut buf).unwrap();
+            assert_eq!("   --:--", buf_to_string(buf, 8));
+        }
+
+        #[test]
+        fn pause_time_some() {
+            let mut status = mpd_status_new();
+            status.state = mpd::status::State::Pause;
+            status.duration = Some(Duration::from_secs(10));
+            status.elapsed = Some(Duration::from_secs(5));
+            let mut buf = Vec::new();
+            State { status }.display_time(&mut buf).unwrap();
+            assert_eq!("   00:05", buf_to_string(buf, 8));
+        }
+
+        #[test]
+        fn stop_time_some() {
+            let mut status = mpd_status_new();
+            status.state = mpd::status::State::Stop;
+            status.duration = Some(Duration::from_secs(10));
+            status.elapsed = Some(Duration::from_secs(5));
+            let mut buf = Vec::new();
+            State { status }.display_time(&mut buf).unwrap();
+            assert_eq!("   --:--", buf_to_string(buf, 8));
+        }
+
+        #[test]
+        fn play_time_some() {
+            let mut status = mpd_status_new();
+            status.state = mpd::status::State::Play;
+            status.duration = Some(Duration::from_secs(60 * 60));
+            status.elapsed = Some(Duration::from_secs(60 * 60));
+            let mut buf = Vec::new();
+            State { status }.display_time(&mut buf).unwrap();
+            assert_eq!("01:00:00", buf_to_string(buf, 8));
+        }
+    }
+
+    fn mpd_status_new() -> mpd::status::Status {
+        let status = mpd::status::Status::default();
+        assert_eq!(status.state, mpd::status::State::Stop);
+        assert!(status.duration.is_none());
+        assert!(status.elapsed.is_none());
+        status
+    }
+
+    fn buf_to_string(buf: Vec<u8>, len: usize) -> String {
+        let str = String::from_utf8(buf).unwrap();
+        dbg!(&str);
+        assert_eq!(len, str.len());
+        str
+    }
+}
