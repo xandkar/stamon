@@ -28,7 +28,7 @@ pub trait State {
 
     fn update(
         &mut self,
-        update: Self::Msg,
+        msg: Self::Msg,
         // TODO Pass alerts as an iterator?
         // XXX Wrap in Option to avoid allocating a Vec in the common case.
     ) -> Result<Option<Vec<Box<dyn Alert>>>>;
@@ -61,12 +61,12 @@ impl Iterator for Clock {
 
 pub fn pipeline<Event, Msg>(
     events: impl Iterator<Item = Event>,
-    read: impl Fn(Event) -> Result<Msg>,
+    event_to_state_msg: impl Fn(Event) -> Result<Msg>,
     mut state: impl State<Msg = Msg>,
     mut buf: impl std::io::Write,
 ) -> Result<()> {
     for event in events {
-        match read(event) {
+        match event_to_state_msg(event) {
             Err(err) => {
                 tracing::error!("Reader failed to read: {:?}", err);
             }
