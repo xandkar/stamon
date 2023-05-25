@@ -23,14 +23,14 @@ impl Device {
     }
 }
 
-pub struct Watcher {
+struct Watcher {
     dev: Device,
     _watcher: notify::RecommendedWatcher, // XXX To keep it from being dropped.
     receiver: std::sync::mpsc::Receiver<Result<notify::Event, notify::Error>>,
 }
 
 impl Watcher {
-    pub fn new(device_name: &str) -> Result<Self> {
+    fn new(device_name: &str) -> Result<Self> {
         let dev = Device::new(device_name);
         tracing::info!(
             "Instantiating new watcher for backlight device: {:?}",
@@ -52,7 +52,7 @@ impl Watcher {
         })
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = Result<u64>> + '_ {
+    fn iter(&self) -> impl Iterator<Item = Result<u64>> + '_ {
         use notify::event::{
             DataChange, Event, EventKind::Modify, ModifyKind,
         };
@@ -79,4 +79,48 @@ impl Watcher {
             }
         })
     }
+}
+
+pub struct State<'a> {
+    prefix: &'a str,
+    percentage: Option<u64>,
+}
+
+impl<'a> State<'a> {
+    pub fn new(prefix: &'a str) -> Self {
+        Self {
+            prefix,
+            percentage: None,
+        }
+    }
+}
+
+impl<'a> crate::State for State<'a> {
+    type Msg = u64;
+
+    fn update(
+        &mut self,
+        percentage: Self::Msg,
+    ) -> Result<Option<Vec<Box<dyn crate::Alert>>>> {
+        self.percentage = Some(percentage);
+        Ok(None)
+    }
+
+    fn display<W: std::io::Write>(&self, mut buf: W) -> Result<()> {
+        write!(buf, "{}", self.prefix)?;
+        match self.percentage {
+            None => write!(buf, "----")?,
+            Some(pct) => write!(buf, "{:3.0}%", pct)?,
+        }
+        writeln!(buf)?;
+        Ok(())
+    }
+}
+
+pub fn run(device: &str, prefix: &str) -> Result<()> {
+    let events = Watcher::new(device)?;
+    let reader = Box::new(|x| x);
+    let state = State::new(prefix);
+    let mut stdout = std::io::stdout().lock();
+    crate::pipeline(events.iter(), reader, state, &mut stdout)
 }

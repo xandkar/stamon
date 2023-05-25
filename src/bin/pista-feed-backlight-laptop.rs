@@ -1,7 +1,6 @@
-use anyhow::{anyhow, Result};
 use clap::Parser;
 
-#[derive(Parser)]
+#[derive(Parser, Debug)]
 struct Cli {
     #[clap(long = "device", default_value = "intel_backlight")]
     device: String,
@@ -10,24 +9,9 @@ struct Cli {
     prefix: String,
 }
 
-fn main() -> Result<()> {
+fn main() -> anyhow::Result<()> {
     pista_feeds::log::init()?;
     let cli = Cli::parse();
-    let mut stdout = std::io::stdout().lock();
-    for percentage in
-        pista_feeds::backlight::Watcher::new(&cli.device)?.iter()
-    {
-        match percentage {
-            Ok(percentage) => {
-                if let Err(e) = {
-                    use std::io::Write;
-                    writeln!(stdout, "{}{:3.0}%", &cli.prefix, percentage)
-                } {
-                    tracing::error!("Failed to write to stdout: {:?}", e);
-                }
-            }
-            Err(e) => tracing::error!("Failed update: {:?}", e),
-        }
-    }
-    Err(anyhow!("Backlight watcher exited unexpectedly!"))
+    tracing::info!("Cli: {:?}", &cli);
+    pista_feeds::backlight::run(&cli.device, &cli.prefix)
 }
