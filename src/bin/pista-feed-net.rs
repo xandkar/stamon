@@ -1,32 +1,6 @@
-// data sources:
-// - type
-//   - f: /sys/class/net/$IFACE/wireless/ --> present if wireless
-// - status:
-//   - f: /proc/net/wireless
-//        "The cfg80211 wext compat layer assumes a maximum quality of 70"
-//        -- https://git.openwrt.org/?p=project/iwinfo.git;a=blob;f=iwinfo_nl80211.c
-//   - f: /sys/class/net/$IFACE/operstate --> up | down
-//   - f: /proc/net/fib_trie
-//   - f: /proc/net/route
-//   - c: ip route list
-//   - l: libnetlink
-//   - l: https://github.com/achanda/netlink
-// - traffic:
-//   - f: /proc/net/dev
-// - SSID:
-//   - c: iwconfig
-//   - c: iwgetid
-// - TCP buffers
-//  - f: /proc/net/tcp
-//      > The "tx_queue" and "rx_queue" are the
-//      > outgoing and incoming data queue
-//      > in terms of kernel memory usage.
-
-use std::io::BufRead; // .lines() method
-use std::path::{Path, PathBuf};
-
-use anyhow::{anyhow, Result};
 use clap::Parser;
+
+use pista_feeds::net;
 
 #[derive(Debug, clap::Subcommand)]
 enum IFKind {
@@ -44,107 +18,23 @@ struct Cli {
     #[clap(long = "interval", short = 'i', default_value = "5")]
     interval: u64,
 
-    #[clap(long = "prefix", default_value = "n ")]
+    #[clap(long = "prefix", default_value = "net ")]
     prefix: String,
 }
 
-#[derive(Debug)]
-enum EthStatus {
-    Up,
-    Down,
-}
-
-fn main() -> Result<()> {
+fn main() -> anyhow::Result<()> {
     pista_feeds::tracing_init()?;
     let cli = Cli::parse();
-    tracing::info!("Parameters: {:?}", &cli);
-    let operstate_path: PathBuf =
-        ["/sys/class/net", &cli.interface, "operstate"]
-            .iter()
-            .collect();
-    tracing::info!("operstate_path: {:?}", &operstate_path);
-    let mut stdout = std::io::stdout().lock();
-    loop {
-        match &cli.interface_kind {
-            IFKind::Wifi => match wifi_link_quality_pct(&cli.interface) {
-                Ok(Some(pct)) => print(
-                    &mut stdout,
-                    format_args!("{}{:3}%", &cli.prefix, pct),
-                ),
-                Ok(None) => {
-                    print(&mut stdout, format_args!("{}---", &cli.prefix));
-                }
-                Err(e) => tracing::error!(
-                    "Failure to parse link quality for {:?}: {:?}",
-                    &cli.interface,
-                    e
-                ),
-            },
-            IFKind::Eth => match eth_status(operstate_path.as_path()) {
-                Ok(Some(EthStatus::Up)) => {
-                    print(&mut stdout, format_args!("{}<>", &cli.prefix));
-                }
-                Ok(Some(EthStatus::Down)) | Ok(None) => {
-                    print(&mut stdout, format_args!("{}--", &cli.prefix));
-                }
-                Err(e) => tracing::error!(
-                    "Failure to read operstate file for {:?}: {:?}",
-                    &cli.interface,
-                    e
-                ),
-            },
-        }
-        std::thread::sleep(std::time::Duration::from_secs(cli.interval));
+    tracing::info!("Cli: {:?}", &cli);
+    let Cli {
+        interface,
+        interval,
+        prefix,
+        interface_kind,
+    } = &cli;
+    let interval = std::time::Duration::from_secs(*interval);
+    match interface_kind {
+        IFKind::Wifi => net::wifi_link_qual::run(interval, interface, prefix),
+        IFKind::Eth => net::if_operstate::run(interval, interface, prefix),
     }
-}
-
-fn print<W: std::io::Write>(mut buf: W, args: std::fmt::Arguments) {
-    if let Err(e) = { writeln!(buf, "{}", args) } {
-        tracing::error!("Failed to write to stdout: {:?}", e);
-    }
-}
-
-fn eth_status(operstate_path: &Path) -> Result<Option<EthStatus>> {
-    if operstate_path.exists() {
-        let status = match std::fs::read_to_string(operstate_path)?.trim() {
-            "up" => Some(EthStatus::Up),
-            "down" => Some(EthStatus::Down),
-            _ => None,
-        };
-        Ok(status)
-    } else {
-        Ok(None)
-    }
-}
-
-fn wifi_link_quality_pct(interface: &str) -> Result<Option<u64>> {
-    let path = "/proc/net/wireless";
-    let file = std::fs::File::open(path)?;
-    let reader = std::io::BufReader::new(file);
-    let mut line_num = 0;
-    for line_result in reader.lines() {
-        let line = line_result?;
-        line_num += 1;
-        if line_num > 2 && line.starts_with(interface) {
-            let mut fields = line.split_whitespace();
-            let cur = fields
-                .nth(2)
-                .ok_or_else(|| {
-                    anyhow!("Missing link quality in line: {line:?}")
-                })
-                .and_then(|link_quality| {
-                    link_quality.parse::<f32>().map_err(|_| {
-                        anyhow!(
-                            "Link quality value invalid: {:?}",
-                            link_quality
-                        )
-                    })
-                })?;
-            // "The cfg80211 wext compat layer assumes a maximum quality of 70"
-            // https://git.openwrt.org/?p=project/iwinfo.git;a=blob;f=iwinfo_nl80211.c
-            let max = 70.0;
-            return Ok(pista_feeds::math::percentage_floor(cur, max));
-        }
-    }
-    Ok(None)
 }
