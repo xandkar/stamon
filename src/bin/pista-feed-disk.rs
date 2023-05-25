@@ -14,7 +14,7 @@ struct Cli {
 }
 
 fn main() -> Result<()> {
-    pista_feeds::tracing_init()?;
+    pista_feeds::log::init()?;
     let cli = Cli::parse();
     let path = cli.path.as_str();
     let mut stdout = std::io::stdout().lock();

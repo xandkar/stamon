@@ -145,7 +145,7 @@ pub fn main() -> Result<()> {
     //  - [ ] https://wunderground.com/
     //  - [ ] https://www.tomorrow.io/
 
-    pista_feeds::tracing_init()?;
+    pista_feeds::log::init()?;
     let cli = Cli::parse();
     tracing::info!("cli: {:?}", &cli);
 

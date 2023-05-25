@@ -100,7 +100,7 @@ struct Cli {
 }
 
 fn main() -> Result<()> {
-    pista_feeds::tracing_init()?;
+    pista_feeds::log::init()?;
     let cli = Cli::parse();
     tracing::info!("cli: {:?}", &cli);
     let x11 = x11::X11::init()?;

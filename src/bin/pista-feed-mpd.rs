@@ -51,7 +51,7 @@ impl Cli {
 }
 
 fn main() -> Result<()> {
-    pista_feeds::tracing_init()?;
+    pista_feeds::log::init()?;
     let cli = Cli::parse();
     tracing::info!("params: {:?}", &cli);
     let symbols = cli.symbols();

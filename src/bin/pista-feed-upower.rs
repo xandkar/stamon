@@ -54,7 +54,7 @@ fn alert(alerts: &[u64], percentage: u64) -> Vec<u64> {
 }
 
 fn main() -> Result<()> {
-    pista_feeds::tracing_init()?;
+    pista_feeds::log::init()?;
     let cli = {
         use clap::Parser;
         Cli::parse()
