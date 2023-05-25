@@ -10,6 +10,7 @@ pub mod process;
 pub mod pulseaudio;
 pub mod upower;
 pub mod weather;
+pub mod x11;
 
 use std::time::Duration;
 
