@@ -118,9 +118,9 @@ impl<'a> crate::State for State<'a> {
 }
 
 pub fn run(device: &str, prefix: &str) -> Result<()> {
-    let events = Watcher::new(device)?;
-    let reader = Box::new(|x| x);
-    let state = State::new(prefix);
-    let mut stdout = std::io::stdout().lock();
-    crate::pipeline(events.iter(), reader, state, &mut stdout)
+    crate::pipeline_to_stdout(
+        Watcher::new(device)?.iter(),
+        Box::new(|x| x),
+        State::new(prefix),
+    )
 }

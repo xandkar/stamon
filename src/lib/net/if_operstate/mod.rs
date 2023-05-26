@@ -6,13 +6,13 @@ use std::{
 use anyhow::Result;
 
 #[derive(Debug)]
-pub enum Status {
+enum Status {
     Up,
     Down,
 }
 
 impl Status {
-    pub fn read(operstate_path: &Path) -> Result<Option<Self>> {
+    fn read(operstate_path: &Path) -> Result<Option<Self>> {
         if operstate_path.exists() {
             let status = match std::fs::read_to_string(operstate_path)?.trim()
             {
@@ -34,14 +34,14 @@ struct Symbols<'a> {
     down: &'a str,
 }
 
-pub struct State<'a> {
+struct State<'a> {
     prefix: &'a str,
     symbols: Symbols<'a>,
     status: Option<Status>,
 }
 
 impl<'a> State<'a> {
-    pub fn new(prefix: &'a str) -> Self {
+    fn new(prefix: &'a str) -> Self {
         Self {
             prefix,
             symbols: Symbols {
@@ -81,21 +81,12 @@ impl<'a> crate::State for State<'a> {
 }
 
 pub fn run(interval: Duration, interface: &str, prefix: &str) -> Result<()> {
-    let events = crate::clock::new(interval);
-    let reader = crate::net::if_operstate::reader(interface);
-    let state = crate::net::if_operstate::State::new(prefix);
-    let mut stdout = std::io::stdout().lock();
-    crate::pipeline(events, reader, state, &mut stdout)
-}
-
-pub fn reader<'a, E>(
-    interface: &'a str,
-) -> Box<dyn 'a + Fn(E) -> Result<Option<Status>>> {
-    let path = path(interface);
+    let path: PathBuf =
+        ["/sys/class/net", interface, "operstate"].iter().collect();
     tracing::info!("operstate path: {:?}", &path);
-    Box::new(move |_| Status::read(&path))
-}
-
-fn path(interface: &str) -> PathBuf {
-    ["/sys/class/net", interface, "operstate"].iter().collect()
+    crate::pipeline_to_stdout(
+        crate::clock::new(interval),
+        Box::new(|_| Status::read(&path)),
+        State::new(prefix),
+    )
 }

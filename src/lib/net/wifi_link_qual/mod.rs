@@ -4,13 +4,13 @@ use std::{io::BufRead, time::Duration}; // .lines()
 
 const PROC_NET_WIRELESS: &str = "/proc/net/wireless";
 
-pub struct State<'a> {
+struct State<'a> {
     prefix: &'a str,
     link_qual: Option<u64>,
 }
 
 impl<'a> State<'a> {
-    pub fn new(prefix: &'a str) -> Self {
+    fn new(prefix: &'a str) -> Self {
         Self {
             prefix,
             link_qual: None,
@@ -47,15 +47,7 @@ impl<'a> crate::State for State<'a> {
     }
 }
 
-pub fn run(interval: Duration, interface: &str, prefix: &str) -> Result<()> {
-    let events = crate::clock::new(interval);
-    let reader = reader(interface);
-    let state = State::new(prefix);
-    let mut stdout = std::io::stdout().lock();
-    crate::pipeline(events, reader, state, &mut stdout)
-}
-
-pub fn reader<'a, E>(
+fn reader<'a, E>(
     interface: &'a str,
 ) -> Box<dyn 'a + Fn(E) -> Result<Option<u64>>> {
     Box::new(|_| match read(interface) {
@@ -67,7 +59,7 @@ pub fn reader<'a, E>(
     })
 }
 
-pub fn read(interface: &str) -> Result<Option<u64>> {
+fn read(interface: &str) -> Result<Option<u64>> {
     let file = std::fs::File::open(PROC_NET_WIRELESS)?;
     let reader = std::io::BufReader::new(file);
     parse(reader.lines(), interface).map_err(Error::from)
@@ -103,4 +95,12 @@ fn parse(
         }
     }
     Ok(None)
+}
+
+pub fn run(interval: Duration, interface: &str, prefix: &str) -> Result<()> {
+    crate::pipeline_to_stdout(
+        crate::clock::new(interval),
+        reader(interface),
+        State::new(prefix),
+    )
 }

@@ -75,3 +75,12 @@ pub fn pipeline<Event, Msg>(
     }
     Err(anyhow!("Unexpected end of events"))
 }
+
+pub fn pipeline_to_stdout<Event, Msg>(
+    events: impl Iterator<Item = Event>,
+    event_to_state_msg: impl Fn(Event) -> Result<Msg>,
+    state: impl State<Msg = Msg>,
+) -> Result<()> {
+    let stdout = std::io::stdout().lock();
+    pipeline(events, event_to_state_msg, state, stdout)
+}
