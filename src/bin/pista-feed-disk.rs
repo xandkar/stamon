@@ -16,25 +16,9 @@ struct Cli {
 fn main() -> Result<()> {
     pista_feeds::log::init()?;
     let cli = Cli::parse();
-    let path = cli.path.as_str();
-    let mut stdout = std::io::stdout().lock();
-    loop {
-        match pista_feeds::disk::usage(path) {
-            Err(err) => {
-                tracing::error!("Failed to read disk usage info: {:?}", err)
-            }
-            Ok(None) => {
-                tracing::error!("Failed to calculate disk usage percentage")
-            }
-            Ok(Some(percentage)) => {
-                if let Err(e) = {
-                    use std::io::Write;
-                    writeln!(stdout, "{}{:3.0}%", &cli.prefix, percentage)
-                } {
-                    tracing::error!("Failed to write to stdout: {:?}", e);
-                }
-            }
-        }
-        std::thread::sleep(std::time::Duration::from_secs(cli.interval));
-    }
+    pista_feeds::disk::run(
+        &cli.prefix,
+        std::time::Duration::from_secs(cli.interval),
+        &cli.path,
+    )
 }
