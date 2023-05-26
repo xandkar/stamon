@@ -82,9 +82,11 @@ impl DeviceState {
 }
 
 pub fn run(prefix: &str, interval: Duration) -> Result<()> {
+    use crate::clock;
+
     crate::pipeline_to_stdout(
-        crate::clock::new(interval),
-        Box::new(|()| DeviceState::read()),
+        clock::new(interval),
+        Box::new(|clock::Tick| DeviceState::read()),
         State::new(prefix),
     )
 }

@@ -61,9 +61,11 @@ impl<'a> crate::State for State<'a> {
 }
 
 pub fn run(prefix: &str, interval: Duration, path: &str) -> Result<()> {
+    use crate::clock;
+
     crate::pipeline_to_stdout(
-        crate::clock::new(interval),
-        Box::new(|()| usage(path)),
+        clock::new(interval),
+        Box::new(|clock::Tick| usage(path)),
         State::new(prefix),
     )
 }

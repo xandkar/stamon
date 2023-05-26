@@ -1,10 +1,10 @@
 use std::time::Duration;
 
-pub type Tick = (); // TODO Make opaque. Need to update callers.
+pub struct Tick;
 
 /// First tick is immediate, subsequent ones after the given interval.
 pub fn new(interval: Duration) -> impl Iterator<Item = Tick> {
-    std::iter::once(()).chain(Clock { interval })
+    std::iter::once(Tick).chain(Clock { interval })
 }
 
 struct Clock {
@@ -16,6 +16,6 @@ impl Iterator for Clock {
 
     fn next(&mut self) -> Option<Self::Item> {
         std::thread::sleep(self.interval);
-        Some(())
+        Some(Tick)
     }
 }
