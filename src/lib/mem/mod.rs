@@ -1,4 +1,7 @@
-use std::io::BufRead; // To access the lines() method.
+use std::{
+    io::BufRead, // .lines()
+    time::Duration,
+};
 
 use anyhow::{anyhow, Result};
 
@@ -56,13 +59,59 @@ impl Info {
         self.total - self.available
     }
 
-    pub fn used_pct(&self) -> Option<u64> {
+    fn used_pct(&self) -> Option<u64> {
         let cur = self.used() as f32;
         let tot = self.total as f32;
         crate::math::percentage_ceiling(cur, tot)
     }
 }
 
-pub fn usage() -> Result<Option<u64>> {
+fn usage() -> Result<Option<u64>> {
     Ok(Info::read()?.used_pct())
+}
+
+struct State<'a> {
+    prefix: &'a str,
+    usage: Option<u64>,
+}
+
+impl<'a> State<'a> {
+    fn new(prefix: &'a str) -> Self {
+        Self {
+            prefix,
+            usage: None,
+        }
+    }
+}
+
+impl<'a> crate::State for State<'a> {
+    type Msg = Option<u64>;
+
+    fn update(
+        &mut self,
+        usage: Self::Msg,
+    ) -> Result<Option<Vec<Box<dyn crate::Alert>>>> {
+        self.usage = usage;
+        Ok(None)
+    }
+
+    fn display<W: std::io::Write>(&self, mut buf: W) -> Result<()> {
+        write!(buf, "{}", self.prefix)?;
+        match self.usage {
+            None => write!(buf, "----")?,
+            Some(pct) => write!(buf, "{:3.0}%", pct)?,
+        }
+        writeln!(buf)?;
+        Ok(())
+    }
+}
+
+pub fn run(prefix: &str, interval: Duration) -> Result<()> {
+    use crate::clock;
+
+    crate::pipeline_to_stdout(
+        clock::new(interval),
+        Box::new(|clock::Tick| usage()),
+        State::new(prefix),
+    )
 }
