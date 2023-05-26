@@ -48,7 +48,7 @@ impl<'a> crate::State for State<'a> {
 }
 
 pub fn run(interval: Duration, interface: &str, prefix: &str) -> Result<()> {
-    let events = crate::Clock::new(interval);
+    let events = crate::clock::new(interval);
     let reader = reader(interface);
     let state = State::new(prefix);
     let mut stdout = std::io::stdout().lock();

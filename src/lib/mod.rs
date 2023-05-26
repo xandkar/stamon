@@ -1,18 +1,19 @@
+// TODO "feeds" submodule
 pub mod backlight;
 pub mod bluetooth;
 pub mod disk;
-pub mod log;
-pub mod math;
 pub mod mem;
 pub mod mpd;
 pub mod net;
-pub mod process;
 pub mod pulseaudio;
 pub mod upower;
 pub mod weather;
 pub mod x11;
 
-use std::time::Duration;
+pub mod clock;
+pub mod log;
+pub mod math;
+pub mod process;
 
 use anyhow::{anyhow, Result};
 
@@ -26,11 +27,10 @@ use anyhow::{anyhow, Result};
 pub trait State {
     type Msg;
 
+    // XXX Alerts wrapped in Option to avoid allocating a Vec in the common case.
     fn update(
         &mut self,
         msg: Self::Msg,
-        // TODO Pass alerts as an iterator?
-        // XXX Wrap in Option to avoid allocating a Vec in the common case.
     ) -> Result<Option<Vec<Box<dyn Alert>>>>;
 
     fn display<W: std::io::Write>(&self, buf: W) -> Result<()>;
@@ -38,25 +38,6 @@ pub trait State {
 
 pub trait Alert {
     fn send(&self) -> Result<()>;
-}
-
-pub struct Clock {
-    interval: Duration,
-}
-
-impl Clock {
-    pub fn new(interval: Duration) -> Self {
-        Self { interval }
-    }
-}
-
-impl Iterator for Clock {
-    type Item = ();
-
-    fn next(&mut self) -> Option<Self::Item> {
-        std::thread::sleep(self.interval);
-        Some(())
-    }
 }
 
 pub fn pipeline<Event, Msg>(

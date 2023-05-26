@@ -82,7 +82,7 @@ impl DeviceState {
 }
 
 pub fn run(prefix: &str, interval: Duration) -> Result<()> {
-    let events = crate::Clock::new(interval);
+    let events = crate::clock::new(interval);
     let event_to_msg = Box::new(|()| DeviceState::read());
     let state = State::new(prefix);
     let mut stdout = std::io::stdout().lock();
