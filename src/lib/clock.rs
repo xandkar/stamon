@@ -1,6 +1,3 @@
-// TODO Design a clock with feedback for backoff? Over a channel?
-//      Or perhaps that is better off as a feature of the pipeline?
-
 use std::time::Duration;
 
 pub type Tick = (); // TODO Make opaque. Need to update callers.

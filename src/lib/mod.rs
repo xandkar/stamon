@@ -46,6 +46,8 @@ pub fn pipeline<Event, Msg>(
     mut state: impl State<Msg = Msg>,
     mut buf: impl std::io::Write,
 ) -> Result<()> {
+    // TODO Redesign for backoff, so it is usable for weather
+    //      and potentially other remote source polling.
     for event in events {
         match event_to_state_msg(event) {
             Err(err) => {
