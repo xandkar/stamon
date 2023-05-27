@@ -42,32 +42,29 @@ pub trait Alert {
 
 pub fn pipeline<Event, Msg>(
     events: impl Iterator<Item = Event>,
-    event_to_state_msg: impl Fn(Event) -> Result<Msg>,
+    event_mapper: impl Fn(Event) -> Result<Msg>,
     mut state: impl State<Msg = Msg>,
     mut buf: impl std::io::Write,
 ) -> Result<()> {
     // TODO Redesign for backoff, so it is usable for weather
     //      and potentially other remote source polling.
     for event in events {
-        match event_to_state_msg(event) {
+        match event_mapper(event) {
             Err(err) => {
-                tracing::error!("Reader failed to read: {:?}", err);
+                tracing::error!("Event mapper failed: {:?}", err);
             }
             Ok(msg) => match state.update(msg) {
                 Err(err) => {
-                    tracing::error!("State failed to update: {:?}", err);
+                    tracing::error!("State update failed: {:?}", err);
                 }
                 Ok(alerts) => {
                     if let Err(e) = state.display(&mut buf) {
-                        tracing::error!("State failed to display: {:?}", e);
+                        tracing::error!("State display failed: {:?}", e);
                     }
                     if let Some(alerts) = alerts {
                         alerts.iter().for_each(|a| {
                             if let Err(e) = a.send() {
-                                tracing::error!(
-                                    "Alert failed to send: {:?}",
-                                    e
-                                );
+                                tracing::error!("Alert send failed: {:?}", e);
                             }
                         })
                     }
