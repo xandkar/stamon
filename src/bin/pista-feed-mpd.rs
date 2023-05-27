@@ -1,6 +1,5 @@
-use std::{net::IpAddr, str::FromStr, time::Duration};
+use std::str::FromStr;
 
-use anyhow::{anyhow, Result};
 use clap::Parser;
 
 #[derive(Debug, Parser)]
@@ -29,8 +28,14 @@ struct Cli {
     #[clap(long = "symbol-stop", default_value = "-")]
     symbol_stop: String,
 
-    #[clap(long = "pct-when-stop", default_value = "---")]
+    #[clap(long = "symbol-off", default_value = " ")]
+    symbol_off: String,
+
+    #[clap(long = "pct-when-stop", default_value = "   ")]
     pct_when_stop: String,
+
+    #[clap(long = "pct-when-off", default_value = "   ")]
+    pct_when_off: String,
 
     #[clap(long = "pct-when-stream", default_value = "~~~")]
     pct_when_stream: String,
@@ -41,30 +46,25 @@ impl Cli {
         pista_feeds::mpd::Symbols {
             prefix: &self.prefix,
             postfix: &self.postfix,
-            play: &self.symbol_play,
-            pause: &self.symbol_pause,
-            stop: &self.symbol_stop,
+            state_play: &self.symbol_play,
+            state_pause: &self.symbol_pause,
+            state_stop: &self.symbol_stop,
+            state_off: &self.symbol_off,
             pct_when_stopped: &self.pct_when_stop,
             pct_when_streaming: &self.pct_when_stream,
+            pct_when_off: &self.pct_when_off,
         }
     }
 }
 
-fn main() -> Result<()> {
+fn main() -> anyhow::Result<()> {
     pista_feeds::log::init()?;
     let cli = Cli::parse();
-    tracing::info!("params: {:?}", &cli);
-    let symbols = cli.symbols();
-    let states = pista_feeds::mpd::States::new(
-        IpAddr::from_str(&cli.addr)?,
+    tracing::info!("Cli: {:?}", &cli);
+    pista_feeds::mpd::run(
+        std::time::Duration::from_secs(cli.interval),
+        std::net::IpAddr::from_str(&cli.addr)?,
         cli.port,
-        Duration::from_secs(cli.interval),
-    );
-    let mut stdout = std::io::stdout().lock();
-    for state in states {
-        if let Err(e) = { state.display(&mut stdout, &symbols) } {
-            tracing::error!("Failed to write to stdout: {:?}", e);
-        }
-    }
-    Err(anyhow!("Unexpected exit"))
+        cli.symbols(),
+    )
 }
