@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use anyhow::{anyhow, Result};
 use x11::xlib;
 
@@ -69,6 +71,7 @@ impl X11 {
         }
     }
 
+    // TODO Avoid allocating new strings? Can we write into a passed buffer?
     pub fn keymap(&self) -> Result<String> {
         let symbols = self.symbols()?;
         let group_index = self.current_group_index()?;
@@ -80,4 +83,56 @@ impl X11 {
         let symbol = symbol.chars().take(2).collect::<String>();
         Ok(symbol)
     }
+}
+
+struct State<'a> {
+    prefix: &'a str,
+    symbol: Option<String>,
+}
+
+impl<'a> State<'a> {
+    fn new(prefix: &'a str) -> Self {
+        Self {
+            prefix,
+            symbol: None,
+        }
+    }
+}
+
+impl<'a> crate::State for State<'a> {
+    type Event = String;
+
+    fn update(
+        &mut self,
+        symbol: Self::Event,
+    ) -> Result<Option<Vec<Box<dyn crate::Alert>>>> {
+        self.symbol = Some(symbol);
+        Ok(None)
+    }
+
+    fn display<W: std::io::Write>(&self, mut buf: W) -> Result<()> {
+        let symbol = match self.symbol {
+            None => "--",
+            Some(ref s) => s,
+        };
+        writeln!(buf, "{}{}", self.prefix, symbol)?;
+        Ok(())
+    }
+}
+
+fn reads(interval: Duration, x11: &X11) -> impl Iterator<Item = String> + '_ {
+    use crate::clock;
+
+    clock::new(interval).filter_map(|clock::Tick| match x11.keymap() {
+        Err(err) => {
+            tracing::error!("Failure to lookup keymap: {:?}", err);
+            None
+        }
+        Ok(symbol) => Some(symbol),
+    })
+}
+
+pub fn run(prefix: &str, interval: Duration) -> Result<()> {
+    let x11 = X11::init()?;
+    crate::pipeline_to_stdout(reads(interval, &x11), State::new(prefix))
 }
