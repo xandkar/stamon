@@ -7,19 +7,29 @@ use std::collections::HashSet;
 
 use anyhow::{anyhow, Result};
 
-pub type Seq = u64;
+#[derive(Debug)]
+pub struct Symbols<'a> {
+    pub prefix: &'a str,
+    pub mic_on: &'a str,
+    pub mic_off: &'a str,
+    pub mute: &'a str,
+    pub equal: &'a str,
+    pub approx: &'a str,
+}
+
+type Seq = u64;
 
 #[derive(Debug, PartialEq)]
-pub struct Sink<'a> {
+struct Sink<'a> {
     _seq: Seq,
-    pub name: &'a str,
-    pub mute: bool,
-    pub vol_left: u64,
-    pub vol_right: u64,
+    name: &'a str,
+    mute: bool,
+    vol_left: u64,
+    vol_right: u64,
 }
 
 #[derive(Debug, PartialEq)]
-pub enum Event {
+enum Event {
     New,
     Change,
     Remove,
@@ -37,7 +47,7 @@ impl Event {
 }
 
 #[derive(Debug, PartialEq)]
-pub enum Stream {
+enum Stream {
     Sink,
     SourceOutput,
 }
@@ -52,9 +62,9 @@ impl Stream {
     }
 }
 
-pub type Update = (Event, Stream, Seq);
+type Update = (Event, Stream, Seq);
 
-pub fn updates<'a>() -> Result<impl Iterator<Item = Result<Update>> + 'a> {
+fn updates() -> Result<impl Iterator<Item = Update>> {
     let init_vol_change =
         std::iter::once(Ok((Event::Change, Stream::Sink, 0)));
     let init_source_outputs = source_outputs_list()?;
@@ -63,11 +73,18 @@ pub fn updates<'a>() -> Result<impl Iterator<Item = Result<Update>> + 'a> {
         .map(|seq| Ok((Event::New, Stream::SourceOutput, seq)));
     let updates = init_vol_change
         .chain(init_source_outputs)
-        .chain(subscribe()?);
+        .chain(subscribe()?)
+        .filter_map(|result| match result {
+            Err(err) => {
+                tracing::error!("Failed to read event: {:?}", err);
+                None
+            }
+            Ok(update) => Some(update),
+        });
     Ok(updates)
 }
 
-pub enum Volume {
+enum Volume {
     Muted,
     Exactly(u64),
     Approx(u64),
@@ -111,27 +128,37 @@ fn pactl_info_find_default_sink(data: &str) -> Option<&str> {
     None
 }
 
-pub struct State {
+struct State<'a> {
+    symbols: Symbols<'a>,
     source_outputs: HashSet<Seq>,
     volume: Volume, // TODO Maybe Option instead of init fetch?
 }
 
-impl State {
-    pub fn new() -> Result<Self> {
+impl<'a> State<'a> {
+    fn new(symbols: Symbols<'a>) -> Result<Self> {
         let source_outputs = HashSet::new();
         let volume = Volume::fetch()?;
         Ok(Self {
+            symbols,
             source_outputs,
             volume,
         })
     }
+}
 
-    pub fn update(&mut self, update: Update) -> Result<()> {
+impl<'a> crate::State for State<'a> {
+    type Event = Update;
+
+    fn update(
+        &mut self,
+        update: Self::Event,
+    ) -> Result<Option<Vec<Box<dyn crate::Alert>>>> {
         match update {
             (Event::Change, Stream::Sink, _) => {
                 self.volume = Volume::fetch()?;
             }
             (Event::New, Stream::SourceOutput, seq) => {
+                // TODO Maybe alert here, on mic/source-output additions?
                 self.source_outputs.insert(seq);
             }
             (Event::Remove, Stream::SourceOutput, seq) => {
@@ -139,40 +166,33 @@ impl State {
             }
             _ => (),
         }
-        Ok(())
+        Ok(None)
     }
 
-    pub fn write<W: std::io::Write>(
-        &self,
-        mut buf: W,
-        prefix: &str,
-        symbol_mic_on: &str,
-        symbol_mic_off: &str,
-    ) -> Result<()> {
-        let sym_mute = "  X  ";
-        let sym_mic = if self.source_outputs.is_empty() {
-            symbol_mic_off
-        } else {
-            symbol_mic_on
-        };
-        let sym_eq = "=";
-        let sym_ap = "~";
+    fn display<W: std::io::Write>(&self, mut buf: W) -> Result<()> {
+        write!(buf, "{}", self.symbols.prefix)?;
         match self.volume {
             Volume::Muted => {
-                writeln!(buf, "{}{} {}", prefix, sym_mute, sym_mic)?;
+                write!(buf, "{}", self.symbols.mute)?;
             }
             Volume::Exactly(n) => {
-                writeln!(buf, "{}{}{:3}% {}", prefix, sym_eq, n, sym_mic)?;
+                write!(buf, "{}{:3}%", self.symbols.equal, n)?;
             }
             Volume::Approx(n) => {
-                writeln!(buf, "{}{}{:3}% {}", prefix, sym_ap, n, sym_mic)?;
+                write!(buf, "{}{:3}%", self.symbols.approx, n)?;
             }
         }
+        let symbol_mic = if self.source_outputs.is_empty() {
+            self.symbols.mic_off
+        } else {
+            self.symbols.mic_on
+        };
+        writeln!(buf, " {}", symbol_mic)?;
         Ok(())
     }
 }
 
-pub fn subscribe() -> Result<impl Iterator<Item = Result<Update>>> {
+fn subscribe() -> Result<impl Iterator<Item = Result<Update>>> {
     let updates = crate::process::spawn("pactl", &["subscribe"])?.filter_map(
         |line_result| match line_result {
             Ok(line) => update_parse(&line),
@@ -207,7 +227,7 @@ fn seq_parse(name: &str) -> Option<Seq> {
     name.strip_prefix('#').and_then(|seq| seq.parse().ok())
 }
 
-pub fn pactl_list_sinks_parse<'a>(data: &'a str) -> Result<Vec<Sink<'a>>> {
+fn pactl_list_sinks_parse<'a>(data: &'a str) -> Result<Vec<Sink<'a>>> {
     let mut sinks: Vec<Sink<'a>> = Vec::new();
     let mut seq: Option<Seq> = None;
     let mut name: Option<&str> = None;
@@ -282,4 +302,8 @@ fn pactl_list_source_outputs_parse(data: &str) -> Vec<Seq> {
         }
     }
     sources.into_iter().collect()
+}
+
+pub fn run(symbols: Symbols<'_>) -> Result<()> {
+    crate::pipeline_to_stdout(updates()?, State::new(symbols)?)
 }

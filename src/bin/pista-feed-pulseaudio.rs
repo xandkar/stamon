@@ -1,4 +1,3 @@
-use anyhow::{anyhow, Result};
 use clap::Parser;
 
 #[derive(Parser)]
@@ -13,33 +12,21 @@ struct Cli {
     symbol_mic_off: String,
 }
 
-fn main() -> Result<()> {
-    pista_feeds::log::init()?;
-    let cli = Cli::parse();
-    let mut stdout = std::io::stdout().lock();
-
-    let mut state = pista_feeds::pulseaudio::State::new()?;
-    for update_result in pista_feeds::pulseaudio::updates()? {
-        match update_result {
-            Ok(update) => match state.update(update) {
-                Ok(()) => {
-                    if let Err(e) = state.write(
-                        &mut stdout,
-                        &cli.prefix,
-                        &cli.symbol_mic_on,
-                        &cli.symbol_mic_off,
-                    ) {
-                        tracing::error!("Failed to write to stdout: {:?}", e);
-                    }
-                }
-                Err(e) => {
-                    tracing::error!("Failed to update state: {:?}", e);
-                }
-            },
-            Err(e) => {
-                tracing::error!("Failed to read event: {:?}", e);
-            }
+impl Cli {
+    fn symbols(&self) -> pista_feeds::pulseaudio::Symbols {
+        pista_feeds::pulseaudio::Symbols {
+            prefix: &self.prefix,
+            mic_on: &self.symbol_mic_on,
+            mic_off: &self.symbol_mic_off,
+            mute: "  X  ",
+            equal: "=",
+            approx: "~",
         }
     }
-    Err(anyhow!("Unexpected exit of 'pactl subscribe'"))
+}
+
+fn main() -> anyhow::Result<()> {
+    pista_feeds::log::init()?;
+    let cli = Cli::parse();
+    pista_feeds::pulseaudio::run(cli.symbols())
 }
