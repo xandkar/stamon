@@ -40,3 +40,7 @@ coverage:
 .PHONY: coverage_html
 coverage_html:
 	cargo llvm-cov --lib --ignore-filename-regex 'tests\.rs' --open
+
+.PHONY: install
+install:
+	cargo install --path .
