@@ -116,55 +116,11 @@ impl Cli {
 }
 
 pub fn main() -> Result<()> {
-    // TODO Async
-    // TODO Redesign:
-    // - Sequence of implementations of a Weather/Observatory trait:
-    //   - noaa
-    //   - weather.com
-    //   - ...
-    // - Execution strategy:
-    //   A.
-    //     - sorted in order of user preference
-    //     - the next tried only if previous fails
-    //     - if all fail - backoff, otherwise normal interval
-    //   B.
-    //     - all spawned in parallel and each handles its own retries and intervals
-    //     - aggregate state is asynchronously updated and displayed
-    //      - possible aggregate functions:
-    //          - min
-    //          - mean
-    //          - max
-    //          - preferred, in order listed in CLI, but that amounts to strategy A
-    //     - each observation will need a TTL, since async execution could
-    //       result in some observations getting much older than others.
-    //
-    // TODO Alt/backup observatories:
-    //  - [x] https://www.weather.gov/
-    //  - [x] https://openweathermap.org/
-    //  - [ ] https://www.accuweather.com/
-    //  - [ ] https://wunderground.com/
-    //  - [ ] https://www.tomorrow.io/
-
     pista_feeds::log::init()?;
     let cli = Cli::parse();
     tracing::info!("cli: {:?}", &cli);
-
-    let observatories: Vec<Box<dyn weather::Observatory>> =
-        cli.to_observatories()?;
-    let observations = weather::Observations::new(
-        observatories,
+    pista_feeds::weather::run(
         Duration::from_secs(cli.interval),
-        Duration::from_secs(15), // TODO Cli?
-    )?;
-
-    let mut stdout = std::io::stdout().lock();
-    for weather::Observation { temp_f } in observations {
-        if let Err(e) = {
-            use std::io::Write;
-            writeln!(stdout, "{:3.0}°F", temp_f)
-        } {
-            tracing::error!("Failed to write to stdout: {:?}", e);
-        }
-    }
-    Err(anyhow!("Unexpected exit of observations iterator!"))
+        cli.to_observatories()?,
+    )
 }

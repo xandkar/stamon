@@ -1,3 +1,21 @@
+// TODO Async
+// TODO Redesign to concurrently poll and compare multiple sources.
+//     - all spawned in parallel and each handles its own retries and intervals
+//     - aggregate state is asynchronously updated and displayed
+//         - possible aggregate functions:
+//             - min
+//             - mean
+//             - max
+//             - preferred, in order listed in CLI, but that amounts to strategy A
+//     - each observation will need a TTL, since async execution could
+//       result in some observations getting much older than others.
+//     - combined report for all observatories, written to file
+// TODO Alt/backup observatories:
+//  - [x] https://www.weather.gov/
+//  - [x] https://openweathermap.org/
+//  - [ ] https://www.accuweather.com/
+//  - [ ] https://wunderground.com/
+//  - [ ] https://www.tomorrow.io/
 use std::{thread::sleep, time::Duration};
 
 use anyhow::{anyhow, Result};
@@ -7,7 +25,7 @@ pub mod openweathermap;
 
 #[derive(Debug)]
 pub struct Observation {
-    pub temp_f: f32,
+    temp_f: f32,
 }
 
 pub trait Observatory {
@@ -17,7 +35,7 @@ pub trait Observatory {
     fn module_path(&self) -> &str;
 }
 
-pub struct Observations {
+struct Observations {
     observatories: Vec<Box<dyn Observatory>>,
     first_iteration: bool,
     interval_init: Duration,
@@ -80,4 +98,46 @@ impl Iterator for Observations {
             );
         }
     }
+}
+
+struct State {
+    temp_f: Option<f32>,
+}
+
+impl State {
+    fn new() -> Self {
+        Self { temp_f: None }
+    }
+}
+
+impl crate::State for State {
+    type Event = Observation;
+
+    fn update(
+        &mut self,
+        Observation { temp_f }: Self::Event,
+    ) -> Result<Option<Vec<Box<dyn crate::Alert>>>> {
+        self.temp_f = Some(temp_f);
+        Ok(None)
+    }
+
+    fn display<W: std::io::Write>(&self, mut buf: W) -> Result<()> {
+        match self.temp_f {
+            None => writeln!(buf, "---°F")?,
+            Some(temp_f) => writeln!(buf, "{:3.0}°F", temp_f)?,
+        }
+        Ok(())
+    }
+}
+
+pub fn run(
+    interval: Duration,
+    observatories: Vec<Box<dyn Observatory>>,
+) -> Result<()> {
+    let observations = Observations::new(
+        observatories,
+        interval,
+        Duration::from_secs(15), // TODO Cli?
+    )?;
+    crate::pipeline_to_stdout(observations, State::new())
 }
