@@ -104,11 +104,11 @@ impl<'a> State<'a> {
 }
 
 impl<'a> crate::State for State<'a> {
-    type Msg = Option<mpd::status::Status>;
+    type Event = Option<mpd::status::Status>;
 
     fn update(
         &mut self,
-        status_opt: Self::Msg,
+        status_opt: Self::Event,
     ) -> Result<Option<Vec<Box<dyn crate::Alert>>>> {
         self.status = status_opt;
         Ok(None)
@@ -132,9 +132,9 @@ impl<'a> crate::State for State<'a> {
     }
 }
 
-fn status_poll(
-    addr: SocketAddr,
+fn reads(
     interval: Duration,
+    addr: SocketAddr,
 ) -> impl Iterator<Item = Option<mpd::status::Status>> {
     use crate::clock;
 
@@ -169,9 +169,6 @@ pub fn run(
     port: u16,
     symbols: Symbols<'_>,
 ) -> Result<()> {
-    crate::pipeline_to_stdout(
-        status_poll(SocketAddr::new(addr, port), interval),
-        Box::new(Ok),
-        State::new(symbols),
-    )
+    let addr = SocketAddr::new(addr, port);
+    crate::pipeline_to_stdout(reads(interval, addr), State::new(symbols))
 }

@@ -54,13 +54,13 @@ impl<'a> State<'a> {
 }
 
 impl<'a> crate::State for State<'a> {
-    type Msg = Option<Status>;
+    type Event = Option<Status>;
 
     fn update(
         &mut self,
-        status: Self::Msg,
+        status_opt: Self::Event,
     ) -> Result<Option<Vec<Box<dyn crate::Alert>>>> {
-        self.status = status;
+        self.status = status_opt;
         let alerts = None;
         Ok(alerts)
     }
@@ -80,13 +80,27 @@ impl<'a> crate::State for State<'a> {
     }
 }
 
-pub fn run(interval: Duration, interface: &str, prefix: &str) -> Result<()> {
+fn reads(
+    interval: Duration,
+    interface: &str,
+) -> impl Iterator<Item = Option<Status>> {
+    use crate::clock;
+
     let path: PathBuf =
         ["/sys/class/net", interface, "operstate"].iter().collect();
     tracing::info!("operstate path: {:?}", &path);
-    crate::pipeline_to_stdout(
-        crate::clock::new(interval),
-        Box::new(|_| Status::read(&path)),
-        State::new(prefix),
-    )
+
+    clock::new(interval).filter_map(move |clock::Tick| {
+        match Status::read(&path) {
+            Err(err) => {
+                tracing::error!("Failed to read operstate: {:?}", err);
+                None
+            }
+            Ok(status_opt) => Some(status_opt),
+        }
+    })
+}
+
+pub fn run(interval: Duration, interface: &str, prefix: &str) -> Result<()> {
+    crate::pipeline_to_stdout(reads(interval, interface), State::new(prefix))
 }

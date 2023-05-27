@@ -19,11 +19,11 @@ impl<'a> State<'a> {
 }
 
 impl<'a> crate::State for State<'a> {
-    type Msg = Option<u64>;
+    type Event = Option<u64>;
 
     fn update(
         &mut self,
-        link_qual: Self::Msg,
+        link_qual: Self::Event,
     ) -> Result<Option<Vec<Box<dyn crate::Alert>>>> {
         self.link_qual = link_qual;
         let alerts = None;
@@ -45,18 +45,6 @@ impl<'a> crate::State for State<'a> {
         writeln!(buf)?;
         Ok(())
     }
-}
-
-fn reader<'a, E>(
-    interface: &'a str,
-) -> Box<dyn 'a + Fn(E) -> Result<Option<u64>>> {
-    Box::new(|_| match read(interface) {
-        Ok(pct_opt) => Ok(pct_opt),
-        Err(err) => {
-            tracing::error!("Failed to read link quality: {:?}", err);
-            Ok(None)
-        }
-    })
 }
 
 fn read(interface: &str) -> Result<Option<u64>> {
@@ -97,10 +85,21 @@ fn parse(
     Ok(None)
 }
 
+fn reads(
+    interval: Duration,
+    interface: &str,
+) -> impl Iterator<Item = Option<u64>> + '_ {
+    use crate::clock;
+
+    clock::new(interval).filter_map(|clock::Tick| match read(interface) {
+        Ok(pct_opt) => Some(pct_opt),
+        Err(err) => {
+            tracing::error!("Failed to read link quality: {:?}", err);
+            None
+        }
+    })
+}
+
 pub fn run(interval: Duration, interface: &str, prefix: &str) -> Result<()> {
-    crate::pipeline_to_stdout(
-        crate::clock::new(interval),
-        reader(interface),
-        State::new(prefix),
-    )
+    crate::pipeline_to_stdout(reads(interval, interface), State::new(prefix))
 }

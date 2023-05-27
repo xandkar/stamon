@@ -25,12 +25,12 @@ use anyhow::{anyhow, Result};
 //      the data written to the buffer.
 
 pub trait State {
-    type Msg;
+    type Event;
 
     // XXX Alerts wrapped in Option to avoid allocating a Vec in the common case.
     fn update(
         &mut self,
-        msg: Self::Msg,
+        event: Self::Event,
     ) -> Result<Option<Vec<Box<dyn Alert>>>>;
 
     fn display<W: std::io::Write>(&self, buf: W) -> Result<()>;
@@ -40,47 +40,39 @@ pub trait Alert {
     fn send(&self) -> Result<()>;
 }
 
-pub fn pipeline<Event, Msg>(
+pub fn pipeline<Event>(
     events: impl Iterator<Item = Event>,
-    event_mapper: impl Fn(Event) -> Result<Msg>,
-    mut state: impl State<Msg = Msg>,
+    mut state: impl State<Event = Event>,
     mut buf: impl std::io::Write,
 ) -> Result<()> {
-    // TODO event_mapper seems mostly useless - its jobs should be done in events
     // TODO Redesign for backoff, so it is usable for weather
     //      and potentially other remote source polling.
     for event in events {
-        match event_mapper(event) {
+        match state.update(event) {
             Err(err) => {
-                tracing::error!("Event mapper failed: {:?}", err);
+                tracing::error!("State update failed: {:?}", err);
             }
-            Ok(msg) => match state.update(msg) {
-                Err(err) => {
-                    tracing::error!("State update failed: {:?}", err);
+            Ok(alerts) => {
+                if let Err(e) = state.display(&mut buf) {
+                    tracing::error!("State display failed: {:?}", e);
                 }
-                Ok(alerts) => {
-                    if let Err(e) = state.display(&mut buf) {
-                        tracing::error!("State display failed: {:?}", e);
-                    }
-                    if let Some(alerts) = alerts {
-                        alerts.iter().for_each(|a| {
-                            if let Err(e) = a.send() {
-                                tracing::error!("Alert send failed: {:?}", e);
-                            }
-                        })
+                if let Some(alerts) = alerts {
+                    for a in alerts.iter() {
+                        if let Err(e) = a.send() {
+                            tracing::error!("Alert send failed: {:?}", e);
+                        }
                     }
                 }
-            },
+            }
         }
     }
     Err(anyhow!("Unexpected end of events"))
 }
 
-pub fn pipeline_to_stdout<Event, Msg>(
+pub fn pipeline_to_stdout<Event>(
     events: impl Iterator<Item = Event>,
-    event_to_state_msg: impl Fn(Event) -> Result<Msg>,
-    state: impl State<Msg = Msg>,
+    state: impl State<Event = Event>,
 ) -> Result<()> {
     let stdout = std::io::stdout().lock();
-    pipeline(events, event_to_state_msg, state, stdout)
+    pipeline(events, state, stdout)
 }

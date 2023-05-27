@@ -17,11 +17,11 @@ impl<'a> State<'a> {
 }
 
 impl<'a> crate::State for State<'a> {
-    type Msg = Option<DeviceState>;
+    type Event = Option<DeviceState>;
 
     fn update(
         &mut self,
-        msg: Self::Msg,
+        msg: Self::Event,
     ) -> Result<Option<Vec<Box<dyn crate::Alert>>>> {
         self.device_state = msg;
         Ok(None)
@@ -84,9 +84,14 @@ impl DeviceState {
 pub fn run(prefix: &str, interval: Duration) -> Result<()> {
     use crate::clock;
 
-    crate::pipeline_to_stdout(
-        clock::new(interval),
-        Box::new(|clock::Tick| DeviceState::read()),
-        State::new(prefix),
-    )
+    let events = clock::new(interval)
+        .map(|clock::Tick| DeviceState::read())
+        .filter_map(|result| match result {
+            Err(err) => {
+                tracing::error!("Failed to read device state: {:?}", err);
+                None
+            }
+            Ok(dev_opt) => Some(dev_opt),
+        });
+    crate::pipeline_to_stdout(events, State::new(prefix))
 }

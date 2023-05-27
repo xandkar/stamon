@@ -39,11 +39,11 @@ impl<'a> State<'a> {
 }
 
 impl<'a> crate::State for State<'a> {
-    type Msg = Option<u64>;
+    type Event = Option<u64>;
 
     fn update(
         &mut self,
-        msg: Self::Msg,
+        msg: Self::Event,
     ) -> Result<Option<Vec<Box<dyn crate::Alert>>>> {
         self.usage = msg;
         Ok(None)
@@ -60,12 +60,24 @@ impl<'a> crate::State for State<'a> {
     }
 }
 
-pub fn run(prefix: &str, interval: Duration, path: &str) -> Result<()> {
+fn reads(
+    interval: Duration,
+    path: &str,
+) -> impl Iterator<Item = Option<u64>> + '_ {
     use crate::clock;
+    clock::new(interval).filter_map(|clock::Tick| match usage(path) {
+        Err(err) => {
+            tracing::error!("Failed to read disk usage: {:?}", err);
+            None
+        }
+        Ok(usage_opt) => Some(usage_opt),
+    })
+}
 
-    crate::pipeline_to_stdout(
-        clock::new(interval),
-        Box::new(|clock::Tick| usage(path)),
-        State::new(prefix),
-    )
+pub fn run<'a>(
+    prefix: &'a str,
+    interval: Duration,
+    path: &'a str,
+) -> Result<()> {
+    crate::pipeline_to_stdout(reads(interval, path), State::new(prefix))
 }

@@ -52,7 +52,7 @@ impl Watcher {
         })
     }
 
-    fn iter(&self) -> impl Iterator<Item = Result<u64>> + '_ {
+    fn iter(&self) -> impl Iterator<Item = u64> + '_ {
         use notify::event::{
             DataChange, Event, EventKind::Modify, ModifyKind,
         };
@@ -68,14 +68,19 @@ impl Watcher {
                 ..
             }) => match self.dev.read_cur_brightness_pct() {
                 Ok(None) => None,
-                Ok(Some(pct)) => Some(Ok(pct)),
-                Err(e) => Some(Err(
-                    e.context("failed to read backlight percentage")
-                )),
+                Ok(Some(pct)) => Some(pct),
+                Err(err) => {
+                    tracing::error!(
+                        "Failed to read backlight percentage: {:?}",
+                        err
+                    );
+                    None
+                }
             },
             Ok(_) => None,
-            Err(e) => {
-                Some(Err(anyhow::Error::from(e).context("watch event error")))
+            Err(err) => {
+                tracing::error!("Watch event error: {:?}", err);
+                None
             }
         })
     }
@@ -96,11 +101,11 @@ impl<'a> State<'a> {
 }
 
 impl<'a> crate::State for State<'a> {
-    type Msg = u64;
+    type Event = u64;
 
     fn update(
         &mut self,
-        percentage: Self::Msg,
+        percentage: Self::Event,
     ) -> Result<Option<Vec<Box<dyn crate::Alert>>>> {
         self.percentage = Some(percentage);
         Ok(None)
@@ -120,7 +125,6 @@ impl<'a> crate::State for State<'a> {
 pub fn run(device: &str, prefix: &str) -> Result<()> {
     crate::pipeline_to_stdout(
         Watcher::new(device)?.iter(),
-        Box::new(|x| x),
         State::new(prefix),
     )
 }
