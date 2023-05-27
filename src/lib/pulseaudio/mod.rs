@@ -54,30 +54,17 @@ impl Stream {
 
 pub type Update = (Event, Stream, Seq);
 
-pub struct Updates {
-    // TODO init_sinks: Vec<Seq>, // Maybe by name rather than seq?
-    init_source_outputs: Vec<Seq>,
-}
-
-impl Updates {
-    pub fn new() -> Result<Self> {
-        Ok(Self {
-            init_source_outputs: source_outputs_list()?,
-        })
-    }
-
-    pub fn iter(&self) -> Result<impl Iterator<Item = Result<Update>> + '_> {
-        let init_vol_change =
-            std::iter::once(Ok((Event::Change, Stream::Sink, 0)));
-        let init_source_outputs = self
-            .init_source_outputs
-            .iter()
-            .map(|seq| Ok((Event::New, Stream::SourceOutput, *seq)));
-        let updates = init_vol_change
-            .chain(init_source_outputs)
-            .chain(subscribe()?);
-        Ok(updates)
-    }
+pub fn updates<'a>() -> Result<impl Iterator<Item = Result<Update>> + 'a> {
+    let init_vol_change =
+        std::iter::once(Ok((Event::Change, Stream::Sink, 0)));
+    let init_source_outputs = source_outputs_list()?;
+    let init_source_outputs = init_source_outputs
+        .into_iter()
+        .map(|seq| Ok((Event::New, Stream::SourceOutput, seq)));
+    let updates = init_vol_change
+        .chain(init_source_outputs)
+        .chain(subscribe()?);
+    Ok(updates)
 }
 
 pub enum Volume {

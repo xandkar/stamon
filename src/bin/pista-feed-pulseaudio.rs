@@ -19,7 +19,7 @@ fn main() -> Result<()> {
     let mut stdout = std::io::stdout().lock();
 
     let mut state = pista_feeds::pulseaudio::State::new()?;
-    for update_result in pista_feeds::pulseaudio::Updates::new()?.iter()? {
+    for update_result in pista_feeds::pulseaudio::updates()? {
         match update_result {
             Ok(update) => match state.update(update) {
                 Ok(()) => {
