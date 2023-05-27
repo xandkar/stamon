@@ -46,6 +46,7 @@ pub fn pipeline<Event, Msg>(
     mut state: impl State<Msg = Msg>,
     mut buf: impl std::io::Write,
 ) -> Result<()> {
+    // TODO event_mapper seems mostly useless - its jobs should be done in events
     // TODO Redesign for backoff, so it is usable for weather
     //      and potentially other remote source polling.
     for event in events {
