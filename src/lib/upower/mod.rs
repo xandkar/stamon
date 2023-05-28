@@ -6,7 +6,7 @@ use anyhow::{anyhow, Context, Result};
 mod tests;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
-pub enum Direction {
+enum Direction {
     Increasing,
     Decreasing,
     Full,
@@ -14,7 +14,7 @@ pub enum Direction {
 }
 
 impl Direction {
-    pub fn to_char(self) -> char {
+    fn to_char(self) -> char {
         match self {
             Self::Increasing => '>',
             Self::Decreasing => '<',
@@ -52,7 +52,7 @@ impl std::str::FromStr for BatteryState {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Battery {
+struct Battery {
     path: String, // TODO Try &str
     state: BatteryState,
     energy: f32,
@@ -60,7 +60,7 @@ pub struct Battery {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct LinePower {
+struct LinePower {
     path: String, // TODO Try &str
     online: bool,
 }
@@ -82,18 +82,18 @@ enum MsgIntermediate {
 }
 
 #[derive(Debug, PartialEq)]
-pub enum Msg {
+enum Msg {
     LinePower(LinePower),
     Battery(Battery),
 }
 
-pub struct Messages<'a> {
-    lines: &'a mut dyn Iterator<Item = String>, // TODO Try &str
+struct Messages<'a> {
+    lines: Box<dyn Iterator<Item = String> + 'a>, // TODO Try &str
 }
 
 impl<'a> Messages<'a> {
-    pub fn from_output_lines(
-        lines: &'a mut dyn Iterator<Item = String>,
+    fn from_output_lines(
+        lines: Box<dyn Iterator<Item = String> + 'a>,
     ) -> Self {
         Self { lines }
     }
@@ -359,7 +359,7 @@ impl<'a> Messages<'a> {
     }
 }
 
-impl Iterator for Messages<'_> {
+impl<'a> Iterator for Messages<'a> {
     type Item = Msg;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -375,35 +375,99 @@ impl Iterator for Messages<'_> {
     }
 }
 
-type StateAggregate = (Direction, Option<u64>);
+mod alert {
+    use notify_rust::{Notification, Urgency};
 
-#[derive(Debug)]
-struct State {
-    plugged_in: bool,
-    batteries: HashMap<String, Battery>, // TODO Try &str
-}
+    pub enum Level {
+        Lo,
+        Mid,
+        Hi,
+    }
 
-impl State {
-    fn new() -> Self {
-        Self {
-            plugged_in: false,
-            batteries: HashMap::new(),
+    pub struct Alert {
+        notification: Notification,
+    }
+
+    impl Alert {
+        pub fn new(level: Level, threshold: u64, current: u64) -> Self {
+            let mut notification = Notification::new();
+            notification
+                .summary(&format!("Battery power bellow {}%!", threshold))
+                .body(&format!("{}%", current))
+                .urgency(match level {
+                    Level::Lo => Urgency::Low,
+                    Level::Mid => Urgency::Normal,
+                    Level::Hi => Urgency::Critical,
+                });
+            Self { notification }
         }
     }
 
-    fn update(&mut self, msg: Msg) {
-        match msg {
-            Msg::Battery(b) if b.path.ends_with("/DisplayDevice") => {
-                tracing::warn!(
-                    "Ignoring the aggregate from 'upower --dump': {:?}",
-                    b
-                );
+    impl crate::Alert for Alert {
+        fn send(&self) -> anyhow::Result<()> {
+            self.notification.show()?;
+            Ok(())
+        }
+    }
+}
+
+#[derive(Debug)]
+struct State {
+    // TODO Alerts.
+    prefix: String,
+    plugged_in: bool,
+    batteries: HashMap<String, Battery>, // TODO Try &str
+    alerts_init: Vec<u64>,
+    alerts_curr: Vec<u64>,
+}
+
+impl State {
+    fn new(prefix: &str, alert_triggers: &[u64]) -> Result<Self> {
+        match alert_triggers.iter().find(|n| **n > 100) {
+            Some(n) => {
+                Err(anyhow!("Alert value out of percentage range: {:?}", n))
             }
-            Msg::Battery(b) => {
-                self.batteries.insert(b.path.clone(), b);
+            None => Ok(Self {
+                prefix: prefix.to_owned(),
+                plugged_in: false,
+                batteries: HashMap::new(),
+                alerts_init: alert_triggers.to_vec(),
+                alerts_curr: alert_triggers.to_vec(),
+            }),
+        }
+    }
+
+    fn alerts(&mut self) -> Option<Vec<Box<dyn crate::Alert>>> {
+        match (self.direction(), self.percentage()) {
+            (Direction::Decreasing, Some(pct)) => {
+                let (mut triggered, remaining): (Vec<u64>, Vec<u64>) = self
+                    .alerts_curr
+                    .iter()
+                    .partition(|threshold| threshold > &&pct);
+                self.alerts_curr = remaining;
+                triggered.sort();
+                if let Some(threshold) = triggered.first() {
+                    let level = match () {
+                        // TODO User-specifyable alert urgency levels.
+                        _ if *threshold <= 25 => alert::Level::Hi,
+                        _ if *threshold <= 50 => alert::Level::Mid,
+                        _ if *threshold <= 100 => alert::Level::Lo,
+                        _ => unreachable!(
+                            "Threshold value out of range: {:?}",
+                            threshold
+                        ),
+                    };
+                    Some(vec![Box::new(alert::Alert::new(
+                        level, *threshold, pct,
+                    ))])
+                } else {
+                    None
+                }
             }
-            Msg::LinePower(LinePower { online, .. }) => {
-                self.plugged_in = online;
+            _ => {
+                // TODO Reset elsewhere, to optimize common case.
+                self.alerts_curr = self.alerts_init.clone();
+                None
             }
         }
     }
@@ -468,41 +532,44 @@ impl State {
             crate::math::percentage_floor(cur, tot)
         })
     }
-
-    fn aggregate(&self) -> StateAggregate {
-        (self.direction(), self.percentage())
-    }
 }
 
-pub struct StateAggregates<'a> {
-    state: State,
-    messages: &'a mut dyn Iterator<Item = Msg>,
-}
+impl crate::State for State {
+    type Event = Msg;
 
-impl<'a> StateAggregates<'a> {
-    pub fn from_messages(messages: &'a mut dyn Iterator<Item = Msg>) -> Self {
-        Self {
-            state: State::new(),
-            messages,
-        }
-    }
-}
-
-impl<'a> Iterator for StateAggregates<'a> {
-    type Item = StateAggregate;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.messages.next() {
-            None => None,
-            Some(m) => {
-                self.state.update(m);
-                Some(self.state.aggregate())
+    fn update(
+        &mut self,
+        msg: Self::Event,
+    ) -> Result<Option<Vec<Box<dyn crate::Alert>>>> {
+        match msg {
+            Msg::Battery(b) if b.path.ends_with("/DisplayDevice") => {
+                tracing::warn!(
+                    "Ignoring the aggregate from 'upower --dump': {:?}",
+                    b
+                );
+            }
+            Msg::Battery(b) => {
+                self.batteries.insert(b.path.clone(), b);
+            }
+            Msg::LinePower(LinePower { online, .. }) => {
+                self.plugged_in = online;
             }
         }
+        Ok(self.alerts())
+    }
+
+    fn display<W: std::io::Write>(&self, mut buf: W) -> Result<()> {
+        write!(buf, "{}{}", &self.prefix, self.direction().to_char())?;
+        match self.percentage() {
+            None => write!(buf, "---%")?,
+            Some(pct) => write!(buf, "{:3.0}%", pct)?,
+        }
+        writeln!(buf)?;
+        Ok(())
     }
 }
 
-pub fn run() -> Result<impl Iterator<Item = String>> {
+fn run_monitor() -> Result<impl Iterator<Item = String>> {
     let dump = crate::process::spawn("upower", &["--dump"])?;
     let monitor = crate::process::spawn("upower", &["--monitor-detail"])?;
     let lines = dump.chain(monitor).map_while(|line_result| {
@@ -514,4 +581,18 @@ pub fn run() -> Result<impl Iterator<Item = String>> {
             .ok()
     });
     Ok(lines)
+}
+
+fn messages<'a>() -> Result<impl Iterator<Item = Msg> + 'a> {
+    // TODO Revisit if we really need to box lines.
+    let lines = run_monitor()?;
+    let messages = Messages::from_output_lines(Box::new(lines));
+    Ok(messages)
+}
+
+pub fn run(prefix: &str, alert_triggers: &[u64]) -> Result<()> {
+    crate::pipeline_to_stdout(
+        messages()?,
+        State::new(prefix, alert_triggers)?,
+    )
 }

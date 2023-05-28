@@ -1,5 +1,4 @@
-use std::iter::zip;
-
+// TODO Replace * with adhoc modules.
 use super::*;
 
 // TODO Multi-battery tests.
@@ -9,9 +8,9 @@ use super::*;
 fn dump() {
     let output: String =
         std::fs::read_to_string("tests/upower-dump.txt").unwrap();
-    let mut lines = output.lines().map(|l| l.to_string());
+    let lines = output.lines().map(|l| l.to_string());
     let messages_produced: Vec<Msg> =
-        Messages::from_output_lines(&mut lines).collect();
+        Messages::from_output_lines(Box::new(lines)).collect();
     let messages_expected: Vec<Msg> = vec![
         Msg::LinePower(LinePower {
             path: "AC".to_string(),
@@ -31,36 +30,32 @@ fn dump() {
         }),
     ];
     assert_eq!(&messages_expected, &messages_produced);
-    let states_produced: Vec<StateAggregate> =
-        StateAggregates::from_messages(&mut messages_produced.into_iter())
-            .collect();
-    dbg!(&states_produced);
-    let states_expected = vec![
-        (Direction::Decreasing, None),
-        (Direction::Decreasing, Some(97)),
-        (Direction::Decreasing, Some(97)),
-    ];
 
-    // State aggregates cannot be compared directly, because they contain
-    // floats and we do expect them to at least initially be NaN.
-    for ((dir_expected, pct_expected), (dir_produced, pct_produced)) in
-        zip(states_expected, states_produced)
-    {
-        assert_eq!(dir_expected, dir_produced);
-        assert!(matches!(
-            pct_expected.partial_cmp(&pct_produced),
-            None | Some(std::cmp::Ordering::Equal),
-        ));
+    let mut state = State::new("u ", &[]).unwrap();
+    let mut buf: Vec<u8> = Vec::new();
+    for msg in messages_produced {
+        {
+            use crate::State;
+            state.update(msg).unwrap();
+            state.display(&mut buf).unwrap();
+        }
     }
+    assert_eq!(
+        vec!["u <---%", "u < 97%", "u < 97%"],
+        String::from_utf8(buf)
+            .unwrap()
+            .lines()
+            .collect::<Vec<&str>>()
+    );
 }
 
 #[test]
 fn monitor() {
     let output: String =
         std::fs::read_to_string("tests/upower-monitor-detail.txt").unwrap();
-    let mut lines = output.lines().map(|l| l.to_string());
+    let lines = output.lines().map(|l| l.to_string());
     let messages_produced: Vec<Msg> =
-        Messages::from_output_lines(&mut lines).collect();
+        Messages::from_output_lines(Box::new(lines)).collect();
     dbg!(&messages_produced);
     let messages_expected: Vec<Msg> = vec![
         Msg::Battery(Battery {
