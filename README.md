@@ -1,14 +1,26 @@
-![test status](https://github.com/xandkar/pista-feeds-rs/actions/workflows/test.yml/badge.svg)
-[![codecov](https://codecov.io/gh/xandkar/pista-feeds-rs/branch/dominus/graph/badge.svg)](https://codecov.io/gh/xandkar/pista-feeds-rs)
-[![dependencies status](https://deps.rs/repo/github/xandkar/pista-feeds-rs/status.svg)](https://deps.rs/repo/github/xandkar/pista-feeds-rs)
+![test status](https://github.com/xandkar/pista-feeds/actions/workflows/test.yml/badge.svg)
+[![codecov](https://codecov.io/gh/xandkar/pista-feeds/branch/dominus/graph/badge.svg)](https://codecov.io/gh/xandkar/pista-feeds)
+[![dependencies status](https://deps.rs/repo/github/xandkar/pista-feeds/status.svg)](https://deps.rs/repo/github/xandkar/pista-feeds)
 
 pista-feeds
 ===============================================================================
 ![Screenshot](screenshot.png)
 
-Data feed processes that I use with [pista](https://github.com/xandkar/pista)
-in my [dwm](https://dwm.suckless.org/) status area.
+Status data for [pista](https://github.com/xandkar/pista).
 
+Each of the executables periodically collects the necessary data and spits out
+an aggregate.
+
+Which I then redicet to a [FIFO](https://en.wikipedia.org/wiki/Named_pipe) to
+be read by [pista](https://github.com/xandkar/pista) and inserted into my
+[dwm](https://dwm.suckless.org/) status area.
+
+Linux-only.
+
+Some things _may_ work on other unices (like maybe time, weather (`http`), disk
+(`statfs`) and keymap (`x11`)), but I'm only testing this on mine and a
+[friend](https://github.com/asinovski)'s laptops (Void, Debian Stable and
+Ubuntu LTS). Help with improving this is most welcome!
 
 TODO
 ----
