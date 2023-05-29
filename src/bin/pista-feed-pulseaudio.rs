@@ -26,7 +26,7 @@ impl Cli {
 }
 
 fn main() -> anyhow::Result<()> {
-    pista_feeds::log::init()?;
+    pista_feeds::logger::init()?;
     let cli = Cli::parse();
     pista_feeds::feeds::pulseaudio::run(cli.symbols())
 }

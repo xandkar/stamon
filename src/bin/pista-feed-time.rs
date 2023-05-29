@@ -15,7 +15,7 @@ struct Cli {
 }
 
 fn main() -> Result<()> {
-    pista_feeds::log::init()?;
+    pista_feeds::logger::init()?;
     let cli = Cli::parse();
     tracing::info!("Cli: {:?}", &cli);
     let format = cli.format.as_str();

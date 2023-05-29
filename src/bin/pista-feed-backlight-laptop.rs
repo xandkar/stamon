@@ -10,7 +10,7 @@ struct Cli {
 }
 
 fn main() -> anyhow::Result<()> {
-    pista_feeds::log::init()?;
+    pista_feeds::logger::init()?;
     let cli = Cli::parse();
     tracing::info!("Cli: {:?}", &cli);
     pista_feeds::feeds::backlight::run(&cli.device, &cli.prefix)
