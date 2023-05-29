@@ -63,6 +63,15 @@ impl State {
         }
 
         match (curr_dir, self.percentage()) {
+            (Dec, None) => {
+                // TODO This may possibly spam. Maybe user-configurable?
+                let summary = "Battery power dropping, but \
+                     current power level is unknown!";
+                let body = "";
+                let alert =
+                    alert::Alert::new(alert::Level::Hi, summary, body);
+                Some(vec![Box::new(alert)])
+            }
             (Dec, Some(pct)) => {
                 let (mut triggered, remaining): (Vec<u64>, Vec<u64>) = self
                     .alerts_curr
@@ -85,7 +94,10 @@ impl State {
                             threshold
                         ),
                     };
-                    let alert = alert::Alert::new(level, *threshold, pct);
+                    let summary =
+                        format!("Battery power bellow {}%!", *threshold);
+                    let body = format!("{}%", pct);
+                    let alert = alert::Alert::new(level, &summary, &body);
                     Some(vec![Box::new(alert)])
                 } else {
                     None

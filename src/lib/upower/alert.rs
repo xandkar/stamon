@@ -11,11 +11,11 @@ pub struct Alert {
 }
 
 impl Alert {
-    pub fn new(level: Level, threshold: u64, current: u64) -> Self {
+    pub fn new(level: Level, summary: &str, body: &str) -> Self {
         let mut notification = Notification::new();
         notification
-            .summary(&format!("Battery power bellow {}%!", threshold))
-            .body(&format!("{}%", current))
+            .summary(summary)
+            .body(body)
             .urgency(match level {
                 Level::Lo => Urgency::Low,
                 Level::Mid => Urgency::Normal,
