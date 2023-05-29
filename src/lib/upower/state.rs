@@ -6,8 +6,8 @@ use super::{alert, msg};
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 enum Direction {
-    Increasing,
-    Decreasing,
+    Inc,
+    Dec,
     Full,
     Unknown,
 }
@@ -15,8 +15,8 @@ enum Direction {
 impl Direction {
     fn to_char(self) -> char {
         match self {
-            Self::Increasing => '>',
-            Self::Decreasing => '<',
+            Self::Inc => '>',
+            Self::Dec => '<',
             Self::Full => '=',
             Self::Unknown => '?',
         }
@@ -25,12 +25,12 @@ impl Direction {
 
 #[derive(Debug)]
 pub struct State {
-    // TODO Alerts.
     prefix: String,
     plugged_in: bool,
     batteries: HashMap<String, msg::Battery>, // TODO Try &str
     alerts_init: Vec<u64>,
     alerts_curr: Vec<u64>,
+    prev_dir: Direction,
 }
 
 impl State {
@@ -45,19 +45,35 @@ impl State {
                 batteries: HashMap::new(),
                 alerts_init: alert_triggers.to_vec(),
                 alerts_curr: alert_triggers.to_vec(),
+                prev_dir: Direction::Dec,
             }),
         }
     }
 
     fn alerts(&mut self) -> Option<Vec<Box<dyn crate::Alert>>> {
-        match (self.direction(), self.percentage()) {
-            (Direction::Decreasing, Some(pct)) => {
+        use Direction::*;
+
+        let prev_dir = self.prev_dir;
+        let curr_dir = self.direction();
+        self.prev_dir = curr_dir;
+
+        if let (Dec, Inc | Full | Unknown) = (curr_dir, prev_dir) {
+            self.alerts_curr = self.alerts_init.clone();
+            tracing::debug!("Alerts reset: {:?}", &self.alerts_curr[..]);
+        }
+
+        match (curr_dir, self.percentage()) {
+            (Dec, Some(pct)) => {
                 let (mut triggered, remaining): (Vec<u64>, Vec<u64>) = self
                     .alerts_curr
                     .iter()
                     .partition(|threshold| threshold > &&pct);
                 self.alerts_curr = remaining;
                 triggered.sort();
+                tracing::debug!(
+                    "Alerts remaining: {:?}",
+                    &self.alerts_curr[..]
+                );
                 if let Some(threshold) = triggered.first() {
                     let level = match () {
                         // TODO User-specifyable alert urgency levels.
@@ -69,25 +85,20 @@ impl State {
                             threshold
                         ),
                     };
-                    Some(vec![Box::new(alert::Alert::new(
-                        level, *threshold, pct,
-                    ))])
+                    let alert = alert::Alert::new(level, *threshold, pct);
+                    Some(vec![Box::new(alert)])
                 } else {
                     None
                 }
             }
-            _ => {
-                // TODO Reset elsewhere, to optimize common case.
-                self.alerts_curr = self.alerts_init.clone();
-                None
-            }
+            _ => None,
         }
     }
 
     fn direction(&self) -> Direction {
         if !self.plugged_in {
             tracing::debug!("Direction::Decreasing because not plugged-in.");
-            Direction::Decreasing
+            Direction::Dec
         } else {
             tracing::debug!("Batteries: {:?}", self.batteries);
             let states: HashSet<msg::BatteryState> =
@@ -106,21 +117,21 @@ impl State {
                     battery states contain Discharging: {:?}",
                     states
                 );
-                Direction::Decreasing
+                Direction::Dec
             } else if states.contains(&msg::BatteryState::PendingCharge) {
                 tracing::debug!(
                     "Direction::Decreasing because plugged-in, but \
                     battery states contain PendingCharge: {:?}",
                     states
                 );
-                Direction::Decreasing
+                Direction::Dec
             } else if states.contains(&msg::BatteryState::Charging) {
                 tracing::debug!(
                     "Direction::Increasing because plugged-in and \
                     battery states contain Charging: {:?}",
                     states
                 );
-                Direction::Increasing
+                Direction::Inc
             } else if 0
                 == states
                     .difference(&HashSet::from([
