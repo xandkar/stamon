@@ -42,8 +42,8 @@ struct Cli {
 }
 
 impl Cli {
-    fn symbols(&self) -> pista_feeds::mpd::Symbols {
-        pista_feeds::mpd::Symbols {
+    fn symbols(&self) -> pista_feeds::feeds::mpd::Symbols {
+        pista_feeds::feeds::mpd::Symbols {
             prefix: &self.prefix,
             postfix: &self.postfix,
             state_play: &self.symbol_play,
@@ -61,7 +61,7 @@ fn main() -> anyhow::Result<()> {
     pista_feeds::log::init()?;
     let cli = Cli::parse();
     tracing::info!("Cli: {:?}", &cli);
-    pista_feeds::mpd::run(
+    pista_feeds::feeds::mpd::run(
         std::time::Duration::from_secs(cli.interval),
         std::net::IpAddr::from_str(&cli.addr)?,
         cli.port,

@@ -13,5 +13,5 @@ fn main() -> anyhow::Result<()> {
     pista_feeds::log::init()?;
     let cli = Cli::parse();
     tracing::info!("Cli: {:?}", &cli);
-    pista_feeds::backlight::run(&cli.device, &cli.prefix)
+    pista_feeds::feeds::backlight::run(&cli.device, &cli.prefix)
 }

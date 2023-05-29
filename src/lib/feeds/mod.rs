@@ -1,0 +1,10 @@
+pub mod backlight;
+pub mod bluetooth;
+pub mod disk;
+pub mod mem;
+pub mod mpd;
+pub mod net;
+pub mod pulseaudio;
+pub mod upower;
+pub mod weather;
+pub mod x11;

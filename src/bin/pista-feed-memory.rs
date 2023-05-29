@@ -13,7 +13,7 @@ fn main() -> anyhow::Result<()> {
     pista_feeds::log::init()?;
     let cli = Cli::parse();
     tracing::info!("Cli: {:?}", &cli);
-    pista_feeds::mem::run(
+    pista_feeds::feeds::mem::run(
         &cli.prefix,
         std::time::Duration::from_secs(cli.interval),
     )

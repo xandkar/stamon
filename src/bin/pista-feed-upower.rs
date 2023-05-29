@@ -38,5 +38,5 @@ impl Cli {
 fn main() -> Result<()> {
     pista_feeds::log::init()?;
     let cli = Cli::parse_and_validate();
-    pista_feeds::upower::run(&cli.prefix, &cli.alerts[..])
+    pista_feeds::feeds::upower::run(&cli.prefix, &cli.alerts[..])
 }

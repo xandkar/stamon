@@ -3,7 +3,7 @@ use std::time::Duration;
 use anyhow::{anyhow, Result};
 use clap::{Parser, ValueEnum};
 
-use pista_feeds::weather;
+use pista_feeds::feeds::weather;
 
 #[derive(Debug, Parser)]
 struct Cli {
@@ -119,8 +119,5 @@ pub fn main() -> Result<()> {
     pista_feeds::log::init()?;
     let cli = Cli::parse();
     tracing::info!("cli: {:?}", &cli);
-    pista_feeds::weather::run(
-        Duration::from_secs(cli.interval),
-        cli.to_observatories()?,
-    )
+    weather::run(Duration::from_secs(cli.interval), cli.to_observatories()?)
 }

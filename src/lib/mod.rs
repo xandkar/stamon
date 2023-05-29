@@ -1,17 +1,6 @@
-// TODO "feeds" submodule
-pub mod backlight;
-pub mod bluetooth;
-pub mod disk;
-pub mod mem;
-pub mod mpd;
-pub mod net;
-pub mod pulseaudio;
-pub mod upower;
-pub mod weather;
-pub mod x11;
-
 pub mod alert;
 pub mod clock;
+pub mod feeds;
 pub mod log;
 pub mod math;
 pub mod process;

@@ -1,6 +1,6 @@
 use clap::Parser;
 
-use pista_feeds::net;
+use pista_feeds::feeds::net;
 
 #[derive(Debug, clap::Subcommand)]
 enum IFKind {
