@@ -90,7 +90,7 @@ impl<'a> crate::State for State<'a> {
     fn update(
         &mut self,
         usage: Self::Event,
-    ) -> Result<Option<Vec<Box<dyn crate::Alert>>>> {
+    ) -> Result<Option<Vec<crate::alert::Alert>>> {
         self.usage = usage;
         Ok(None)
     }

@@ -10,12 +10,15 @@ pub mod upower;
 pub mod weather;
 pub mod x11;
 
+pub mod alert;
 pub mod clock;
 pub mod log;
 pub mod math;
 pub mod process;
 
 use anyhow::{anyhow, Result};
+
+use alert::Alert;
 
 // TODO Everything must implement State
 //      - State.new(cfg) --> State
@@ -28,16 +31,9 @@ pub trait State {
     type Event;
 
     // XXX Alerts wrapped in Option to avoid allocating a Vec in the common case.
-    fn update(
-        &mut self,
-        event: Self::Event,
-    ) -> Result<Option<Vec<Box<dyn Alert>>>>;
+    fn update(&mut self, event: Self::Event) -> Result<Option<Vec<Alert>>>;
 
     fn display<W: std::io::Write>(&self, buf: W) -> Result<()>;
-}
-
-pub trait Alert {
-    fn send(&self) -> Result<()>;
 }
 
 pub fn pipeline<Event>(

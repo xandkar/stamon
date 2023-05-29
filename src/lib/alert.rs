@@ -23,10 +23,8 @@ impl Alert {
             });
         Self { notification }
     }
-}
 
-impl crate::Alert for Alert {
-    fn send(&self) -> anyhow::Result<()> {
+    pub fn send(&self) -> anyhow::Result<()> {
         self.notification.show()?;
         Ok(())
     }

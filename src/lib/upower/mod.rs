@@ -1,6 +1,5 @@
 use anyhow::Result;
 
-mod alert;
 mod msg;
 mod state;
 

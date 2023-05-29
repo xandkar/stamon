@@ -2,7 +2,9 @@ use std::collections::{HashMap, HashSet};
 
 use anyhow::{anyhow, Result};
 
-use super::{alert, msg};
+use crate::alert::{self, Alert};
+
+use super::msg;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 enum Direction {
@@ -50,7 +52,7 @@ impl State {
         }
     }
 
-    fn alerts(&mut self) -> Option<Vec<Box<dyn crate::Alert>>> {
+    fn alerts(&mut self) -> Option<Vec<Alert>> {
         use Direction::*;
 
         let prev_dir = self.prev_dir;
@@ -68,9 +70,8 @@ impl State {
                 let summary = "Battery power dropping, but \
                      current power level is unknown!";
                 let body = "";
-                let alert =
-                    alert::Alert::new(alert::Level::Hi, summary, body);
-                Some(vec![Box::new(alert)])
+                let alert = Alert::new(alert::Level::Hi, summary, body);
+                Some(vec![alert])
             }
             (Dec, Some(pct)) => {
                 let (mut triggered, remaining): (Vec<u64>, Vec<u64>) = self
@@ -97,8 +98,8 @@ impl State {
                     let summary =
                         format!("Battery power bellow {}%!", *threshold);
                     let body = format!("{}%", pct);
-                    let alert = alert::Alert::new(level, &summary, &body);
-                    Some(vec![Box::new(alert)])
+                    let alert = Alert::new(level, &summary, &body);
+                    Some(vec![alert])
                 } else {
                     None
                 }
@@ -180,10 +181,7 @@ impl State {
 impl crate::State for State {
     type Event = msg::Msg;
 
-    fn update(
-        &mut self,
-        msg: Self::Event,
-    ) -> Result<Option<Vec<Box<dyn crate::Alert>>>> {
+    fn update(&mut self, msg: Self::Event) -> Result<Option<Vec<Alert>>> {
         match msg {
             msg::Msg::Battery(b) if b.path.ends_with("/DisplayDevice") => {
                 tracing::warn!(

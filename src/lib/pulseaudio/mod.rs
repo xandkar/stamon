@@ -152,7 +152,7 @@ impl<'a> crate::State for State<'a> {
     fn update(
         &mut self,
         update: Self::Event,
-    ) -> Result<Option<Vec<Box<dyn crate::Alert>>>> {
+    ) -> Result<Option<Vec<crate::alert::Alert>>> {
         match update {
             (Event::Change, Stream::Sink, _) => {
                 self.volume = Volume::fetch()?;

@@ -116,7 +116,7 @@ impl crate::State for State {
     fn update(
         &mut self,
         Observation { temp_f }: Self::Event,
-    ) -> Result<Option<Vec<Box<dyn crate::Alert>>>> {
+    ) -> Result<Option<Vec<crate::alert::Alert>>> {
         self.temp_f = Some(temp_f);
         Ok(None)
     }

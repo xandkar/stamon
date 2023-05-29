@@ -109,7 +109,7 @@ impl<'a> crate::State for State<'a> {
     fn update(
         &mut self,
         status_opt: Self::Event,
-    ) -> Result<Option<Vec<Box<dyn crate::Alert>>>> {
+    ) -> Result<Option<Vec<crate::alert::Alert>>> {
         self.status = status_opt;
         Ok(None)
     }

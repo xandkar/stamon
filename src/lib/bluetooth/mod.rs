@@ -22,7 +22,7 @@ impl<'a> crate::State for State<'a> {
     fn update(
         &mut self,
         msg: Self::Event,
-    ) -> Result<Option<Vec<Box<dyn crate::Alert>>>> {
+    ) -> Result<Option<Vec<crate::alert::Alert>>> {
         self.device_state = msg;
         Ok(None)
     }
