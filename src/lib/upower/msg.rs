@@ -29,7 +29,7 @@ impl std::str::FromStr for BatteryState {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Battery {
-    pub path: String, // TODO Try &str
+    pub path: String,
     pub state: BatteryState,
     pub energy: f32,
     pub energy_full: f32,
@@ -37,19 +37,19 @@ pub struct Battery {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct LinePower {
-    pub path: String, // TODO Try &str
+    pub path: String,
     pub online: bool,
 }
 
 #[derive(Debug)]
 enum MsgIntermediate {
     Device {
-        path: String,                // TODO Try &str
-        native_path: Option<String>, // TODO Try &str
+        path: String,
+        native_path: Option<String>,
     },
     LinePower(LinePower),
     Battery {
-        path: String, // TODO Try &str
+        path: String,
         state: Option<BatteryState>,
         energy: Option<f32>,
         energy_full: Option<f32>,
@@ -328,7 +328,7 @@ impl Msg {
 }
 
 pub struct Messages<'a> {
-    lines: Box<dyn Iterator<Item = String> + 'a>, // TODO Try &str
+    lines: Box<dyn Iterator<Item = String> + 'a>,
 }
 
 impl<'a> Messages<'a> {
