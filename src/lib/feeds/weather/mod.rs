@@ -10,18 +10,11 @@
 //     - each observation will need a TTL, since async execution could
 //       result in some observations getting much older than others.
 //     - combined report for all observatories, written to file
-// TODO Alt/backup observatories:
-//  - [x] https://www.weather.gov/
-//  - [x] https://openweathermap.org/
-//  - [ ] https://www.accuweather.com/
-//  - [ ] https://wunderground.com/
-//  - [ ] https://www.tomorrow.io/
+pub mod observatories;
+
 use std::{thread::sleep, time::Duration};
 
 use anyhow::{anyhow, Result};
-
-pub mod noaa;
-pub mod openweathermap;
 
 #[derive(Debug)]
 pub struct Observation {

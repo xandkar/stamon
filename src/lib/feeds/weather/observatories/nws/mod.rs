@@ -1,9 +1,11 @@
+#[cfg(test)]
+mod tests;
+
 use std::path::PathBuf;
 
 use anyhow::{anyhow, Result};
 
-#[cfg(test)]
-mod tests;
+use crate::feeds::weather;
 
 #[derive(Debug)]
 pub struct Settings {
@@ -67,12 +69,8 @@ impl Observatory {
     }
 }
 
-impl super::Observatory for Observatory {
-    fn module_path(&self) -> &str {
-        &self.module_path
-    }
-
-    fn fetch(&self) -> Result<super::Observation> {
+impl weather::Observatory for Observatory {
+    fn fetch(&self) -> Result<weather::Observation> {
         let client = reqwest::blocking::Client::new();
         let req = client
             .get(&self.url)
@@ -92,10 +90,14 @@ impl super::Observatory for Observatory {
                         observation.summary(chrono::offset::Local::now()),
                     )?,
                 };
-                Ok(super::Observation { temp_f })
+                Ok(weather::Observation { temp_f })
             }
             s => Err(anyhow!("Error response: {:?} {:?}", s, resp)),
         }
+    }
+
+    fn module_path(&self) -> &str {
+        &self.module_path
     }
 }
 

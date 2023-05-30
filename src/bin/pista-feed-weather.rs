@@ -3,7 +3,10 @@ use std::time::Duration;
 use anyhow::{anyhow, Result};
 use clap::{Parser, ValueEnum};
 
-use pista_feeds::feeds::weather;
+use pista_feeds::feeds::weather::{
+    self,
+    observatories::{nws, owm},
+};
 
 #[derive(Debug, Parser)]
 struct Cli {
@@ -36,7 +39,7 @@ struct Cli {
     noaa_admin_email: String,
 
     #[clap(long)]
-    owm_coord: Option<weather::openweathermap::Coord>,
+    owm_coord: Option<owm::Coord>,
 
     #[clap(long)]
     owm_api_key: Option<String>,
@@ -75,19 +78,18 @@ impl Cli {
                         .as_ref()
                         .ok_or_else(|| anyhow!("missing noaa station id"))?
                         .to_string();
-                    let user_agent = weather::noaa::UserAgent {
+                    let user_agent = nws::UserAgent {
                         app_name: self.noaa_app_name.to_string(),
                         app_version: self.noaa_app_version.to_string(),
                         app_url: self.noaa_app_url.to_string(),
                         admin_email: self.noaa_admin_email.to_string(),
                     };
-                    let settings = weather::noaa::Settings {
+                    let settings = nws::Settings {
                         station_id,
                         user_agent,
                         summary_file: self.noaa_summary_file.clone(),
                     };
-                    let observatory =
-                        weather::noaa::Observatory::new(&settings)?;
+                    let observatory = nws::Observatory::new(&settings)?;
                     observatories.push(Box::new(observatory));
                 }
                 ObservatoryName::Owm => {
@@ -103,10 +105,8 @@ impl Cli {
                             anyhow!("missing API key for OWM observatory")
                         })?
                         .to_string();
-                    let settings =
-                        weather::openweathermap::Settings { coord, api_key };
-                    let observatory =
-                        weather::openweathermap::Observatory::new(&settings)?;
+                    let settings = owm::Settings { coord, api_key };
+                    let observatory = owm::Observatory::new(&settings)?;
                     observatories.push(Box::new(observatory));
                 }
             }

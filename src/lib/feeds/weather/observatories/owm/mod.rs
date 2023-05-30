@@ -1,6 +1,8 @@
+mod data;
+
 use anyhow::{anyhow, Result};
 
-mod data;
+use crate::feeds::weather;
 
 const UNITS: &str = "imperial"; // imperial | metric
 const LANG: &str = "en"; // en | de
@@ -57,12 +59,12 @@ impl Observatory {
     }
 }
 
-impl super::Observatory for Observatory {
+impl weather::Observatory for Observatory {
     fn module_path(&self) -> &str {
         &self.module_path
     }
 
-    fn fetch(&self) -> Result<super::Observation> {
+    fn fetch(&self) -> Result<weather::Observation> {
         let client = reqwest::blocking::Client::new();
         let req = client.get(&self.url).build()?;
         let resp = client.execute(req)?;
@@ -75,7 +77,7 @@ impl super::Observatory for Observatory {
                     assert_eq!("imperial", UNITS);
                     observation.main.temp
                 };
-                Ok(super::Observation { temp_f })
+                Ok(weather::Observation { temp_f })
             }
             s => Err(anyhow!("Error response: {:?} {:?}", s, resp)),
         }
