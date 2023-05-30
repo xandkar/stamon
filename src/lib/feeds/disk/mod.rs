@@ -1,27 +1,32 @@
-use std::mem::MaybeUninit;
-use std::{ffi::CString, time::Duration};
+use std::{
+    ffi::{c_char, CString},
+    mem::MaybeUninit,
+    time::Duration,
+};
 
 use anyhow::{anyhow, Result};
 
 fn usage(path: &str) -> Result<Option<u64>> {
-    let path = CString::new(path)?;
+    let path: CString = CString::new(path)?;
+    let path: *const c_char = path.as_ptr();
     let mut buf: MaybeUninit<libc::statfs> = MaybeUninit::uninit();
-    let (total, free) = unsafe {
-        match libc::statfs(path.as_ptr() as *const i8, buf.assume_init_mut())
-        {
-            0 => {
+    match unsafe { libc::statfs(path, buf.assume_init_mut()) } {
+        0 => {
+            let (total, free) = unsafe {
                 let libc::statfs {
                     f_blocks: total,
                     f_bfree: free,
                     ..
                 } = buf.assume_init();
-                Ok((total, free))
-            }
-            n => Err(anyhow!("libc::statfs failed with {}", n)),
+                (total, free)
+            };
+            let used = total - free;
+            let used_pct =
+                crate::math::percentage_ceiling(used as f32, total as f32);
+            Ok(used_pct)
         }
-    }?;
-    let used = total - free;
-    Ok(crate::math::percentage_ceiling(used as f32, total as f32))
+        n => Err(anyhow!("libc::statfs failed with {}", n)),
+    }
 }
 
 struct State<'a> {

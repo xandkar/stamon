@@ -23,54 +23,56 @@ impl X11 {
     }
 
     fn symbols(&self) -> Result<String> {
-        unsafe {
-            let desc_ptr = xlib::XkbAllocKeyboard();
-            if desc_ptr.is_null() {
-                return Err(anyhow!(
-                    "XkbAllocKeyboard: Failed to allocate keyboard"
-                ));
-            }
-            if xlib::XkbGetNames(
+        let desc_ptr = unsafe { xlib::XkbAllocKeyboard() };
+        if desc_ptr.is_null() {
+            return Err(anyhow!(
+                "XkbAllocKeyboard: Failed to allocate keyboard"
+            ));
+        }
+        if unsafe {
+            xlib::XkbGetNames(
                 self.display_ptr,
                 XKB_SYMBOLS_NAME_MASK,
                 desc_ptr,
-            ) > 0
-            {
-                return Err(anyhow!(
-                    "XkbGetNames: Failed to retrieve key symbols"
-                ));
-            }
-            let symbols_ptr = xlib::XGetAtomName(
-                self.display_ptr,
-                (*(*desc_ptr).names).symbols,
-            );
-            if symbols_ptr.is_null() {
-                return Err(anyhow!("XGetAtomName: Failed to get atom name"));
-            }
-            let symbols =
-                std::ffi::CStr::from_ptr(symbols_ptr).to_str()?.to_string();
+            )
+        } > 0
+        {
+            return Err(anyhow!(
+                "XkbGetNames: Failed to retrieve key symbols"
+            ));
+        }
+        let symbols_ptr = unsafe {
+            xlib::XGetAtomName(self.display_ptr, (*(*desc_ptr).names).symbols)
+        };
+        if symbols_ptr.is_null() {
+            return Err(anyhow!("XGetAtomName: Failed to get atom name"));
+        }
+        let symbols = unsafe { std::ffi::CStr::from_ptr(symbols_ptr) }
+            .to_str()?
+            .to_string();
+        unsafe {
             xlib::XFree(symbols_ptr as *mut _);
             xlib::XkbFreeKeyboard(desc_ptr, XKB_SYMBOLS_NAME_MASK, 1);
-            Ok(symbols)
         }
+        Ok(symbols)
     }
 
     fn current_group_index(&self) -> Result<usize> {
-        unsafe {
-            let mut state: std::mem::MaybeUninit<xlib::XkbStateRec> =
-                std::mem::MaybeUninit::uninit();
-            if xlib::XkbGetState(
+        let mut state: std::mem::MaybeUninit<xlib::XkbStateRec> =
+            std::mem::MaybeUninit::uninit();
+        if unsafe {
+            xlib::XkbGetState(
                 self.display_ptr,
                 XKB_USE_CORE_KBD,
                 state.assume_init_mut(),
-            ) > 0
-            {
-                return Err(anyhow!(
-                    "XkbGetState: Failed to retrieve keyboard state"
-                ));
-            }
-            Ok(state.assume_init().group as usize)
+            )
+        } > 0
+        {
+            return Err(anyhow!(
+                "XkbGetState: Failed to retrieve keyboard state"
+            ));
         }
+        Ok(unsafe { state.assume_init() }.group as usize)
     }
 
     // TODO Avoid allocating new strings? Can we write into a passed buffer?
