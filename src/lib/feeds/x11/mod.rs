@@ -6,8 +6,10 @@ use x11::xlib;
 const XKB_SYMBOLS_NAME_MASK: u32 = 1 << 2; // TODO Find in X11 lib.
 const XKB_USE_CORE_KBD: u32 = 0x0100; // TODO Find in X11 lib.
 
+/// Ref: <https://xwindow.angelfire.com/page2.html>
+/// Ref: <https://www.oreilly.com/library/view/xlib-reference-manual/9780937175262/14_appendix-f.html>
 pub struct X11 {
-    display_ptr: *mut xlib::_XDisplay,
+    display_ptr: *mut xlib::Display,
 }
 
 impl X11 {
@@ -82,6 +84,14 @@ impl X11 {
             .ok_or_else(|| anyhow!("group index not found in symbols"))?;
         let symbol = symbol.chars().take(2).collect::<String>();
         Ok(symbol)
+    }
+}
+
+impl Drop for X11 {
+    fn drop(&mut self) {
+        unsafe {
+            xlib::XCloseDisplay(self.display_ptr);
+        }
     }
 }
 
