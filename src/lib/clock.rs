@@ -1,5 +1,5 @@
 // TODO Clock is not a good match for the semantics.
-//      We sleep only on each call, so it is more like pushback.
+//      We sleep cooperatively with the caller, so it is more like pushback.
 use std::time::Duration;
 
 pub struct Tick;
