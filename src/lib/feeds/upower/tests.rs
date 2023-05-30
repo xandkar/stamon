@@ -34,7 +34,7 @@ fn dump() {
     let mut buf: Vec<u8> = Vec::new();
     for msg in messages_produced {
         {
-            use crate::State;
+            use crate::pipeline::State;
             state.update(msg).unwrap();
             state.display(&mut buf).unwrap();
         }

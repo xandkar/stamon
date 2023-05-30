@@ -38,7 +38,7 @@ impl<'a> State<'a> {
     }
 }
 
-impl<'a> crate::State for State<'a> {
+impl<'a> crate::pipeline::State for State<'a> {
     type Event = Option<u64>;
 
     fn update(
@@ -79,5 +79,5 @@ pub fn run<'a>(
     interval: Duration,
     path: &'a str,
 ) -> Result<()> {
-    crate::pipeline_to_stdout(reads(interval, path), State::new(prefix))
+    crate::pipeline::run_to_stdout(reads(interval, path), State::new(prefix))
 }

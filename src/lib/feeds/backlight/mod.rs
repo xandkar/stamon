@@ -100,7 +100,7 @@ impl<'a> State<'a> {
     }
 }
 
-impl<'a> crate::State for State<'a> {
+impl<'a> crate::pipeline::State for State<'a> {
     type Event = u64;
 
     fn update(
@@ -123,7 +123,7 @@ impl<'a> crate::State for State<'a> {
 }
 
 pub fn run(device: &str, prefix: &str) -> Result<()> {
-    crate::pipeline_to_stdout(
+    crate::pipeline::run_to_stdout(
         Watcher::new(device)?.iter(),
         State::new(prefix),
     )

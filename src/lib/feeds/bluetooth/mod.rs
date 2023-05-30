@@ -16,7 +16,7 @@ impl<'a> State<'a> {
     }
 }
 
-impl<'a> crate::State for State<'a> {
+impl<'a> crate::pipeline::State for State<'a> {
     type Event = Option<DeviceState>;
 
     fn update(
@@ -93,5 +93,5 @@ pub fn run(prefix: &str, interval: Duration) -> Result<()> {
             }
             Ok(dev_opt) => Some(dev_opt),
         });
-    crate::pipeline_to_stdout(events, State::new(prefix))
+    crate::pipeline::run_to_stdout(events, State::new(prefix))
 }

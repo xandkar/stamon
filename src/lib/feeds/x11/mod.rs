@@ -99,7 +99,7 @@ impl<'a> State<'a> {
     }
 }
 
-impl<'a> crate::State for State<'a> {
+impl<'a> crate::pipeline::State for State<'a> {
     type Event = String;
 
     fn update(
@@ -134,5 +134,5 @@ fn reads(interval: Duration, x11: &X11) -> impl Iterator<Item = String> + '_ {
 
 pub fn run(prefix: &str, interval: Duration) -> Result<()> {
     let x11 = X11::init()?;
-    crate::pipeline_to_stdout(reads(interval, &x11), State::new(prefix))
+    crate::pipeline::run_to_stdout(reads(interval, &x11), State::new(prefix))
 }

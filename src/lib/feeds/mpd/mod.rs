@@ -103,7 +103,7 @@ impl<'a> State<'a> {
     }
 }
 
-impl<'a> crate::State for State<'a> {
+impl<'a> crate::pipeline::State for State<'a> {
     type Event = Option<mpd::status::Status>;
 
     fn update(
@@ -170,5 +170,5 @@ pub fn run(
     symbols: Symbols<'_>,
 ) -> Result<()> {
     let addr = SocketAddr::new(addr, port);
-    crate::pipeline_to_stdout(reads(interval, addr), State::new(symbols))
+    crate::pipeline::run_to_stdout(reads(interval, addr), State::new(symbols))
 }

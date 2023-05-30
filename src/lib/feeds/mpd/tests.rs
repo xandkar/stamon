@@ -11,7 +11,7 @@ mod display {
 
         use super::super::util;
 
-        use crate::State; // .display()
+        use crate::pipeline::State; // .display()
 
         #[test]
         fn stop_time_none() {

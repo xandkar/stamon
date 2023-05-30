@@ -178,7 +178,7 @@ impl State {
     }
 }
 
-impl crate::State for State {
+impl crate::pipeline::State for State {
     type Event = msg::Msg;
 
     fn update(&mut self, msg: Self::Event) -> Result<Option<Vec<Alert>>> {

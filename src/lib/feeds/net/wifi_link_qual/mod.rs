@@ -18,7 +18,7 @@ impl<'a> State<'a> {
     }
 }
 
-impl<'a> crate::State for State<'a> {
+impl<'a> crate::pipeline::State for State<'a> {
     type Event = Option<u64>;
 
     fn update(
@@ -101,5 +101,8 @@ fn reads(
 }
 
 pub fn run(interval: Duration, interface: &str, prefix: &str) -> Result<()> {
-    crate::pipeline_to_stdout(reads(interval, interface), State::new(prefix))
+    crate::pipeline::run_to_stdout(
+        reads(interval, interface),
+        State::new(prefix),
+    )
 }

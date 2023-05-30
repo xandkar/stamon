@@ -110,7 +110,7 @@ impl State {
     }
 }
 
-impl crate::State for State {
+impl crate::pipeline::State for State {
     type Event = Observation;
 
     fn update(
@@ -139,5 +139,5 @@ pub fn run(
         interval,
         Duration::from_secs(15), // TODO Cli?
     )?;
-    crate::pipeline_to_stdout(observations, State::new())
+    crate::pipeline::run_to_stdout(observations, State::new())
 }

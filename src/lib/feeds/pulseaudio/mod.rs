@@ -146,7 +146,7 @@ impl<'a> State<'a> {
     }
 }
 
-impl<'a> crate::State for State<'a> {
+impl<'a> crate::pipeline::State for State<'a> {
     type Event = Update;
 
     fn update(
@@ -305,5 +305,5 @@ fn pactl_list_source_outputs_parse(data: &str) -> Vec<Seq> {
 }
 
 pub fn run(symbols: Symbols<'_>) -> Result<()> {
-    crate::pipeline_to_stdout(updates()?, State::new(symbols)?)
+    crate::pipeline::run_to_stdout(updates()?, State::new(symbols)?)
 }

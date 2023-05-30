@@ -7,7 +7,7 @@ mod state;
 mod tests;
 
 pub fn run(prefix: &str, alert_triggers: &[u64]) -> Result<()> {
-    crate::pipeline_to_stdout(
+    crate::pipeline::run_to_stdout(
         msg::Messages::from_run()?,
         state::State::new(prefix, alert_triggers)?,
     )
