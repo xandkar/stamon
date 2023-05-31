@@ -30,7 +30,6 @@ impl Cli {
             panic!("Alert value out of percentage range: {:?}", n)
         }
         cli.alerts = alert_triggers.to_vec();
-        tracing::info!("cli with defaults: {:?}", &cli);
         cli
     }
 }
@@ -38,5 +37,6 @@ impl Cli {
 fn main() -> Result<()> {
     pista_feeds::logger::init()?;
     let cli = Cli::parse_and_validate();
+    tracing::info!("cli: {:?}", &cli);
     pista_feeds::feeds::upower::run(&cli.prefix, &cli.alerts[..])
 }

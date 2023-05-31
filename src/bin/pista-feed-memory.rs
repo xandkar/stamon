@@ -12,7 +12,7 @@ struct Cli {
 fn main() -> anyhow::Result<()> {
     pista_feeds::logger::init()?;
     let cli = Cli::parse();
-    tracing::info!("Cli: {:?}", &cli);
+    tracing::info!("cli: {:?}", &cli);
     pista_feeds::feeds::mem::run(
         &cli.prefix,
         std::time::Duration::from_secs(cli.interval),

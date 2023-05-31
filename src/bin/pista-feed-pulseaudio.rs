@@ -1,6 +1,6 @@
 use clap::Parser;
 
-#[derive(Parser)]
+#[derive(Parser, Debug)]
 struct Cli {
     #[clap(long = "prefix", default_value = "v ")]
     prefix: String,
@@ -28,5 +28,6 @@ impl Cli {
 fn main() -> anyhow::Result<()> {
     pista_feeds::logger::init()?;
     let cli = Cli::parse();
+    tracing::info!("cli: {:?}", &cli);
     pista_feeds::feeds::pulseaudio::run(cli.symbols())
 }

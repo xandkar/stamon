@@ -25,7 +25,7 @@ struct Cli {
 fn main() -> anyhow::Result<()> {
     pista_feeds::logger::init()?;
     let cli = Cli::parse();
-    tracing::info!("Cli: {:?}", &cli);
+    tracing::info!("cli: {:?}", &cli);
     let Cli {
         interface,
         interval,
