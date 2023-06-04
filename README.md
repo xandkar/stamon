@@ -11,7 +11,7 @@ Status data for [pista](https://github.com/xandkar/pista).
 Each of the executables periodically collects the necessary data and spits out
 an aggregate.
 
-Which I then redicet to a [FIFO](https://en.wikipedia.org/wiki/Named_pipe) to
+Which I then redirect to a [FIFO](https://en.wikipedia.org/wiki/Named_pipe) to
 be read by [pista](https://github.com/xandkar/pista) and inserted into my
 [dwm](https://dwm.suckless.org/) status area.
 
