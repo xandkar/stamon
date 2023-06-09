@@ -60,7 +60,7 @@ impl Cli {
 fn main() -> anyhow::Result<()> {
     pista_feeds::logger::init()?;
     let cli = Cli::parse();
-    tracing::info!("cli: {:?}", &cli);
+    tracing::info!("cli: {:#?}", &cli);
     pista_feeds::feeds::mpd::run(
         std::time::Duration::from_secs(cli.interval),
         std::net::IpAddr::from_str(&cli.addr)?,

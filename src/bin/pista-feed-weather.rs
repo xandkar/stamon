@@ -118,6 +118,6 @@ impl Cli {
 pub fn main() -> Result<()> {
     pista_feeds::logger::init()?;
     let cli = Cli::parse();
-    tracing::info!("cli: {:?}", &cli);
+    tracing::info!("cli: {:#?}", &cli);
     weather::run(Duration::from_secs(cli.interval), cli.to_observatories()?)
 }
