@@ -1,3 +1,7 @@
+.PHONY: build
+build:
+	cargo build --release
+
 .PHONY: check
 check:
 	cargo check
