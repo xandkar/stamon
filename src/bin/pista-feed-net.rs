@@ -10,6 +10,9 @@ enum IFKind {
 
 #[derive(Debug, clap::Parser)]
 struct Cli {
+    #[clap(long, short, default_value_t = false)]
+    debug: bool,
+
     interface: String,
 
     #[clap(subcommand)]
@@ -23,14 +26,15 @@ struct Cli {
 }
 
 fn main() -> anyhow::Result<()> {
-    pista_feeds::logger::init()?;
     let cli = Cli::parse();
+    pista_feeds::logger::init(cli.debug)?;
     tracing::info!("cli: {:#?}", &cli);
     let Cli {
         interface,
         interval,
         prefix,
         interface_kind,
+        ..
     } = &cli;
     let interval = std::time::Duration::from_secs(*interval);
     match interface_kind {

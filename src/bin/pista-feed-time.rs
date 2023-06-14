@@ -3,6 +3,9 @@ use clap::Parser;
 
 #[derive(Debug, clap::Parser)]
 struct Cli {
+    #[clap(long, short, default_value_t = false)]
+    debug: bool,
+
     #[clap(
         long = "format",
         short = 'f',
@@ -15,8 +18,8 @@ struct Cli {
 }
 
 fn main() -> Result<()> {
-    pista_feeds::logger::init()?;
     let cli = Cli::parse();
+    pista_feeds::logger::init(cli.debug)?;
     tracing::info!("cli: {:#?}", &cli);
     let format = cli.format.as_str();
     let interval = std::time::Duration::from_secs_f64(cli.interval);

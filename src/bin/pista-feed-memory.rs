@@ -2,6 +2,9 @@ use clap::Parser;
 
 #[derive(Debug, Parser)]
 struct Cli {
+    #[clap(long, short, default_value_t = false)]
+    debug: bool,
+
     #[clap(long = "interval", short = 'i', default_value = "5")]
     interval: u64,
 
@@ -10,8 +13,8 @@ struct Cli {
 }
 
 fn main() -> anyhow::Result<()> {
-    pista_feeds::logger::init()?;
     let cli = Cli::parse();
+    pista_feeds::logger::init(cli.debug)?;
     tracing::info!("cli: {:#?}", &cli);
     pista_feeds::feeds::mem::run(
         &cli.prefix,

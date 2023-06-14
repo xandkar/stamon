@@ -10,6 +10,9 @@ use pista_feeds::feeds::weather::{
 
 #[derive(Debug, Parser)]
 struct Cli {
+    #[clap(long, short, default_value_t = false)]
+    debug: bool,
+
     #[clap(long, short, default_value_t = 1800)]
     interval: u64,
 
@@ -116,8 +119,8 @@ impl Cli {
 }
 
 pub fn main() -> Result<()> {
-    pista_feeds::logger::init()?;
     let cli = Cli::parse();
+    pista_feeds::logger::init(cli.debug)?;
     tracing::info!("cli: {:#?}", &cli);
     weather::run(Duration::from_secs(cli.interval), cli.to_observatories()?)
 }
