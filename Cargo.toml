@@ -29,3 +29,14 @@ x11 = { version = "2.20.0", features = ["xlib"] }
 
 [dev-dependencies]
 proptest = "1.1.0"
+
+###############################################################################
+# binary size optimizations
+# https://github.com/johnthagen/min-sized-rust
+###############################################################################
+[profile.release]
+codegen-units = 1  # Disable parallelization, allowing maximum size reduction.
+lto = true         # Enable Link Time Optimizations.
+# panic = "abort"  # Disable stack unwind.
+# strip = true     # Strip symbols.
+# opt-level = "z"  # Optimize for size.
