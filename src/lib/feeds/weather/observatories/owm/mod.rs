@@ -65,7 +65,9 @@ impl weather::Observatory for Observatory {
     }
 
     fn fetch(&self) -> Result<weather::Observation> {
-        let client = reqwest::blocking::Client::new();
+        let client = reqwest::blocking::ClientBuilder::new()
+            .use_rustls_tls()
+            .build()?;
         let req = client.get(&self.url).build()?;
         let resp = client.execute(req)?;
         match resp.status() {
