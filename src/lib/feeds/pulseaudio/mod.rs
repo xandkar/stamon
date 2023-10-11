@@ -130,6 +130,7 @@ fn pactl_info_find_default_sink(data: &str) -> Option<&str> {
 
 struct State<'a> {
     symbols: Symbols<'a>,
+    mic_sym_len: usize,
     source_outputs: HashSet<Seq>,
     volume: Volume, // TODO Maybe Option instead of init fetch?
 }
@@ -138,8 +139,11 @@ impl<'a> State<'a> {
     fn new(symbols: Symbols<'a>) -> Result<Self> {
         let source_outputs = HashSet::new();
         let volume = Volume::fetch()?;
+        let mic_on = symbols.mic_on.len();
+        let mic_off = symbols.mic_off.len();
         Ok(Self {
             symbols,
+            mic_sym_len: mic_on.max(mic_off),
             source_outputs,
             volume,
         })
@@ -187,7 +191,7 @@ impl<'a> crate::pipeline::State for State<'a> {
         } else {
             self.symbols.mic_on
         };
-        writeln!(buf, " {}", symbol_mic)?;
+        writeln!(buf, " {:width$}", symbol_mic, width = self.mic_sym_len)?;
         Ok(())
     }
 }
