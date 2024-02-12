@@ -46,6 +46,9 @@ mod concrete {
         assert_eq!(Some(5), pa::vol_str_parse("005%"));
         assert_eq!(Some(50), pa::vol_str_parse("50%"));
         assert_eq!(Some(100), pa::vol_str_parse("100%"));
+
+        // When "dB" is missing, seen with bluetooth headphones.
+        assert_eq!(Some(46), pa::vol_str_parse("46%,"));
     }
 
     #[test]
@@ -65,13 +68,22 @@ mod concrete {
     #[test]
     fn t_pactl_list_sinks_parse() {
         let given = fs::read_to_string("tests/pactl-list-sinks.txt").unwrap();
-        let expected = vec![pa::Sink {
-            _seq: 0,
-            name: "alsa_output.pci-0000_00_1f.3.analog-stereo",
-            mute: false,
-            vol_left: 50,
-            vol_right: 50,
-        }];
+        let expected = vec![
+            pa::Sink {
+                _seq: 0,
+                name: "alsa_output.pci-0000_00_1f.3.analog-stereo",
+                mute: false,
+                vol_left: 15,
+                vol_right: 15,
+            },
+            pa::Sink {
+                _seq: 8,
+                name: "bluez_sink.04_52_C7_0A_BD_56.a2dp_sink",
+                mute: false,
+                vol_left: 46,
+                vol_right: 46,
+            },
+        ];
         let actual = pa::pactl_list_sinks_parse(&given).unwrap();
         assert_eq!(expected, actual);
     }

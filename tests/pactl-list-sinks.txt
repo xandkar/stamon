@@ -1,17 +1,17 @@
 Sink #0
-	State: RUNNING
+	State: SUSPENDED
 	Name: alsa_output.pci-0000_00_1f.3.analog-stereo
 	Description: Built-in Audio Analog Stereo
 	Driver: module-alsa-card.c
 	Sample Specification: s16le 2ch 48000Hz
 	Channel Map: front-left,front-right
-	Owner Module: 8
+	Owner Module: 7
 	Mute: no
-	Volume: front-left: 32764 /  50% / -18.06 dB,   front-right: 32764 /  50% / -18.06 dB
+	Volume: front-left: 9828 /  15% / -49.44 dB,   front-right: 9828 /  15% / -49.44 dB
 	        balance 0.00
 	Base Volume: 65536 / 100% / 0.00 dB
 	Monitor Source: alsa_output.pci-0000_00_1f.3.analog-stereo.monitor
-	Latency: 210247 usec, configured 210000 usec
+	Latency: 0 usec, configured 0 usec
 	Flags: HARDWARE HW_MUTE_CTRL HW_VOLUME_CTRL DECIBEL_VOLUME LATENCY 
 	Properties:
 		alsa.resolution_bits = "16"
@@ -26,7 +26,7 @@ Sink #0
 		alsa.device = "0"
 		alsa.card = "0"
 		alsa.card_name = "HDA Intel PCH"
-		alsa.long_card_name = "HDA Intel PCH at 0x6291198000 irq 168"
+		alsa.long_card_name = "HDA Intel PCH at 0x6291198000 irq 187"
 		alsa.driver_name = "snd_hda_intel"
 		device.bus_path = "pci-0000:00:1f.3"
 		sysfs.path = "/devices/pci0000:00/0000:00:1f.3/sound/card0"
@@ -47,7 +47,41 @@ Sink #0
 		device.icon_name = "audio-card-pci"
 	Ports:
 		analog-output-speaker: Speakers (type: Speaker, priority: 10000, availability unknown)
-		analog-output-headphones: Headphones (type: Headphones, priority: 9900, availability group: Legacy 2, availability unknown)
-	Active Port: analog-output-headphones
+		analog-output-headphones: Headphones (type: Headphones, priority: 9900, availability group: Legacy 2, not available)
+	Active Port: analog-output-speaker
+	Formats:
+		pcm
+
+Sink #8
+	State: RUNNING
+	Name: bluez_sink.04_52_C7_0A_BD_56.a2dp_sink
+	Description: Bose QuietComfort 35
+	Driver: module-bluez5-device.c
+	Sample Specification: s16le 2ch 44100Hz
+	Channel Map: front-left,front-right
+	Owner Module: 28
+	Mute: no
+	Volume: front-left: 30422 /  46%,   front-right: 30422 /  46%
+	        balance 0.00
+	Base Volume: 65536 / 100%
+	Monitor Source: bluez_sink.04_52_C7_0A_BD_56.a2dp_sink.monitor
+	Latency: 51362 usec, configured 45317 usec
+	Flags: HARDWARE HW_VOLUME_CTRL LATENCY 
+	Properties:
+		bluetooth.protocol = "a2dp_sink"
+		bluetooth.codec = "sbc"
+		device.description = "Bose QuietComfort 35"
+		device.string = "04:52:C7:0A:BD:56"
+		device.api = "bluez"
+		device.class = "sound"
+		device.bus = "bluetooth"
+		device.form_factor = "headphone"
+		bluez.path = "/org/bluez/hci0/dev_04_52_C7_0A_BD_56"
+		bluez.class = "0x240418"
+		bluez.alias = "Bose QuietComfort 35"
+		device.icon_name = "audio-headphones-bluetooth"
+	Ports:
+		headphone-output: Headphone (type: Headphones, priority: 0, available)
+	Active Port: headphone-output
 	Formats:
 		pcm

@@ -100,7 +100,6 @@ impl Volume {
         let pactl_list_sinks =
             crate::process::exec("pactl", &["list", "sinks"])?;
         let pactl_list_sinks = std::str::from_utf8(&pactl_list_sinks)?;
-
         let sinks = pactl_list_sinks_parse(pactl_list_sinks)?;
         let target_sink_opt =
             sinks.iter().find(|s| s.name == target_sink_name);
@@ -257,7 +256,20 @@ fn pactl_list_sinks_parse<'a>(data: &'a str) -> Result<Vec<Sink<'a>>> {
             ["Mute:", other] if indented => {
                 return Err(anyhow!("Invalid Mute value: {:?}", other));
             }
-            ["Volume:", "front-left:", _, "/", left, "/", _, "dB,", "front-right:", _, "/", right, "/", _, "dB"]
+
+            // Volume examples:
+            //
+            //   Volume: front-left: 9828 /  15% / -49.44 dB,   front-right: 9828 /  15% / -49.44 dB
+            //   ["Volume:", "front-left:", "9828", "/", "15%", "/", "-49.44", "dB,", "front-right:", "9828", "/", "15%", "/", "-49.44", "dB"]
+            //
+            //   Volume: front-left: 30422 /  46%,   front-right: 30422 /  46%
+            //   ["Volume:", "front-left:", "30422", "/", "46%,", "front-right:", "30422", "/", "46%"]
+            //
+            // TODO Maybe handle volume more-generally, like split on ","
+            //      and then parse left and right?
+            #[rustfmt::skip] // I want these aligned:
+            ["Volume:", "front-left:", _, "/", left, "/", _, "dB,", "front-right:", _, "/", right, "/", _, "dB"] |
+            ["Volume:", "front-left:", _, "/", left,                "front-right:", _, "/", right,             ]
                 if indented =>
             {
                 let seq = seq.ok_or_else(|| anyhow!("Missing seq"))?;
@@ -284,7 +296,9 @@ fn pactl_list_sinks_parse<'a>(data: &'a str) -> Result<Vec<Sink<'a>>> {
 }
 
 fn vol_str_parse(s: &str) -> Option<u64> {
-    s.strip_suffix('%').and_then(|s| s.parse().ok())
+    s.trim_end_matches(',')
+        .strip_suffix('%')
+        .and_then(|s| s.parse().ok())
 }
 
 fn source_outputs_list() -> Result<Vec<Seq>> {
