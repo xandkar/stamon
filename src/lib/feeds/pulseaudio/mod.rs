@@ -41,7 +41,10 @@ impl Event {
             "'new'" => Some(Self::New),
             "'change'" => Some(Self::Change),
             "'remove'" => Some(Self::Remove),
-            _ => None,
+            _ => {
+                tracing::trace!(event = ?s, "Uninteresting event.");
+                None
+            }
         }
     }
 }
@@ -57,7 +60,10 @@ impl Stream {
         match s {
             "sink" => Some(Self::Sink),
             "source-output" => Some(Self::SourceOutput),
-            _ => None,
+            _ => {
+                tracing::trace!(stream = ?s, "Uninteresting stream.");
+                None
+            }
         }
     }
 }
@@ -216,7 +222,10 @@ fn update_parse(line: &str) -> Option<Result<Update>> {
                 (Some(event), Some(stream), Some(seq)) => {
                     Some(Ok((event, stream, seq)))
                 }
-                _ => None,
+                _ => {
+                    tracing::trace!(?line, "Ignoring update.");
+                    None
+                }
             }
         }
         _ => {
@@ -227,7 +236,11 @@ fn update_parse(line: &str) -> Option<Result<Update>> {
 }
 
 fn seq_parse(name: &str) -> Option<Seq> {
-    name.strip_prefix('#').and_then(|seq| seq.parse().ok())
+    let seq_opt = name.strip_prefix('#').and_then(|seq| seq.parse().ok());
+    if seq_opt.is_none() {
+        tracing::error!(?name, "Invalid seq.");
+    }
+    seq_opt
 }
 
 fn pactl_list_sinks_parse<'a>(data: &'a str) -> Result<Vec<Sink<'a>>> {
@@ -288,6 +301,9 @@ fn pactl_list_sinks_parse<'a>(data: &'a str) -> Result<Vec<Sink<'a>>> {
                     vol_left,
                     vol_right,
                 });
+            }
+            ["Volume:", ..] if indented => {
+                tracing::warn!(?line, "Unmatched volume line.");
             }
             _ => (),
         }

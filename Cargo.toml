@@ -1,6 +1,6 @@
 [package]
 name = "pista-feeds"
-version = "0.10.5"
+version = "0.10.6"
 edition = "2021"
 license-file = "LICENSE"
 repository = "https://github.com/xandkar/pista-feeds"
