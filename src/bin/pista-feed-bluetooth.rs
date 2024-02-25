@@ -5,10 +5,10 @@ use clap::Parser;
 
 #[derive(Debug, Parser)]
 struct Cli {
-    #[clap(long, short, default_value_t = false)]
+    #[clap(short, long, default_value_t = false)]
     debug: bool,
 
-    #[clap(long = "interval", short = 'i', default_value = "2.0")]
+    #[clap(short = 'i', long = "interval", default_value = "2.0")]
     interval: f64,
 
     #[clap(long = "prefix", default_value = "ᛒ ")]
