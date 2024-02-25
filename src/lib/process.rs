@@ -1,3 +1,5 @@
+use std::{sync::mpsc, thread, time::Duration};
+
 use anyhow::{anyhow, Result};
 
 pub fn spawn(
@@ -25,6 +27,34 @@ pub fn exec(cmd: &str, args: &[&str]) -> Result<Vec<u8>> {
     if out.status.success() {
         Ok(out.stdout)
     } else {
-        Err(anyhow!("Failure in '{} {:?}'. out: {:?}", cmd, args, out))
+        let stderr = String::from_utf8(out.stderr.clone());
+        tracing::error!(
+            ?cmd,
+            ?args,
+            ?out,
+            ?stderr,
+            "Failed to execute command."
+        );
+        Err(anyhow!("Failure in '{:?} {:?}'. out: {:?}", cmd, args, out))
     }
+}
+
+pub fn exec_with_timeout(
+    cmd: &'static str,
+    args: &'static [&'static str],
+    timeout: Duration,
+) -> Option<anyhow::Result<Vec<u8>>> {
+    let (tx, rx) = mpsc::channel();
+    thread::spawn(move || {
+        let result = exec(cmd, args);
+        tx.send(result).unwrap_or_else(|error| {
+            tracing::error!(
+                ?error,
+                ?cmd,
+                ?args,
+                "Timed-out receiver. Can't send cmd result."
+            );
+        })
+    });
+    rx.recv_timeout(timeout).ok()
 }

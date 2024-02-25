@@ -13,6 +13,16 @@ struct Cli {
 
     #[clap(long = "prefix", default_value = "ᛒ ")]
     prefix: String,
+
+    /// Attempt to count current connections, using the bluetoothctl command.
+    #[clap(short, long, default_value_t = false)]
+    conn_count: bool,
+
+    /// When attempting to count number of connected devices, we call out to
+    /// bluetoothctl, which in some cases may be unresponsive or slow. Timeout
+    /// mitigates such situations.
+    #[clap(short = 't', long, default_value_t = 1.0)]
+    conn_count_timeout: f64,
 }
 
 fn main() -> Result<()> {
@@ -22,5 +32,7 @@ fn main() -> Result<()> {
     pista_feeds::feeds::bluetooth::run(
         &cli.prefix,
         Duration::from_secs_f64(cli.interval),
+        cli.conn_count,
+        Duration::from_secs_f64(cli.conn_count_timeout),
     )
 }
