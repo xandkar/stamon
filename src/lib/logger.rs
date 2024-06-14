@@ -17,7 +17,12 @@ pub fn init(debug: bool) -> Result<()> {
         .with_ansi(debug)
         .with_file(debug)
         .with_line_number(debug)
-        .with_timer(tracing_subscriber::fmt::time::LocalTime::rfc_3339())
+        // FIXME fmt::time::LocalTime::rfc_3339 prints "<unknown time>" sometimes.
+        //       The feature was disabled in time crate due to safety
+        //       impossibility under multiple threads. It maybe possible that
+        //       tracing-subscriber will switch to chrono instead:
+        //       https://github.com/tokio-rs/tracing/issues/2080
+        //.with_timer(tracing_subscriber::fmt::time::LocalTime::rfc_3339())
         .finish();
     tracing::subscriber::set_global_default(subscriber)?;
     Ok(())
