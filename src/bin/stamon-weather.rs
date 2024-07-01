@@ -3,7 +3,7 @@ use std::time::Duration;
 use anyhow::{anyhow, Result};
 use clap::{Parser, ValueEnum};
 
-use pista_feeds::feeds::weather::{
+use stamon::feeds::weather::{
     self,
     observatories::{nws, owm},
 };
@@ -26,13 +26,13 @@ struct Cli {
     #[clap(long)]
     nws_station_id: Option<String>,
 
-    #[clap(long, default_value = "pista-feed-weather")]
+    #[clap(long, default_value = "stamon-weather")]
     nws_app_name: String,
 
     #[clap(long, default_value = env!("CARGO_PKG_VERSION"))]
     nws_app_version: String,
 
-    #[clap(long, default_value = "https://github.com/xandkar/pista-feeds")]
+    #[clap(long, default_value = "https://github.com/xandkar/stamon")]
     nws_app_url: String,
 
     /// Give NWS a way to contact you to inform of API misuse (interval too
@@ -120,7 +120,7 @@ impl Cli {
 
 pub fn main() -> Result<()> {
     let cli = Cli::parse();
-    pista_feeds::logger::init(cli.debug)?;
+    stamon::logger::init(cli.debug)?;
     tracing::info!("cli: {:#?}", &cli);
     weather::run(Duration::from_secs(cli.interval), cli.to_observatories()?)
 }

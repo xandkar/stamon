@@ -1,11 +1,11 @@
 [package]
-name = "pista-feeds"
-version = "0.11.1"
+name = "stamon"
+version = "0.12.0"
 edition = "2021"
 license-file = "LICENSE"
-repository = "https://github.com/xandkar/pista-feeds"
-description = "Status bar data feeds for pista, dwm and similar needs"
-keywords = ["dwm", "status bar", "pista", "suckless", "small data pipeline"]
+repository = "https://github.com/xandkar/stamon"
+description = "Status monitors for textual status bars (such as barista, pista, etc.)"
+keywords = ["dwm", "status bar", "pista", "barista", "suckless"]
 categories = ["command-line-utilities", "parser-implementations"]
 
 [lib]

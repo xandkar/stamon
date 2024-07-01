@@ -14,7 +14,7 @@ struct Cli {
 
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
-    pista_feeds::logger::init(cli.debug)?;
+    stamon::logger::init(cli.debug)?;
     tracing::info!("cli: {:#?}", &cli);
-    pista_feeds::feeds::backlight::run(&cli.device, &cli.prefix)
+    stamon::feeds::backlight::run(&cli.device, &cli.prefix)
 }

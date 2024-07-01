@@ -1177,27 +1177,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
 
 [[package]]
-name = "pista-feeds"
-version = "0.11.1"
-dependencies = [
- "anyhow",
- "chrono",
- "clap",
- "libc",
- "mpd",
- "notify",
- "notify-rust",
- "proptest",
- "reqwest",
- "serde",
- "serde-xml-rs",
- "serde_json",
- "tracing",
- "tracing-subscriber",
- "x11",
-]
-
-[[package]]
 name = "pkg-config"
 version = "0.3.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1631,6 +1610,27 @@ name = "spin"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6e63cff320ae2c57904679ba7cb63280a3dc4613885beafb148ee7bf9aa9042d"
+
+[[package]]
+name = "stamon"
+version = "0.12.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "clap",
+ "libc",
+ "mpd",
+ "notify",
+ "notify-rust",
+ "proptest",
+ "reqwest",
+ "serde",
+ "serde-xml-rs",
+ "serde_json",
+ "tracing",
+ "tracing-subscriber",
+ "x11",
+]
 
 [[package]]
 name = "static_assertions"

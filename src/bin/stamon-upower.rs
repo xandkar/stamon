@@ -39,7 +39,7 @@ impl Cli {
 
 fn main() -> Result<()> {
     let cli = Cli::parse_and_validate();
-    pista_feeds::logger::init(cli.debug)?;
+    stamon::logger::init(cli.debug)?;
     tracing::info!("cli: {:#?}", &cli);
-    pista_feeds::feeds::upower::run(&cli.prefix, &cli.alerts[..])
+    stamon::feeds::upower::run(&cli.prefix, &cli.alerts[..])
 }

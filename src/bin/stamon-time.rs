@@ -19,7 +19,7 @@ struct Cli {
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
-    pista_feeds::logger::init(cli.debug)?;
+    stamon::logger::init(cli.debug)?;
     tracing::info!("cli: {:#?}", &cli);
     let format = cli.format.as_str();
     let interval = std::time::Duration::from_secs_f64(cli.interval);

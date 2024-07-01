@@ -27,9 +27,9 @@ struct Cli {
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
-    pista_feeds::logger::init(cli.debug)?;
+    stamon::logger::init(cli.debug)?;
     tracing::info!("cli: {:#?}", &cli);
-    pista_feeds::feeds::bluetooth::run(
+    stamon::feeds::bluetooth::run(
         &cli.prefix,
         Duration::from_secs_f64(cli.interval),
         cli.conn_count,

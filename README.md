@@ -1,19 +1,22 @@
-![test status](https://github.com/xandkar/pista-feeds/actions/workflows/test.yml/badge.svg)
-[![codecov](https://codecov.io/gh/xandkar/pista-feeds/branch/dominus/graph/badge.svg)](https://codecov.io/gh/xandkar/pista-feeds)
-[![dependencies status](https://deps.rs/repo/github/xandkar/pista-feeds/status.svg)](https://deps.rs/repo/github/xandkar/pista-feeds)
-
-pista-feeds
+stamon
 ===============================================================================
+
 ![Screenshot](screenshot.png)
 
-Status data for [pista](https://github.com/xandkar/pista).
+![test status](https://github.com/xandkar/stamon/actions/workflows/test.yml/badge.svg)
+[![codecov](https://codecov.io/gh/xandkar/stamon/branch/dominus/graph/badge.svg)](https://codecov.io/gh/xandkar/stamon)
+[![dependencies status](https://deps.rs/repo/github/xandkar/stamon/status.svg)](https://deps.rs/repo/github/xandkar/stamon)
+
+Status monitors for textual status bars such as
+[pista](https://github.com/xandkar/pista) and
+[barista](https://github.com/xandkar/barista).
 
 Each of the executables periodically collects the necessary data and spits out
-an aggregate.
+an aggregate line.
 
-Which I then redirect to a [FIFO](https://en.wikipedia.org/wiki/Named_pipe) to
-be read by [pista](https://github.com/xandkar/pista) and inserted into my
-[dwm](https://dwm.suckless.org/) status area.
+Such lines can then be read by something like
+[barista](https://github.com/xandkar/barista) and inserted into a desired
+status area.
 
 Linux-only.
 
@@ -26,15 +29,19 @@ TODO
 ----
 
 ### improvements
+
 #### all
-- [ ] configurable format strings https://github.com/vitiral/strfmt
+
+- [ ] configurable format strings: <https://github.com/vitiral/strfmt>
 - [ ] switch from `chrono` to `time` crate
 
 #### weather
+
 - [ ] fallback/alternative weather data sources
-- [ ] forecast: https://weather-gov.github.io/api/general-faqs
+- [ ] forecast: <https://weather-gov.github.io/api/general-faqs>
   - [ ] daily
   - [ ] hourly
 
 #### power/battery
+
 - [ ] updates from D-Bus, rather than `upower --monitor-detail`

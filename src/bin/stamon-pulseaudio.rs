@@ -16,8 +16,8 @@ struct Cli {
 }
 
 impl Cli {
-    fn symbols(&self) -> pista_feeds::feeds::pulseaudio::Symbols {
-        pista_feeds::feeds::pulseaudio::Symbols {
+    fn symbols(&self) -> stamon::feeds::pulseaudio::Symbols {
+        stamon::feeds::pulseaudio::Symbols {
             prefix: &self.prefix,
             mic_on: &self.symbol_mic_on,
             mic_off: &self.symbol_mic_off,
@@ -30,7 +30,7 @@ impl Cli {
 
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
-    pista_feeds::logger::init(cli.debug)?;
+    stamon::logger::init(cli.debug)?;
     tracing::info!("cli: {:#?}", &cli);
-    pista_feeds::feeds::pulseaudio::run(cli.symbols())
+    stamon::feeds::pulseaudio::run(cli.symbols())
 }
