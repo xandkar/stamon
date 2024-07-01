@@ -1,11 +1,11 @@
 [package]
 name = "stamon"
-version = "0.12.0"
+version = "0.12.1"
 edition = "2021"
 license-file = "LICENSE"
 repository = "https://github.com/xandkar/stamon"
 description = "Status monitors for textual status bars (such as barista, pista, etc.)"
-keywords = ["dwm", "status bar", "pista", "barista", "suckless"]
+keywords = ["dwm", "status", "bar", "barista", "suckless"]
 categories = ["command-line-utilities", "parser-implementations"]
 
 [lib]
