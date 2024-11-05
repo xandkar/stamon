@@ -1,4 +1,6 @@
-use std::{sync::mpsc, thread, time::Duration};
+use std::{
+    os::unix::process::CommandExt, sync::mpsc, thread, time::Duration,
+};
 
 use anyhow::{anyhow, Result};
 
@@ -40,21 +42,71 @@ pub fn exec(cmd: &str, args: &[&str]) -> Result<Vec<u8>> {
 }
 
 pub fn exec_with_timeout(
-    cmd: &'static str,
-    args: &'static [&'static str],
+    cmd: &str,
+    args: &[&str],
     timeout: Duration,
-) -> Option<anyhow::Result<Vec<u8>>> {
+) -> anyhow::Result<Vec<u8>> {
+    // For error messages:
+    let cmd_str = format!("{cmd:?}");
+    let args_str = format!("{args:?}");
+
+    let child = std::process::Command::new(cmd)
+        .args(args)
+        .stdout(std::process::Stdio::piped())
+        // XXX Sets PGID to PID. So we can kill as group (with any children).
+        .process_group(0)
+        .spawn()?;
+    let pid = child.id();
     let (tx, rx) = mpsc::channel();
-    thread::spawn(move || {
-        let result = exec(cmd, args);
-        tx.send(result).unwrap_or_else(|error| {
-            tracing::error!(
-                ?error,
-                ?cmd,
-                ?args,
-                "Timed-out receiver. Can't send cmd result."
-            );
-        })
+    thread::spawn({
+        let cmd_str = cmd_str.clone();
+        let args_str = args_str.clone();
+        move || {
+            let result = child
+            .wait_with_output()
+            .map_err(anyhow::Error::from)
+            .and_then(|out| {
+                if out.status.success() {
+                    Ok(out.stdout)
+                } else {
+                    Err(anyhow!("Command failure: cmd={cmd_str}, args={args_str}, output={out:?}."))
+                }
+            });
+            tx.send(result).unwrap_or_else(|error| {
+                tracing::error!(
+                    ?error,
+                    pid,
+                    cmd = cmd_str,
+                    args = args_str,
+                    "Failed to return send cmd result. Receiver dropped."
+                );
+            })
+        }
     });
-    rx.recv_timeout(timeout).ok()
+    match rx.recv_timeout(timeout) {
+        Ok(ok @ Ok(_)) => ok,
+        Ok(err @ Err(_)) => err,
+        Err(_) => {
+            if let Err(error) = kill(pid) {
+                tracing::error!(
+                    ?error,
+                    pid,
+                    cmd = cmd_str,
+                    args = args_str,
+                    "Failed to kill timed-out process."
+                );
+            }
+            Err(anyhow!("Timed-out: cmd={cmd_str}, args={args_str}."))
+        }
+    }
+}
+
+fn kill(pid: u32) -> anyhow::Result<()> {
+    use nix::{sys::signal::Signal::SIGKILL, unistd::Pid};
+
+    // Catch wrap arounds when going from u32 to i32:
+    let pid: i32 = pid.try_into()?;
+    let pid: Pid = Pid::from_raw(pid);
+    nix::sys::signal::killpg(pid, SIGKILL)?;
+    Ok(())
 }
