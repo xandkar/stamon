@@ -199,7 +199,7 @@ impl crate::pipeline::State for State {
         Ok(self.alerts())
     }
 
-    fn display<W: std::io::Write>(&self, mut buf: W) -> Result<()> {
+    fn display<W: std::io::Write>(&mut self, mut buf: W) -> Result<()> {
         write!(buf, "{}{}", &self.prefix, self.direction().to_char())?;
         match self.percentage() {
             None => write!(buf, "---%")?,

@@ -114,7 +114,7 @@ impl<'a> crate::pipeline::State for State<'a> {
         Ok(None)
     }
 
-    fn display<W: std::io::Write>(&self, mut buf: W) -> Result<()> {
+    fn display<W: std::io::Write>(&mut self, mut buf: W) -> Result<()> {
         let sym = &self.symbols;
         let state: &str = match self.status.as_ref().map(|s| s.state) {
             None => sym.state_off,

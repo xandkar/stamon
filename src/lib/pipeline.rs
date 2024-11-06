@@ -10,7 +10,7 @@ pub trait State {
     // XXX Alerts wrapped in Option to avoid allocating a Vec in the common case.
     fn update(&mut self, event: Self::Event) -> Result<Option<Vec<Alert>>>;
 
-    fn display<W: std::io::Write>(&self, buf: W) -> Result<()>;
+    fn display<W: std::io::Write>(&mut self, buf: W) -> Result<()>;
 }
 
 pub fn run<Event>(

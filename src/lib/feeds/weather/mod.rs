@@ -114,7 +114,7 @@ impl crate::pipeline::State for State {
         Ok(None)
     }
 
-    fn display<W: std::io::Write>(&self, mut buf: W) -> Result<()> {
+    fn display<W: std::io::Write>(&mut self, mut buf: W) -> Result<()> {
         match self.temp_f {
             None => writeln!(buf, "---°F")?,
             Some(temp_f) => writeln!(buf, "{:3.0}°F", temp_f)?,

@@ -30,7 +30,7 @@ impl<'a> crate::pipeline::State for State<'a> {
         Ok(alerts)
     }
 
-    fn display<W: std::io::Write>(&self, mut buf: W) -> Result<()> {
+    fn display<W: std::io::Write>(&mut self, mut buf: W) -> Result<()> {
         // TODO Tests
         write!(buf, "{}", self.prefix)?;
         match self.link_qual {

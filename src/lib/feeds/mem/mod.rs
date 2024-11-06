@@ -95,7 +95,7 @@ impl<'a> crate::pipeline::State for State<'a> {
         Ok(None)
     }
 
-    fn display<W: std::io::Write>(&self, mut buf: W) -> Result<()> {
+    fn display<W: std::io::Write>(&mut self, mut buf: W) -> Result<()> {
         write!(buf, "{}", self.prefix)?;
         match self.usage {
             None => write!(buf, "----")?,
