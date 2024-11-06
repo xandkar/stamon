@@ -6,8 +6,9 @@ const DEFAULT_ALERTS: [u64; 14] =
 
 #[derive(clap::Parser, Debug)]
 struct Cli {
-    #[clap(long, short, default_value_t = false)]
-    debug: bool,
+    /// Log level.
+    #[clap(short, long, default_value_t = tracing::Level::INFO)]
+    log_level: tracing::Level,
 
     #[clap(long = "prefix", default_value = "⚡ ")]
     prefix: String,
@@ -39,7 +40,7 @@ impl Cli {
 
 fn main() -> Result<()> {
     let cli = Cli::parse_and_validate();
-    stamon::logger::init(cli.debug)?;
+    stamon::logger::init(cli.log_level)?;
     tracing::info!("cli: {:#?}", &cli);
     stamon::feeds::upower::run(&cli.prefix, &cli.alerts[..])
 }

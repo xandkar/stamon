@@ -5,8 +5,9 @@ use clap::Parser;
 
 #[derive(Debug, Parser)]
 struct Cli {
-    #[clap(short, long, default_value_t = false)]
-    debug: bool,
+    /// Log level.
+    #[clap(short, long, default_value_t = tracing::Level::INFO)]
+    log_level: tracing::Level,
 
     #[clap(short = 'i', long = "interval", default_value = "2.0")]
     interval: f64,
@@ -27,7 +28,7 @@ struct Cli {
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
-    stamon::logger::init(cli.debug)?;
+    stamon::logger::init(cli.log_level)?;
     tracing::info!("cli: {:#?}", &cli);
     stamon::feeds::bluetooth::run(
         &cli.prefix,

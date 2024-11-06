@@ -10,8 +10,9 @@ use stamon::feeds::weather::{
 
 #[derive(Debug, Parser)]
 struct Cli {
-    #[clap(long, short, default_value_t = false)]
-    debug: bool,
+    /// Log level.
+    #[clap(short, long, default_value_t = tracing::Level::INFO)]
+    log_level: tracing::Level,
 
     #[clap(long, short, default_value_t = 1800)]
     interval: u64,
@@ -120,7 +121,7 @@ impl Cli {
 
 pub fn main() -> Result<()> {
     let cli = Cli::parse();
-    stamon::logger::init(cli.debug)?;
+    stamon::logger::init(cli.log_level)?;
     tracing::info!("cli: {:#?}", &cli);
     weather::run(Duration::from_secs(cli.interval), cli.to_observatories()?)
 }

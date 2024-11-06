@@ -3,8 +3,9 @@ use clap::Parser;
 
 #[derive(Parser, Debug)]
 struct Cli {
-    #[clap(long, short, default_value_t = false)]
-    debug: bool,
+    /// Log level.
+    #[clap(short, long, default_value_t = tracing::Level::INFO)]
+    log_level: tracing::Level,
 
     #[clap(default_value = "/")]
     path: String,
@@ -18,7 +19,7 @@ struct Cli {
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
-    stamon::logger::init(cli.debug)?;
+    stamon::logger::init(cli.log_level)?;
     tracing::info!("cli: {:#?}", &cli);
     stamon::feeds::disk::run(
         &cli.prefix,

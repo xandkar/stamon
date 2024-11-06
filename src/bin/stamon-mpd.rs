@@ -4,8 +4,9 @@ use clap::Parser;
 
 #[derive(Debug, Parser)]
 struct Cli {
-    #[clap(long, short, default_value_t = false)]
-    debug: bool,
+    /// Log level.
+    #[clap(short, long, default_value_t = tracing::Level::INFO)]
+    log_level: tracing::Level,
 
     #[clap(long = "addr", default_value = "127.0.0.1")]
     addr: String,
@@ -62,7 +63,7 @@ impl Cli {
 
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
-    stamon::logger::init(cli.debug)?;
+    stamon::logger::init(cli.log_level)?;
     tracing::info!("cli: {:#?}", &cli);
     stamon::feeds::mpd::run(
         std::time::Duration::from_secs(cli.interval),
