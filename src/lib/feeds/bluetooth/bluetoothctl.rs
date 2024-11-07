@@ -6,7 +6,7 @@ const BLUETOOTHCTL: &str = "bluetoothctl";
 
 #[derive(Debug, PartialEq)]
 pub struct Info {
-    pub id: String,
+    // pub id: String,
     pub bat_pct: Option<u8>,
 }
 
@@ -62,14 +62,16 @@ pub fn info(id: &str, timeout: Duration) -> anyhow::Result<Info> {
 
 #[tracing::instrument(skip_all)]
 fn parse_info<Bytes: AsRef<[u8]>>(out: Bytes) -> anyhow::Result<Info> {
-    let mut id: Option<String> = None;
+    let mut found_id = false;
     let mut bat_pct: Option<u8> = None;
     for line_result in out.as_ref().lines() {
         let line = line_result?;
         let fields: Vec<&str> = line.split_whitespace().collect();
         match &fields[..] {
-            ["Device", dev_id, ..] => {
-                id = Some(dev_id.to_string());
+            ["Device", _id, ..] => {
+                // Just format sanity check - we don't actually use the ID, so
+                // no need to collect it.
+                found_id = true;
             }
             ["Battery", "Percentage:", _some_code_in_hex, bat_pct_in_braces] =>
             {
@@ -82,8 +84,9 @@ fn parse_info<Bytes: AsRef<[u8]>>(out: Bytes) -> anyhow::Result<Info> {
             _ => (),
         }
     }
-    id.ok_or(anyhow!("Failed to parse bluetoothctl device info."))
-        .map(|id| Info { id, bat_pct })
+    found_id
+        .then(|| Info { bat_pct })
+        .ok_or(anyhow!("Failed to parse bluetoothctl device info."))
 }
 
 #[cfg(test)]
@@ -131,7 +134,7 @@ mod tests {
 "
         );
         let device_expected = super::Info {
-            id,
+            // id,
             bat_pct: Some(bat_pct),
         };
         let device_parsed = super::parse_info(out).unwrap();

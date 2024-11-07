@@ -3,7 +3,6 @@ mod bluetoothctl;
 use std::{fs, time::Duration};
 
 use anyhow::{anyhow, Result};
-use bluetoothctl::Info;
 
 struct State<'a> {
     prefix: &'a str,
@@ -43,35 +42,25 @@ impl<'a> crate::pipeline::State for State<'a> {
                 self.next_pos_of_device_to_display = 0;
                 writeln!(buf, "{}-", self.prefix)?
             }
-            Some(ControllerState::On { details: None }) => {
+            Some(ControllerState::On { devices: None }) => {
                 self.next_pos_of_device_to_display = 0;
                 writeln!(buf, "{}+", self.prefix)?
             }
             Some(ControllerState::On {
-                details: Some(ref details),
+                devices: Some(ref devices),
             }) => {
-                let n = details.len();
+                let bat_pcts: Vec<u8> = devices
+                    .into_iter()
+                    .filter_map(|dev| dev.bat_pct)
+                    .collect();
+                let n = bat_pcts.len();
                 let i = self.next_pos_of_device_to_display;
                 self.next_pos_of_device_to_display = i.wrapping_add(1);
-                match (n > 0).then(|| details.get(i % n)).flatten() {
-                    None
-                    | Some((_, None))
-                    | Some((
-                        _,
-                        Some(Info {
-                            id: _,
-                            bat_pct: None,
-                        }),
-                    )) => {
+                match (n > 0).then(|| bat_pcts.get(i % n)).flatten() {
+                    None => {
                         writeln!(buf, "{}{}", self.prefix, n)?;
                     }
-                    Some((
-                        _id,
-                        Some(Info {
-                            id: _,
-                            bat_pct: Some(bat_pct),
-                        }),
-                    )) => {
+                    Some(bat_pct) => {
                         writeln!(buf, "{}{} {}%", self.prefix, n, bat_pct)?;
                     }
                 }
@@ -88,13 +77,17 @@ enum Details {
 }
 
 #[derive(Debug)]
+struct Device {
+    _id: String,
+    bat_pct: Option<u8>,
+}
+
+#[derive(Debug)]
 enum ControllerState {
     NoDev,
     OffHard,
     OffSoft,
-    On {
-        details: Option<Vec<(String, Option<Info>)>>,
-    },
+    On { devices: Option<Vec<Device>> },
 }
 
 impl ControllerState {
@@ -122,11 +115,14 @@ impl ControllerState {
         let selph = match b {
             0 => Self::OffSoft,
             1 => {
-                let details = match details {
+                let devices = match details {
                     Details::No => None,
-                    Details::Yes { timeout } => Self::fetch_details(timeout),
+                    Details::Yes { timeout } => {
+                        let devices = fetch_devices(timeout);
+                        Some(devices)
+                    }
                 };
-                Self::On { details }
+                Self::On { devices }
             }
             2 => Self::OffHard,
             254 => Self::NoDev,
@@ -134,22 +130,20 @@ impl ControllerState {
         };
         Ok(selph)
     }
+}
 
-    fn fetch_details(
-        timeout: Duration,
-    ) -> Option<Vec<(String, Option<Info>)>> {
-        bluetoothctl::devices_connected(timeout)
-            .ok()
-            .map(|dev_ids| {
-                dev_ids
-                    .into_iter()
-                    .map(|id| {
-                        let info = bluetoothctl::info(&id, timeout).ok();
-                        (id, info)
-                    })
-                    .collect::<Vec<(String, Option<Info>)>>()
-            })
-    }
+fn fetch_devices(timeout: Duration) -> Vec<Device> {
+    let dev_ids = bluetoothctl::devices_connected(timeout)
+        .ok()
+        .unwrap_or_default();
+    dev_ids
+        .into_iter()
+        .map(|id| {
+            let info = bluetoothctl::info(&id, timeout).ok();
+            let bat_pct = info.map(|i| i.bat_pct).flatten();
+            Device { _id: id, bat_pct }
+        })
+        .collect()
 }
 
 pub fn run(
