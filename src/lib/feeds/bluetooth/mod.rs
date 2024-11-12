@@ -6,14 +6,16 @@ use anyhow::{anyhow, Result};
 
 struct State<'a> {
     prefix: &'a str,
+    postfix: &'a str,
     device_state: Option<ControllerState>,
     next_pos_of_device_to_display: usize,
 }
 
 impl<'a> State<'a> {
-    fn new(prefix: &'a str) -> Self {
+    fn new(prefix: &'a str, postfix: &'a str) -> Self {
         Self {
             prefix,
+            postfix,
             device_state: None,
             next_pos_of_device_to_display: 0,
         }
@@ -32,19 +34,20 @@ impl<'a> crate::pipeline::State for State<'a> {
     }
 
     fn display<W: std::io::Write>(&mut self, mut buf: W) -> Result<()> {
+        write!(buf, "{}", self.prefix)?;
         match self.device_state {
             Some(ControllerState::NoDev) | None => {
                 self.next_pos_of_device_to_display = 0;
-                writeln!(buf, "{} ", self.prefix)?
+                write!(buf, " ")?
             }
             // TODO Distinguish between OffSoft and OffHard
             Some(ControllerState::OffSoft | ControllerState::OffHard) => {
                 self.next_pos_of_device_to_display = 0;
-                writeln!(buf, "{}-", self.prefix)?
+                write!(buf, "-")?
             }
             Some(ControllerState::On { devices: None }) => {
                 self.next_pos_of_device_to_display = 0;
-                writeln!(buf, "{}+", self.prefix)?
+                write!(buf, "+")?
             }
             Some(ControllerState::On {
                 devices: Some(ref devices),
@@ -58,14 +61,15 @@ impl<'a> crate::pipeline::State for State<'a> {
                 self.next_pos_of_device_to_display = i.wrapping_add(1);
                 match (n > 0).then(|| bat_pcts.get(i % n)).flatten() {
                     None => {
-                        writeln!(buf, "{}{}", self.prefix, n)?;
+                        write!(buf, "{n}")?;
                     }
                     Some(bat_pct) => {
-                        writeln!(buf, "{}{} {}%", self.prefix, n, bat_pct)?;
+                        write!(buf, "{n} {bat_pct}%",)?;
                     }
                 }
             }
         };
+        writeln!(buf, "{}", self.postfix)?;
         Ok(())
     }
 }
@@ -148,6 +152,7 @@ fn fetch_devices(timeout: Duration) -> Vec<Device> {
 
 pub fn run(
     prefix: &str,
+    postfix: &str,
     interval: Duration,
     details_enabled: bool,
     timeout: Duration,
@@ -169,5 +174,5 @@ pub fn run(
             }
             Ok(dev_opt) => Some(dev_opt),
         });
-    crate::pipeline::run_to_stdout(events, State::new(prefix))
+    crate::pipeline::run_to_stdout(events, State::new(prefix, postfix))
 }

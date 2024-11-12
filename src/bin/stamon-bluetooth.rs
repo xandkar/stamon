@@ -16,6 +16,9 @@ struct Cli {
     #[clap(long = "prefix", default_value = "ᛒ ")]
     prefix: String,
 
+    #[clap(long = "postfix", default_value = "")]
+    postfix: String,
+
     /// Attempt to fetch connected device details using the bluetoothctl command.
     #[clap(short, long, default_value_t = false)]
     details: bool,
@@ -33,6 +36,7 @@ fn main() -> Result<()> {
     tracing::info!("cli: {:#?}", &cli);
     stamon::feeds::bluetooth::run(
         &cli.prefix,
+        &cli.postfix,
         Duration::from_secs_f64(cli.interval),
         cli.details,
         Duration::from_secs_f64(cli.timeout),
