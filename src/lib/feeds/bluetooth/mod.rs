@@ -64,7 +64,7 @@ impl<'a> crate::pipeline::State for State<'a> {
                         write!(buf, "{n}")?;
                     }
                     Some(bat_pct) => {
-                        write!(buf, "{n} {bat_pct}%",)?;
+                        write!(buf, "{n} {bat_pct:3.0}%",)?;
                     }
                 }
             }
