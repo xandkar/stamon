@@ -48,3 +48,7 @@ coverage_html:
 .PHONY: install
 install:
 	cargo install --path .
+
+.PHONY: tag
+tag:
+	git tag v$$(cargo pkgid | awk -F'#' '{print $$2}')
