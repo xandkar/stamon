@@ -31,13 +31,15 @@ fn usage(path: &str) -> Result<Option<u64>> {
 
 struct State<'a> {
     prefix: &'a str,
+    postfix: &'a str,
     usage: Option<u64>,
 }
 
 impl<'a> State<'a> {
-    fn new(prefix: &'a str) -> Self {
+    fn new(prefix: &'a str, postfix: &'a str) -> Self {
         Self {
             prefix,
+            postfix,
             usage: None,
         }
     }
@@ -60,7 +62,7 @@ impl<'a> crate::pipeline::State for State<'a> {
             None => write!(buf, "----")?,
             Some(pct) => write!(buf, "{:3.0}%", pct)?,
         }
-        writeln!(buf)?;
+        writeln!(buf, "{}", self.postfix)?;
         Ok(())
     }
 }
@@ -70,6 +72,7 @@ fn reads(
     path: &str,
 ) -> impl Iterator<Item = Option<u64>> + '_ {
     use crate::clock;
+
     clock::new(interval).filter_map(|clock::Tick| match usage(path) {
         Err(err) => {
             tracing::error!("Failed to read disk usage: {:?}", err);
@@ -81,8 +84,12 @@ fn reads(
 
 pub fn run<'a>(
     prefix: &'a str,
+    postfix: &'a str,
     interval: Duration,
     path: &'a str,
 ) -> Result<()> {
-    crate::pipeline::run_to_stdout(reads(interval, path), State::new(prefix))
+    crate::pipeline::run_to_stdout(
+        reads(interval, path),
+        State::new(prefix, postfix),
+    )
 }

@@ -7,14 +7,17 @@ struct Cli {
     #[clap(short, long, default_value_t = tracing::Level::INFO)]
     log_level: tracing::Level,
 
-    #[clap(default_value = "/")]
-    path: String,
-
     #[clap(long = "interval", short = 'i', default_value = "5")]
     interval: u64,
 
     #[clap(long = "prefix", default_value = "d ")]
     prefix: String,
+
+    #[clap(long = "postfix", default_value = "")]
+    postfix: String,
+
+    #[clap(default_value = "/")]
+    path: String,
 }
 
 fn main() -> Result<()> {
@@ -23,6 +26,7 @@ fn main() -> Result<()> {
     tracing::info!("cli: {:#?}", &cli);
     stamon::feeds::disk::run(
         &cli.prefix,
+        &cli.postfix,
         std::time::Duration::from_secs(cli.interval),
         &cli.path,
     )
